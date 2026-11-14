@@ -10,6 +10,7 @@
 
 - **Four camera views:** Review the front, rear, left and right cameras, individually or together.
 - **Record directly to USB:** Keep your recordings on your own drive.
+- **Enable once for automatic recording:** BimmerVision remembers your setting and handles future drives when the cameras and USB storage are available.
 - **See when recording is active:** A blinking **REC** indicator appears in iDrive.
 - **Driving information:** Review recorded speed, steering, blinkers, brake and accelerator information alongside the video, where available.
 - **Scrub through your drive:** Drag the timeline to seek within a clip or move between recordings. Alternating BMW M colors make clip boundaries easier to spot.
@@ -21,7 +22,13 @@
 
 ### Recording in iDrive
 
-The blinking indicator lets you check at a glance that recording is running.
+Choose **Enable recording** once and leave it enabled. BimmerVision saves your choice and is designed to record each drive automatically when the car wakes and its cameras and USB drive become available. You do not need to open BimmerVision or press Record before every trip.
+
+Leave a writable USB drive connected with enough free space. Choose **Pause recording** whenever you want to stop automatic recording; enable it again to resume.
+
+The blinking **REC** indicator lets you check at a glance that recording is running.
+
+*Development verification: automatic startup is configured, but a full car sleep/wake cycle has not yet been physically verified.*
 
 ![BimmerVision recording in iDrive with its blinking REC indicator](docs/images/recording-indicator.gif)
 

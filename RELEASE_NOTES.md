@@ -1,3 +1,8 @@
+# BimmerVision 0.2.7
+
+- Fits both computer USB and direct phone viewing instructions into iDrive’s three-line About area.
+- Includes the export, navigation, speed-limit fallback and GitHub Release fixes from 0.2.6.
+
 # BimmerVision 0.2.6
 
 - Fixed export branding overlapping the date/time and enlarged exported turn arrows and steering wheel.

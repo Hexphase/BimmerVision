@@ -12,8 +12,8 @@
       ],
       "artifact": {
         "name": "bimmervision@0.2.2.tgz",
-        "size": 45448,
-        "sha256": "e65f3b8f0bf10939984aa8bfd20bb169a965cb13b66cab442618711e174f6df7",
+        "size": 45369,
+        "sha256": "3a8e3ac3fd14ba7ba17b05c10b6e481d23a80b69a2d3ad756ca79d98a2255076",
         "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision@0.2.2.tgz"
       },
       "icon": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/store-icon.png",

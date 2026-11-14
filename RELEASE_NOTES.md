@@ -31,8 +31,8 @@
 
 | Asset | Size | SHA-256 Checksum | Description |
 | :--- | :--- | :--- | :--- |
-| `bimmervision@0.2.2.tgz` | 45,448 bytes | `e65f3b8f0bf10939984aa8bfd20bb169a965cb13b66cab442618711e174f6df7` | **iDrive 7 Front-End App** (installed by MGU Store) |
-| `BimmerVisionService-0.2.2.tgz` | 1,744,842 bytes | `a7a3638218cee3f169a0eb0b474578c8cfb946f5b103c3ec055aeebefe6a4067` | **BimmerVisionService Daemon** (Linux systemd recorder) |
+| `bimmervision@0.2.2.tgz` | 45,369 bytes | `3a8e3ac3fd14ba7ba17b05c10b6e481d23a80b69a2d3ad756ca79d98a2255076` | **iDrive 7 Front-End App** (installed by MGU Store) |
+| `BimmerVisionService-0.2.2.tgz` | 1,744,762 bytes | `b38027bdb23dea837411b602c66d827318a33137b4954ceab0ed9aebd3834bea` | **BimmerVisionService Daemon** (Linux systemd recorder) |
 | `catalog.json` | 575 bytes | `9cb570d24a3b5f33a40e3dcaf9bf9d9cc28cef5aae18ee94b8ec881476b6b877` | MGU Store Schema 2 catalog manifest |
 | `mgu-repo.json` | 142 bytes | `be5fe69a5fd3f7c746fee8bb881a1f448f1863dba45fb8f15897770ef4854ea3` | MGU Store Repo Tree manifest |
 | `CAR-SHA256SUMS` | 185 bytes | — | Checksum verification file for release archives |

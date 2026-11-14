@@ -7,7 +7,7 @@
       "title": "BimmerVision",
       "path": "idrive",
       "manifest": "mgu-app.json",
-      "icon": "icon.png",
+      "icon": "store-icon.png",
       "build": {
         "node": "idrive/build-store.js",
         "output": "idrive/store-output.tgz"

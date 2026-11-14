@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "id": "bimmervision",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "BimmerVision - Tested only on iDrive 7",
   "mguHmi": [
     "ID7"

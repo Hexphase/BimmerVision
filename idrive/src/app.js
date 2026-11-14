@@ -90,7 +90,9 @@ async function start(options) {
   }
   if (
     pending ||
-    ["ENTRY_POINT", "BOOKMARK", "LUM"].indexOf(String(app.startReason)) >= 0
+    ["ENTRY_POINT", "BOOKMARK", "LUM"].indexOf(String(app.startReason)) >= 0 ||
+    (process.argv.indexOf("--startReason") >= 0 &&
+      ["ENTRY_POINT", "BOOKMARK", "LUM"].indexOf(process.argv[process.argv.indexOf("--startReason") + 1]) >= 0)
   )
     await ui.openMenu();
   if (options.openPage === "connect") await ui.press("HOME_REAR");

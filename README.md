@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform: BMW iDrive 7 (MGU)](https://img.shields.io/badge/Platform-BMW%20iDrive%207%20(MGU)-0066B2.svg)](https://github.com/robertnisipeanu/mgu-store)
-[![Release: v0.2.2](https://img.shields.io/badge/Release-v0.2.2-brightgreen.svg)](https://github.com/Hexphase/BimmerVision/releases/tag/v0.2.2)
+[![Release: v0.2.3](https://img.shields.io/badge/Release-v0.2.3-brightgreen.svg)](https://github.com/Hexphase/BimmerVision/releases/tag/v0.2.3)
 
 **BimmerVision** is a lightweight, zero-overhead multi-camera dashcam and synchronized vehicle telemetry recorder built natively for BMW vehicles equipped with **iDrive 7 (MGU)**.
 
@@ -48,7 +48,9 @@ Recordings can be viewed, reviewed, and exported into composite 4-camera dashcam
 
 ## Installation
 
-### Method 1: Via MGU Store (Recommended)
+### Step 1: Install the iDrive interface from MGU Store
+
+**The Store entry currently installs the iDrive interface only. It does not install or provision the recorder companion. A different car needs the separate setup below before recording and phone playback will work.**
 
 1. Open **MGU Store** on your BMW iDrive screen.
 2. Navigate to **Settings → Add source**.
@@ -59,20 +61,23 @@ Recordings can be viewed, reviewed, and exported into composite 4-camera dashcam
    *(Or enter the direct catalog URL: `https://raw.githubusercontent.com/Hexphase/BimmerVision/main/catalog.json`)*
 4. Locate **BimmerVision** under the applications list and select **Install**.
 
-### Method 2: Companion Recorder Daemon Setup (SSH)
+### Step 2: Provision the recorder companion (required separately)
 
-The front-end iDrive app is managed by MGU Store, while the background recording daemon runs as a lightweight `systemd` service:
+The background recorder runs as a `systemd` service. Before installation, it requires vehicle-specific verified camera enrollment, the installed app’s current UID in `hardware.json`, and TLS certificates for phone transfer. Its `bimmervision-service` name must be present in both recovery allowlist sections of `/etc/recmgr-restartlist.conf`, followed by a parked infotainment restart before starting the service. The current Store entry does not perform these steps.
 
-1. Download `BimmerVisionService-0.2.2.tgz` from the latest [GitHub Release](https://github.com/Hexphase/BimmerVision/releases).
+After those prerequisites are complete:
+
+1. Download `BimmerVisionService-0.2.3.tgz` from the latest [GitHub Release](https://github.com/Hexphase/BimmerVision/releases).
 2. Transfer the archive to your head unit via SCP:
    ```bash
-   scp BimmerVisionService-0.2.2.tgz root@192.168.1.1:/tmp/
+   scp BimmerVisionService-0.2.3.tgz root@HEAD_UNIT_IP:/tmp/
    ```
 3. Connect via SSH and run the installer:
    ```bash
-   ssh root@192.168.1.1
-   cd /tmp && tar -xzf BimmerVisionService-0.2.2.tgz
-   cd BimmerVisionService && sh scripts/install-car.sh
+   ssh root@HEAD_UNIT_IP
+   cd /tmp && tar -xzf BimmerVisionService-0.2.3.tgz
+   cd BimmerVisionService
+   sh scripts/install-car.sh --enrollment /path/to/hardware.json --tls-dir /path/to/tls
    ```
 
 ---

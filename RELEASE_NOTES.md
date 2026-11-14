@@ -1,10 +1,12 @@
-# BimmerVision v0.2.2
+# BimmerVision v0.2.3
+
+Fixes fresh Store installation and the missing initial QR graphic. The recorder companion remains a separate installation with vehicle enrollment and recovery setup.
 
 > **Important Compatibility Notice:** This app has only been tested on **iDrive 7**.
 
 ---
 
-## What's New in v0.2.2
+## What's New in v0.2.3
 
 ### 🔍 Vehicle Perception & ADAS Metadata Capture
 - **22 High-Frequency SOME/IP Perception Streams**: Real-time logging of surrounding vehicle positions, distance/gap to lead vehicles (`GapVehicleAhead`), lane boundaries, and camera object detection streams (`ObjectRecognitionFrontCamera2`) directly from the KAFAS camera system alongside existing video and vehicle telemetry.
@@ -31,8 +33,8 @@
 
 | Asset | Size | SHA-256 Checksum | Description |
 | :--- | :--- | :--- | :--- |
-| `bimmervision@0.2.2.tgz` | 45,369 bytes | `3a8e3ac3fd14ba7ba17b05c10b6e481d23a80b69a2d3ad756ca79d98a2255076` | **iDrive 7 Front-End App** (installed by MGU Store) |
-| `BimmerVisionService-0.2.2.tgz` | 1,729,767 bytes | `141b2739f8c774c723c136f046f163feb30e7ef42b74c3cf81caff7e3225dcd0` | **BimmerVisionService Daemon** (Linux systemd recorder) |
+| `bimmervision@0.2.3.tgz` | 45,391 bytes | `b15eae3ef79fd182486267659ee2146191a80631bb80a1d12a5ac150de754062` | **iDrive 7 Front-End App** (installed by MGU Store) |
+| `BimmerVisionService-0.2.3.tgz` | 1,729,888 bytes | `13bc1440040e4ec807c4780a92e88ea62febd5d8bbe0057d91b6cde4e0206d9e` | **BimmerVisionService Daemon** (Linux systemd recorder) |
 | `catalog.json` | 575 bytes | `9cb570d24a3b5f33a40e3dcaf9bf9d9cc28cef5aae18ee94b8ec881476b6b877` | MGU Store Schema 2 catalog manifest |
 | `mgu-repo.json` | 142 bytes | `be5fe69a5fd3f7c746fee8bb881a1f448f1863dba45fb8f15897770ef4854ea3` | MGU Store Repo Tree manifest |
 | `CAR-SHA256SUMS` | 185 bytes | — | Checksum verification file for release archives |
@@ -48,7 +50,7 @@
    ```
 3. Tap **Install** on **BimmerVision**.
 
-*For the background recording daemon (`BimmerVisionService-0.2.2.tgz`), follow the SSH installation steps in the README.*
+*For the background recording daemon (`BimmerVisionService-0.2.3.tgz`), follow the SSH installation steps in the README.*
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Turn your BMW’s 360° cameras into a USB drive recorder.** Record your drives, review all four camera views, and save videos with driving information alongside the footage.
 
-**Requires a compatible BMW with a 360° Surround View camera system and iDrive 7 (MGU).** A rear-view camera on its own is not enough. iDrive 8 and other head units are not currently supported.
+**Requires a compatible BMW with a 360° Surround View camera system and iDrive 7 (MGU).** A rear-view camera on its own is not enough. iDrive 8 and other head units are not currently tested.
 
 [Visit BimmerVision.App](https://BimmerVision.App) · [Latest release](https://github.com/Hexphase/BimmerVision/releases/latest)
 

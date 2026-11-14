@@ -3,7 +3,7 @@
   "application": {
     "uuid": "a2228b38-fa54-43a9-80b9-af95fa7e5786",
     "type": "OnlineApp",
-    "name": "hexphase_bimmervision",
+    "name": "BimmerVision",
     "vendor": "Hexphase",
     "version": "0.2.2",
     "defaultLanguage": "en_GB",

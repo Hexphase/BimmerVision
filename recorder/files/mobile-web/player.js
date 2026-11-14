@@ -836,13 +836,19 @@ class BimmerVisionPlayer {
     if (this._speedLimitPending) return this._speedLimitPending;
     const epoch=this._clipEpoch, abort=new AbortController();
     this._speedLimitAbort=abort;
-    const timer=setTimeout(()=>abort.abort(),8000);
+    const timer=setTimeout(()=>abort.abort(),14000);
+    const validLimit=data=>data && data.isEstimated!==true && Number.isFinite(data.limit) && data.limit>0 && data.limit<=200 && ['mph','km/h'].includes(data.unit);
     let request;
     request=bvFetch(`/api/v1/speed-limit?lat=${lat}&lon=${lon}`,{signal:abort.signal})
-      .then(r=>r.ok?r.json():null)
+      .then(r=>r.ok?r.json():null).catch(()=>null)
+      .then(data=>{
+        if(validLimit(data) || abort.signal.aborted || epoch!==this._clipEpoch)return data;
+        // Direct fetch in the client deliberately omits recorder bearer headers and cookies.
+        return typeof BimmerVisionSpeedLimits!=='undefined'?BimmerVisionSpeedLimits.lookup(lat,lon,abort.signal):null;
+      })
       .then(data=>{
         if (epoch!==this._clipEpoch || abort.signal.aborted) return;
-        const valid=data && data.isEstimated!==true && Number.isFinite(data.limit) && data.limit>0 && data.limit<=200 && ['mph','km/h'].includes(data.unit);
+        const valid=validLimit(data);
         const value=valid?{limit:data.limit,unit:data.unit,source:data.source||'Map speed limit',geometry:Array.isArray(data.geometry)?data.geometry:[],key}:null;
         this._speedLimitCache.delete(key);
         this._speedLimitCache.set(key,{value,until:Date.now()+(value?3600000:30000)});

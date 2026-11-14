@@ -291,14 +291,13 @@ UI.prototype.render = async function () {
     if (drives.length > 4) labels.HOME_RIGHT = "Next drives";
     labels.HOME_AUTO = "Back";
   } else if(this.page==="settings") {
-    labels.HOME_STATUS="BimmerVision "+require('../package.json').version+"\nGitHub: Hexphase/BimmerVision\nOpen GitHub on your phone or computer.";
+    labels.HOME_STATUS="BimmerVision "+require('../package.json').version+"\nGitHub: Hexphase/BimmerVision\nComputer: Visit BimmerVision.App and connect your USB drive to view footage.\nPhone: Choose Connect Phone on the previous page to connect directly to your car.";
     labels.HOME_AUTO="Back";
   } else {
     labels.HOME_STATUS = "Connect Phone" +
       (transfer.paired ? " · Connected" : transfer.code ? " · Code " + transfer.code : "") + "\n" +
       (transfer.paired ? "One device connected" : transfer.code ? (transfer.url||"").split("/?")[0] : transfer.error || "Starting connection…") +
       "\nBMW Wi-Fi / CarPlay · Keep this screen open";
-    labels.HOME_ALL = "Disconnect / Back";
     labels.HOME_AUTO = "Back";
   }
   var notice=this.message||desk.storageWarning||desk.error||deletionNotice;

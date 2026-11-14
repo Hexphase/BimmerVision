@@ -30,7 +30,7 @@ npm test
 npm run build
 ```
 
-The release produces `bimmervision@0.2.5.tgz`, its required `bimmervision-recorder@0.2.5.tgz`, `catalog.json` and `CAR-SHA256SUMS`. `mgu-repo.json` provides the same dependency relationship for a GitHub branch source. Runtime code is compatible with the head unit’s Node 8 runtime. Development tests include installation order, UID changes, private credentials, unsupported/missing camera streams and restart status.
+The release produces `bimmervision@0.2.6.tgz`, its required `bimmervision-recorder@0.2.6.tgz`, `catalog.json` and `CAR-SHA256SUMS`. `mgu-repo.json` provides the same dependency relationship for a GitHub branch source. Runtime code is compatible with the head unit’s Node 8 runtime. Development tests include installation order, UID changes, private credentials, unsupported/missing camera streams and restart status.
 
 The recorder is installed and registered by the Store’s deployment tool. Do not manually start a newly installed recorder before its required recovery-manager restart. Older standalone `BimmerVisionService` bundles are retained for existing users but are not the new Store installation path.
 

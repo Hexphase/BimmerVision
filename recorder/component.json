@@ -1,7 +1,7 @@
 {
   "id": "bimmervision-recorder",
   "kind": "tool",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "title": "BimmerVision Recorder",
   "description": "Required recorder service for BimmerVision. Sets up this car automatically; never includes another car’s credentials.",
   "optional": true,
@@ -83,7 +83,7 @@
     {
       "path": "mobile-web/app.js",
       "mode": "0644",
-      "sha256": "0b2fafde5bb950b3b2ce2013336cc4e8d10a85399912e96b1c2958e9c41fd356",
+      "sha256": "b5d27d9d2cfd971fa4f7256dc3f862aacd786a35a9a13f1252eaa8671a67e44c",
       "from": "files/mobile-web/app.js"
     },
     {
@@ -155,13 +155,13 @@
     {
       "path": "mobile-web/exporter.js",
       "mode": "0644",
-      "sha256": "75f4c45d7e6f952d4443b77d76c899368238d50215090c3ec4589935f6418357",
+      "sha256": "4a63e53c253cb92f3c42be446aa465ed293b6103099e7417a63cddedc037dd02",
       "from": "files/mobile-web/exporter.js"
     },
     {
       "path": "mobile-web/index.html",
       "mode": "0644",
-      "sha256": "d5624e799f87426ccb7b3c3d99a5373a52614a5e8c3243c97839f8a3196e0ef8",
+      "sha256": "6e7170853895ecb2ad4bcd4ed7850a6ce43d8d72e8f19340a2b3a2480cbcd85f",
       "from": "files/mobile-web/index.html"
     },
     {
@@ -179,13 +179,13 @@
     {
       "path": "mobile-web/player.js",
       "mode": "0644",
-      "sha256": "2c10cf60584a5ae8144ece56e09bd206bd8821d61bbda8d26f54c26e0c7ebee8",
+      "sha256": "c38da013b9bf3efe171a3028fb341e9660da152bf47dc651832aaaa4ab7e818c",
       "from": "files/mobile-web/player.js"
     },
     {
       "path": "mobile-web/release-checker.js",
       "mode": "0644",
-      "sha256": "231036498837021baaf4cc3360eb5b3ae3480b40f8abfbb51d3dfc00f2ebd60f",
+      "sha256": "3055b924ab5f94077515d3c15f0ca155c02572bda4807e2cb53fd74ba5620117",
       "from": "files/mobile-web/release-checker.js"
     },
     {
@@ -199,6 +199,12 @@
       "mode": "0644",
       "sha256": "e97aa91ea0b9cc5c3a90d717f74e4da3ee48412f6f97309e4258a03fca896412",
       "from": "files/mobile-web/sedan-selector.js"
+    },
+    {
+      "path": "mobile-web/speed-limit-client.js",
+      "mode": "0644",
+      "sha256": "6232fd8d94106a70eaa8e98cab2d9b222b44d08ac7eef54a72eb607feab73e5a",
+      "from": "files/mobile-web/speed-limit-client.js"
     },
     {
       "path": "mobile-web/style.css",
@@ -299,7 +305,7 @@
     {
       "path": "transfer.js",
       "mode": "0644",
-      "sha256": "1ce00fe70c6bb8ec887448f73c3a2025ae77f9acbea32fb67ffe32ef6ecf3431",
+      "sha256": "67c51a43f410873e3c9c8975753cd2bca22dc74b4f16bdf4c16f28902261430f",
       "from": "files/transfer.js"
     },
     {
@@ -311,7 +317,7 @@
     {
       "path": "version.json",
       "mode": "0644",
-      "sha256": "bf154d5c4bf45c40966192b8b9cfc023fa8eb9602566131f3bc5cd356ca087b8",
+      "sha256": "8a7cfe1a89d483d81553472b5fa731c32cf77333387aef4bf78cf6459dd5c950",
       "from": "files/version.json"
     }
   ],

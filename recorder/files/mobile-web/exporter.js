@@ -842,7 +842,9 @@ class ClipExporter {
         ctx.fillStyle = 'rgba(160, 170, 195, 0.35)';
       }
       ctx.beginPath();
-      const ax = x + 2, ay = centerY;
+      ctx.translate(x + 2, centerY);
+      ctx.scale(1.6, 1.6);
+      const ax = 0, ay = 0;
       ctx.moveTo(ax, ay);
       ctx.lineTo(ax + 16, ay - 13);
       ctx.lineTo(ax + 16, ay - 5);
@@ -866,7 +868,9 @@ class ClipExporter {
         ctx.fillStyle = 'rgba(160, 170, 195, 0.35)';
       }
       ctx.beginPath();
-      const ax = x + 2, ay = centerY;
+      ctx.translate(x + 2, centerY);
+      ctx.scale(1.6, 1.6);
+      const ax = 0, ay = 0;
       ctx.moveTo(ax + 30, ay);
       ctx.lineTo(ax + 14, ay - 13);
       ctx.lineTo(ax + 14, ay - 5);
@@ -886,11 +890,11 @@ class ClipExporter {
         ctx.fillStyle = "#ffffff";
         ctx.font = "bold 44px -apple-system, BlinkMacSystemFont, sans-serif";
         ctx.fillText(`${speed}`, curX, centerY + 15);
-        const spdW = (speed >= 100 ? 70 : speed >= 10 ? 48 : 28);
+        const spdW = measure(String(speed), 44);
         ctx.fillStyle = "rgba(160, 170, 195, 0.85)";
         ctx.font = "bold 15px -apple-system, BlinkMacSystemFont, sans-serif";
         ctx.fillText(unit.toUpperCase(), curX + spdW + 6, centerY + 13);
-        curX += spdW + 44;
+        curX += spdW + 6 + measure(unit.toUpperCase(), 15);
       }
       if (ov.speedLimit) {
         const bw = 46, bh = 54;
@@ -930,11 +934,12 @@ class ClipExporter {
     const drawSteering = (x, centerY) => {
       const angleDeg = telem.steeringAngleDeg || 0;
       const angleRad = (angleDeg * Math.PI) / 180;
-      const cx = x + 26;
+      const cx = x + 38;
       const cy = centerY;
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(angleRad);
+      ctx.scale(1.5, 1.5);
       if (ClipExporter.assets.wheel && ClipExporter.assets.wheel.complete && ClipExporter.assets.wheel.naturalWidth) {
         try {
           ctx.drawImage(ClipExporter.assets.wheel, -24, -24, 48, 48);
@@ -964,46 +969,50 @@ class ClipExporter {
       ctx.restore();
     };
 
+    const font = (size, family = '-apple-system, BlinkMacSystemFont, sans-serif') => `bold ${size}px ${family}`;
+    const measure = (text, size, family) => {
+      ctx.font = font(size, family);
+      return ctx.measureText(text).width;
+    };
+    const usableImage = img => img && img.complete && img.naturalWidth > 0 && img.naturalHeight > 0;
+    const wordmark = usableImage(ClipExporter.assets.wordmark) ? ClipExporter.assets.wordmark : null;
+    const eye = usableImage(ClipExporter.assets.eye) ? ClipExporter.assets.eye : null;
+    const brandTextWidth = measure('BIMMERVISION', 16);
+    const bimmerWidth = measure('BIMMER', 18);
+    const visionWidth = measure('VISION', 18);
+    // Reserve exactly what is drawn, including unusually wide source artwork.
+    const imageSize = (img, maxW, maxH) => {
+      const scale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
+      return { w: img.naturalWidth * scale, h: img.naturalHeight * scale };
+    };
+    const brandImage = wordmark ? imageSize(wordmark, 184, 32) : eye ? imageSize(eye, 54, 36) : null;
+    const brandWidth = wordmark ? brandImage.w : eye ? brandImage.w + 8 + brandTextWidth : 36 + bimmerWidth + visionWidth;
     const drawBrandLogo = (x, centerY) => {
       ctx.save();
-      if (ClipExporter.assets.wordmark && ClipExporter.assets.wordmark.complete && ClipExporter.assets.wordmark.naturalWidth) {
-        try {
-          const img = ClipExporter.assets.wordmark;
-          const aspect = img.naturalWidth / img.naturalHeight;
-          const h = 32;
-          const w = h * aspect;
-          ctx.drawImage(img, x, centerY - h / 2, w, h);
-        } catch (_) {}
-      } else if (ClipExporter.assets.eye && ClipExporter.assets.eye.complete && ClipExporter.assets.eye.naturalWidth) {
-        try {
-          const img = ClipExporter.assets.eye;
-          const aspect = img.naturalWidth / img.naturalHeight;
-          const h = 36;
-          const w = h * aspect;
-          ctx.drawImage(img, x, centerY - h / 2, w, h);
-          ctx.fillStyle = "#ffffff";
-          ctx.font = "bold 16px -apple-system, BlinkMacSystemFont, sans-serif";
-          ctx.fillText("BIMMERVISION", x + w + 8, centerY + 6);
-        } catch (_) {}
+      if (wordmark) {
+        try { ctx.drawImage(wordmark, x, centerY - brandImage.h / 2, brandImage.w, brandImage.h); } catch (_) {}
+      } else if (eye) {
+        try { ctx.drawImage(eye, x, centerY - brandImage.h / 2, brandImage.w, brandImage.h); } catch (_) {}
+        ctx.fillStyle = '#ffffff';
+        ctx.font = font(16);
+        ctx.fillText('BIMMERVISION', x + brandImage.w + 8, centerY + 6);
       } else {
-        // High-fidelity vector BimmerVision logo mark
-        ctx.fillStyle = "rgba(61, 168, 242, 0.25)";
+        ctx.fillStyle = 'rgba(61, 168, 242, 0.25)';
         ctx.beginPath();
         ctx.arc(x + 16, centerY, 13, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = "#3da8f2";
+        ctx.strokeStyle = '#3da8f2';
         ctx.lineWidth = 2.5;
         ctx.stroke();
-        ctx.fillStyle = "#3da8f2";
+        ctx.fillStyle = '#3da8f2';
         ctx.beginPath();
         ctx.arc(x + 16, centerY, 5, 0, Math.PI * 2);
         ctx.fill();
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 18px -apple-system, BlinkMacSystemFont, sans-serif";
-        ctx.fillText("BIMMER", x + 36, centerY + 6);
-        ctx.fillStyle = "#3da8f2";
-        ctx.fillText("VISION", x + 110, centerY + 6);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = font(18);
+        ctx.fillText('BIMMER', x + 36, centerY + 6);
+        ctx.fillStyle = '#3da8f2';
+        ctx.fillText('VISION', x + 36 + bimmerWidth, centerY + 6);
       }
       ctx.restore();
     };
@@ -1078,32 +1087,24 @@ class ClipExporter {
       }
     };
 
+    const startMs = new Date(manifest?.startedAt || this.player?.manifest?.startedAt || '').getTime();
+    const date = Number.isFinite(startMs) ? new Date(startMs + timeSec * 1000) : null;
+    const dateStr = date ? date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : null;
+    const clockStr = date ? date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', second: '2-digit' })
+      : `${String(Math.floor(timeSec / 60)).padStart(2, '0')}:${(timeSec % 60).toFixed(2).padStart(5, '0')}`;
+    const timeWidth = Math.max(dateStr ? measure(dateStr, 13) : 0, measure(clockStr, date ? 16 : 17, 'monospace'));
     const drawTime = (x, centerY) => {
       ctx.save();
-      const startMs = manifest?.startedAt ? new Date(manifest.startedAt).getTime() : (this.player?.manifest?.startedAt ? new Date(this.player.manifest.startedAt).getTime() : NaN);
-      if (!isNaN(startMs)) {
-        const curDate = new Date(startMs + timeSec * 1000);
-        const dateStr = curDate.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-        const timeStr = curDate.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" });
-        ctx.font = "bold 13px -apple-system, BlinkMacSystemFont, sans-serif";
-        ctx.fillStyle = "rgba(180, 195, 220, 0.9)";
+      if (dateStr) {
+        ctx.font = font(13);
+        ctx.fillStyle = 'rgba(180, 195, 220, 0.9)';
         ctx.fillText(dateStr, x, centerY - 8);
-        ctx.font = "bold 16px monospace";
-        ctx.fillStyle = "#ffffff";
-        ctx.fillText(timeStr, x, centerY + 13);
-      } else {
-        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-        ctx.font = "bold 17px monospace";
-        const mins = Math.floor(timeSec / 60);
-        const secs = (timeSec % 60).toFixed(2).padStart(5, "0");
-        const timeStr = `${String(mins).padStart(2, "0")}:${secs}`;
-        ctx.fillText(timeStr, x, centerY + 6);
       }
+      ctx.font = font(date ? 16 : 17, 'monospace');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(clockStr, x, centerY + (date ? 13 : 6));
       ctx.restore();
     };
-
-    const hasDate = Boolean(manifest?.startedAt || this.player?.manifest?.startedAt);
-    const timeWidth = hasDate ? 128 : 96;
 
     // 1. Left cluster: Speed & Speed Limit
     const leftModules = [];
@@ -1111,7 +1112,7 @@ class ClipExporter {
       let w = 0;
       if (ov.speed) {
         const spd = unit === "mph" ? (telem.speedMph ?? 0) : (telem.speedKph ?? 0);
-        w += (spd >= 100 ? 118 : spd >= 10 ? 96 : 76);
+        w += measure(String(spd), 44) + 6 + measure(unit.toUpperCase(), 15);
       }
       if (ov.speedLimit) w += (ov.speed ? 60 : 50);
       leftModules.push({ id: 'speed', width: w, draw: drawSpeedCluster });
@@ -1120,13 +1121,13 @@ class ClipExporter {
     // 2. Center cluster: Blinker Left | Steering Wheel | Blinker Right (matching web hud-center)
     const centerModules = [];
     if (ov.blinkers) {
-      centerModules.push({ id: 'blinker_left', width: 36, draw: drawBlinkerLeft });
+      centerModules.push({ id: 'blinker_left', width: 52, draw: drawBlinkerLeft });
     }
     if (ov.steering) {
-      centerModules.push({ id: 'steering', width: 56, draw: drawSteering });
+      centerModules.push({ id: 'steering', width: 76, draw: drawSteering });
     }
     if (ov.blinkers) {
-      centerModules.push({ id: 'blinker_right', width: 36, draw: drawBlinkerRight });
+      centerModules.push({ id: 'blinker_right', width: 52, draw: drawBlinkerRight });
     }
 
     // 3. Right cluster: Pedals (Brake/Gas) | BimmerVision Logo | Time (matching web hud-right)
@@ -1138,7 +1139,7 @@ class ClipExporter {
       rightModules.push({ id: 'pedals', width: w, draw: drawPedals });
     }
     if (showLogo) {
-      rightModules.push({ id: 'logo', width: 184, draw: drawBrandLogo });
+      rightModules.push({ id: 'logo', width: brandWidth, draw: drawBrandLogo });
     }
     if (ov.time) {
       rightModules.push({ id: 'time', width: timeWidth, draw: drawTime });
@@ -1163,43 +1164,36 @@ class ClipExporter {
     ctx.stroke();
 
     const centerY = barY + Math.round(barH / 2);
-    const gap = 24;
-    const paddingX = w > 1280 ? 56 : 36;
-
-    // Special case: Only Time is enabled (single module)
-    if (totalCount === 1 && rightModules.length === 1 && rightModules[0].id === 'time') {
-      const tx = Math.round((w - timeWidth) / 2);
-      drawTime(tx, centerY);
-      ctx.restore();
-      return;
-    }
-
-    // Draw Left cluster
-    let curLeftX = paddingX;
-    for (const mod of leftModules) {
-      mod.draw(curLeftX, centerY);
-      curLeftX += mod.width + gap;
-    }
-
-    // Draw Center cluster
-    if (centerModules.length > 0) {
-      const centerTotalW = centerModules.reduce((acc, m) => acc + m.width, 0) + (centerModules.length - 1) * gap;
-      let curCenterX = Math.round((w - centerTotalW) / 2);
-      for (const mod of centerModules) {
-        mod.draw(curCenterX, centerY);
-        curCenterX += mod.width + gap;
+    const gap = 16;
+    const paddingX = w > 1280 ? 56 : 24;
+    const clusterWidth = modules => modules.reduce((sum, mod) => sum + mod.width, 0) + Math.max(0, modules.length - 1) * gap;
+    const leftW = clusterWidth(leftModules), centerW = clusterWidth(centerModules), rightW = clusterWidth(rightModules);
+    const clusterCount = [leftModules, centerModules, rightModules].filter(modules => modules.length).length;
+    const needed = leftW + centerW + rightW + Math.max(0, clusterCount - 1) * gap;
+    const scale = Math.min(1, (w - 2 * paddingX) / needed);
+    const available = (w - 2 * paddingX) / scale;
+    const drawCluster = (modules, x) => {
+      for (const mod of modules) {
+        mod.draw(x, 0);
+        x += mod.width + gap;
       }
+    };
+    ctx.save();
+    ctx.translate(paddingX, centerY);
+    ctx.scale(scale, scale);
+    if (totalCount === 1 && rightModules[0]?.id === 'time') {
+      drawTime((available - timeWidth) / 2, 0);
+    } else {
+      drawCluster(leftModules, 0);
+      const rightX = available - rightW;
+      // Keep the cockpit near the frame center while respecting both neighbors.
+      const minCenterX = leftW ? leftW + gap : 0;
+      const maxCenterX = rightW ? rightX - gap - centerW : available - centerW;
+      const centerX = Math.max(minCenterX, Math.min((available - centerW) / 2, maxCenterX));
+      drawCluster(centerModules, centerX);
+      drawCluster(rightModules, rightX);
     }
-
-    // Draw Right cluster
-    if (rightModules.length > 0) {
-      const rightTotalW = rightModules.reduce((acc, m) => acc + m.width, 0) + (rightModules.length - 1) * gap;
-      let curRightX = w - paddingX - rightTotalW;
-      for (const mod of rightModules) {
-        mod.draw(curRightX, centerY);
-        curRightX += mod.width + gap;
-      }
-    }
+    ctx.restore();
 
     ctx.restore();
   }

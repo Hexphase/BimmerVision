@@ -22,8 +22,8 @@ class ReleaseChecker {
     try{
       const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(new Error('Update check timed out.'));},this.timeoutMs);});
       const work=(async()=>{
-        const response=await this.fetcher('https://api.github.com/repos/Hexphase/BimmerVision/releases/latest',{method:'GET',mode:'cors',credentials:'omit',referrerPolicy:'no-referrer',headers:{Accept:'application/vnd.github+json'},signal:controller.signal});
-        if(!response.ok)throw new Error(response.status===404?'No accessible public release found.':response.status===403||response.status===429?'GitHub update check is temporarily limited.':'GitHub update check unavailable.');
+        const response=await this.fetcher('https://api.github.com/repos/Hexphase/BimmerVision/releases/latest',{method:'GET',mode:'cors',cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',headers:{Accept:'application/vnd.github+json'},signal:controller.signal});
+        if(!response.ok)throw new Error(response.status===404?'No accessible published stable release found.':response.status===403||response.status===429?'GitHub update check is temporarily limited.':'GitHub update check unavailable.');
         return response.json();
       })();
       const data=await Promise.race([work,timeout]);

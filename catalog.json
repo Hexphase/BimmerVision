@@ -5,19 +5,19 @@
       "id": "bimmervision",
       "kind": "app",
       "title": "BimmerVision",
-      "version": "0.2.5",
+      "version": "0.2.6",
       "description": "BimmerVision for iDrive 7. Recorder companion installs automatically.",
       "mguHmi": [
         "ID7"
       ],
       "requires": {
-        "bimmervision-recorder": "0.2.5"
+        "bimmervision-recorder": "0.2.6"
       },
       "artifact": {
-        "name": "bimmervision@0.2.5.tgz",
-        "size": 62458,
-        "sha256": "7853697a2fadcff6743edfbbe43ac35abc0d5fca0f4d767388a57a8678b5cfe1",
-        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision@0.2.5.tgz"
+        "name": "bimmervision@0.2.6.tgz",
+        "size": 62497,
+        "sha256": "0685dc59131900a100e213d5f0d836a3247b1517624c0abcd04e2af9fd6abb39",
+        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision@0.2.6.tgz"
       },
       "icon": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/store-icon.png",
       "iconSha256": "2699dd3db86fef702d0889c7c6bd7b231bb62490898a257dc41113a48a158836"
@@ -26,7 +26,7 @@
       "id": "bimmervision-recorder",
       "kind": "tool",
       "title": "BimmerVision Recorder",
-      "version": "0.2.5",
+      "version": "0.2.6",
       "description": "Required recorder service for BimmerVision. Sets up this car automatically; never includes another car’s credentials.",
       "mguHmi": [
         "ID7"
@@ -38,10 +38,10 @@
       "optional": true,
       "uninstallable": true,
       "artifact": {
-        "name": "bimmervision-recorder@0.2.5.tgz",
-        "size": 1679876,
-        "sha256": "fffabfe5b3702659eeb5c86aafdb4290b1d2e837a2cda7dbe18e520f183c8098",
-        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision-recorder@0.2.5.tgz"
+        "name": "bimmervision-recorder@0.2.6.tgz",
+        "size": 1682296,
+        "sha256": "1064c387d3d2cca56a6e96fad477c4181b13f334feecaf0045161578481bffaa",
+        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision-recorder@0.2.6.tgz"
       }
     }
   ]

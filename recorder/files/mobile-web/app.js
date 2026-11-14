@@ -1044,19 +1044,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const nativeNote = document.getElementById('nativeExportNote');
     if (nativeNote) nativeNote.hidden = !native;
 
-    const httpsHint = document.getElementById("httpsExportHint");
-    if (httpsHint) {
-      if (location.protocol === "http:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
-        httpsHint.style.display = "block";
-        const upgradeLink = document.getElementById("httpsUpgradeLink");
-        if (upgradeLink) {
-          upgradeLink.href = "https://" + location.hostname + ":8766" + location.pathname + location.search;
-        }
-      } else {
-        httpsHint.style.display = "none";
-      }
-    }
-
     document.getElementById('customExportOptions').hidden = false;
     exportProgress.style.display = "none";
     startExportBtn.disabled = false;

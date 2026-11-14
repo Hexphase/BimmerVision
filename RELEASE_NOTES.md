@@ -1,3 +1,11 @@
+# BimmerVision 0.2.6
+
+- Fixed export branding overlapping the date/time and enlarged exported turn arrows and steering wheel.
+- Removed the HTTPS speed suggestion from export controls.
+- Connect Phone has a single Back action; Settings/About explains computer USB viewing at BimmerVision.App and direct phone connection.
+- Update checks fetch fresh GitHub Release information directly from the viewing device.
+- Speed-limit lookup can use the viewing device’s Internet connection when the car cannot retrieve an explicit mapped limit; unknown limits remain blank.
+
 # BimmerVision 0.2.5
 
 - Removed the artificial 1 MiB/s recording-download cap when the recorder explicitly reports no write in progress.

@@ -307,7 +307,7 @@ Transfer.prototype.headers = function (res) {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader(
     "Content-Security-Policy",
-    "default-src 'self' blob: data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tile.openstreetmap.org; media-src 'self' blob: data:; connect-src 'self' blob: https://api.github.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    "default-src 'self' blob: data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tile.openstreetmap.org; media-src 'self' blob: data:; connect-src 'self' blob: https://api.github.com https://overpass-api.de; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
   );
 };
 Transfer.prototype.body = function (req) {

@@ -70,7 +70,9 @@ Recordings that are still being captured appear in the library only after that c
 
 Visit **[BimmerVision.App](https://BimmerVision.App)** on your computer and connect your recording USB drive to view its footage.
 
-For direct access to the car instead, use **Connect Phone** on the car app’s main page.
+You can also use **[BimmerVision Web on GitHub Pages](https://hexphase.github.io/BimmerVision-Web/)** to open a USB folder or connect to your car by IP address or QR code. Direct hosted connections require **BimmerVision 0.2.8 or newer** and a browser with local-network access support.
+
+For the car’s built-in player, use **Connect Phone** on the car app’s main page.
 
 ## Updates and available information
 

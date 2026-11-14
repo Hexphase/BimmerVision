@@ -1,3 +1,9 @@
+# BimmerVision 0.2.8
+
+- Enables direct pairing and recording access from BimmerVision Web hosted on GitHub Pages or BimmerVision.App.
+- Hosted connections use the existing one-device pairing code, origin-bound bearer authentication and a fixed website allowlist.
+- Adds browser preflight support while preserving the car’s built-in player, USB safety and recording-priority transfers.
+
 # BimmerVision 0.2.7
 
 - Fits both computer USB and direct phone viewing instructions into iDrive’s three-line About area.

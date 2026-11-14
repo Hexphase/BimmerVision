@@ -5,6 +5,8 @@ var crypto = require("crypto");
 var browser = require("./browser");
 var pack = require("./pack");
 var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Only these user-owned HTTPS sites can connect directly to the car API.
+var HOSTED_ORIGINS = ["https://hexphase.github.io", "https://bimmervision.app"];
 function failure(status, text) {
   var e = new Error(text);
   e.statusCode = status;
@@ -345,6 +347,35 @@ Transfer.prototype.sameOrigin = function (req) {
   if (this.devMode) return true;
   return req.headers.origin === this.origin(req);
 };
+Transfer.prototype.hostedOrigin = function (req) {
+  return HOSTED_ORIGINS.indexOf(req.headers.origin) !== -1;
+};
+Transfer.prototype.cors = function (req, res) {
+  var origin = req.headers.origin;
+  var hosted = this.hostedOrigin(req);
+  res.setHeader("Vary", "Origin");
+  if (origin && !hosted && !this.sameOrigin(req))
+    throw failure(403, "Origin not allowed");
+  if (!hosted) return false;
+  if (req.method === "OPTIONS") {
+    var method = req.headers["access-control-request-method"];
+    var requested = req.headers["access-control-request-headers"] || "";
+    if (["GET", "POST", "DELETE", "OPTIONS"].indexOf(method) === -1 ||
+        requested.split(",").some(function (header) {
+          return header.trim() && ["authorization", "content-type", "range"].indexOf(header.trim().toLowerCase()) === -1;
+        })) throw failure(403, "Preflight not allowed");
+  }
+  res.setHeader("Access-Control-Allow-Origin", origin);
+  res.setHeader("Access-Control-Expose-Headers", "Content-Length, Content-Range");
+  if (req.method !== "OPTIONS") return false;
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, Range");
+  if (req.headers["access-control-request-private-network"] === "true")
+    res.setHeader("Access-Control-Allow-Private-Network", "true");
+  res.writeHead(204);
+  res.end();
+  return true;
+};
 Transfer.prototype.auth = function (req, mutation) {
   if (this.devMode && !mutation) {
     if (!this.session) {
@@ -360,10 +391,13 @@ Transfer.prototype.auth = function (req, mutation) {
     }
     throw failure(401, "Pair on the car connection screen");
   }
+  if (session.origin && req.headers.origin !== session.origin)
+    throw failure(403, "Session origin does not match");
   var bearer = req.headers.authorization;
   if (bearer && equal(bearer, "Bearer " + session.token)) {
     return session;
   }
+  if (session.origin) throw failure(401, "Bearer credentials required");
   var cookie = /(?:^|;\s*)bv_session=([a-f0-9]{64})(?:;|$)/.exec(
     req.headers.cookie || ""
   );
@@ -390,6 +424,7 @@ Transfer.prototype.handle = async function (req, res, generation) {
   live();
   if (!this.acceptHost(req)) throw failure(403, "Invalid host");
   var route = (req.url || "").split("?")[0];
+  if (route.indexOf("/api/v1/") === 0 && this.cors(req, res)) return;
   if (req.method === "GET" || req.method === "HEAD") {
     var asset = browser.asset(route);
     if (asset) {
@@ -425,7 +460,7 @@ Transfer.prototype.handle = async function (req, res, generation) {
   if (route === "/api/v1/pair" && req.method === "POST") {
     if (
       (req.headers.cookie && !req.headers.origin) ||
-      (req.headers.origin && !this.sameOrigin(req))
+      (req.headers.origin && !this.sameOrigin(req) && !this.hostedOrigin(req))
     )
       throw failure(403, "Pair from this origin only");
     var now = this.now(),
@@ -461,7 +496,8 @@ Transfer.prototype.handle = async function (req, res, generation) {
       this.code = "";
     }
     this.session = { token: secret(), csrf: secret(), clientId: body.clientId };
-    if (req.headers.origin)
+    if (this.hostedOrigin(req)) this.session.origin = req.headers.origin;
+    if (req.headers.origin && !this.session.origin)
       res.setHeader(
         "Set-Cookie",
         "bv_session=" +
@@ -478,9 +514,13 @@ Transfer.prototype.handle = async function (req, res, generation) {
   }
   var mutation = req.method !== "GET";
   var session = this.auth(req, mutation);
+  if (route === "/api/v1/capabilities" && req.method === "GET") {
+    this.json(res, 200, { apiVersion: 1, hostedViewer: true });
+    return;
+  }
   if (route === "/api/v1/logout" && req.method === "POST") {
     this.session = null;
-    res.setHeader(
+    if (!session.origin) res.setHeader(
       "Set-Cookie",
       "bv_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0" +
         (req.socket && req.socket.encrypted ? "; Secure" : "")

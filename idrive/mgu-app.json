@@ -1,9 +1,0 @@
-{
-  "schema": 1,
-  "id": "BimmerVision",
-  "version": "0.2.2",
-  "description": "Continuous Dash Cam Style Recording to Flash Drive for BMW's with 360 Cameras. Only Tested on iDrive 7",
-  "mguHmi": [
-    "ID7"
-  ]
-}

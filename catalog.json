@@ -1,0 +1,21 @@
+{
+  "schema": 2,
+  "components": [
+    {
+      "id": "BimmerVision",
+      "kind": "app",
+      "title": "BimmerVision",
+      "version": "0.2.2",
+      "description": "BimmerVision - Tested only on iDrive 7",
+      "mguHmi": [
+        "ID7"
+      ],
+      "artifact": {
+        "name": "BimmerVision@0.2.2.tgz",
+        "size": 45434,
+        "sha256": "5bc9d17eb16a7fa42205f960dafe9a5a9cf6a24fd92079db079b0443cf884cc7",
+        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/BimmerVision@0.2.2.tgz"
+      }
+    }
+  ]
+}

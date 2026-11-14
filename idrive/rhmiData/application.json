@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.3.0",
+  "application": {
+    "uuid": "a2228b38-fa54-43a9-80b9-af95fa7e5786",
+    "type": "OnlineApp",
+    "name": "BimmerVision",
+    "vendor": "Hexphase",
+    "version": "0.2.2",
+    "defaultLanguage": "en_GB",
+    "stringBundleUuid": "b3bad544-e253-4a86-8749-a4527f2d9553",
+    "resourceBundleUuid": "ffe3b6de-0c40-4e4e-820d-e58a76597a17",
+    "entryPointsStringBundleUuid": "964a4c64-93be-44bf-8c36-ae354eab4c71",
+    "entryPointsResourceBundleUuid": "f787698a-b769-411d-88ab-5265103a55ea",
+    "externalDialogStringBundleUuid": "2b780da1-f18f-44cb-a717-55d27e0000b2",
+    "bookmarkUuidPool": [
+      "db1d6ba9-c602-46c4-8ce0-ca325b9bd2be",
+      "21b71f60-072f-49a1-a4a1-fb4014f6538a",
+      "13053966-9abf-469b-9b45-6969b5f3934a",
+      "15aa5ffe-e761-47cc-9184-7b4604aecd0e",
+      "4a136ed9-a2d3-4847-9ad0-3290cb803733",
+      "520bf62a-608b-45f1-a22a-b743947b6693",
+      "3cf1f3a6-40e1-4ac7-af96-85cae6d1848f",
+      "0d0bf964-9d36-46f9-9112-a9f797df0eb9"
+    ],
+    "entryPoints": [
+      {
+        "name": "CAMERAS_ENTRY",
+        "uuid": "5c78308a-d0d3-42d7-82d3-2537a25eedf8",
+        "textId": "SID_CAMERAS_TITLE",
+        "icon": "bimmervision2.png",
+        "insertionStateId": 20974,
+        "insertionFocusId": 2,
+        "insertionMode": "INSERT_BELOW",
+        "insertionOrder": 1,
+        "insertionPriority": 0,
+        "previewType": "NONE",
+        "bookmarkable": true,
+        "private": false,
+        "appearance": "DEFAULT",
+        "isGroupHeader": false,
+        "insertionGroup": 0
+      }
+    ],
+    "uiDescriptions": [
+      {
+        "applicationFilePath": "./uiDescriptions/ID7/application.xml",
+        "uiDescriptionFilePath": "./uiDescriptions/ID7/uiDescription.json",
+        "hmi": [
+          "ID7"
+        ]
+      }
+    ],
+    "variantGroups": [
+      {
+        "stringsPath": "./variantGroups/Common/texts",
+        "resourcesPath": "./variantGroups/Common/images",
+        "hmi": [
+          "ID7"
+        ],
+        "brands": [
+          "BMW"
+        ]
+      }
+    ]
+  }
+}

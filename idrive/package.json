@@ -1,0 +1,25 @@
+{
+  "name": "BimmerVision",
+  "version": "0.2.2",
+  "description": "BimmerVision - Tested only on iDrive 7",
+  "main": "src/app.js",
+  "license": "MIT",
+  "engines": {
+    "node": ">=8.9.4"
+  },
+  "mguHmi": [
+    "ID7"
+  ],
+  "oapAppSettings": {
+    "maxDiskUsage": 20971520,
+    "cpuLimit": 20,
+    "memoryThresholdKB": 98304,
+    "priority": "PRIO_LOW",
+    "visibility": "FOREGROUND",
+    "latencyClass": "FOREGROUND",
+    "loggingId": "CAMS",
+    "userLoginRequired": false,
+    "backgroundPriority": 200,
+    "someipManifest": "manifest.json"
+  }
+}

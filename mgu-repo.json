@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "components": [
+    {
+      "id": "BimmerVision",
+      "kind": "app",
+      "path": "idrive",
+      "build": "unit"
+    }
+  ]
+}

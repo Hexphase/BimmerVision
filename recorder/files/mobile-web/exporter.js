@@ -8,6 +8,78 @@ class ClipExporter {
     this.player = player;
   }
 
+  _operationContext(options) {
+    return {epoch:this.player?._clipEpoch,signals:[options.signal,this.player?._activeStreamAbort?.signal].filter(Boolean),timeoutMs:this.completionTimeoutMs || 15000};
+  }
+  _checkOperation(operation) {
+    if(operation.error)throw operation.error;
+    if(operation.signals.some(signal=>signal.aborted) || operation.epoch!==this.player?._clipEpoch) {
+      const error=new Error('Export cancelled because the recording changed or the operation was aborted.');error.name='AbortError';throw error;
+    }
+  }
+  async _awaitCompletion(promise,operation,label) {
+    const awaited=Promise.resolve(promise);awaited.catch(()=>{});
+    this._checkOperation(operation);
+    let timer,aborted;
+    const start=Date.now();
+    try {
+      return await Promise.race([awaited,new Promise((_,reject)=>{
+        const check=()=>{
+          try {
+            this._checkOperation(operation);
+            if(Date.now()-start>=operation.timeoutMs){const error=new Error(`Timed out ${label}. No incomplete export was saved. Please retry.`);error.name='TimeoutError';throw error;}
+            timer=setTimeout(check,Math.min(25,operation.timeoutMs));
+          }catch(error){reject(error);}
+        };
+        aborted=check;
+        for(const signal of operation.signals)signal.addEventListener('abort',aborted,{once:true});
+        check();
+      })]);
+    }finally{
+      clearTimeout(timer);
+      for(const signal of operation.signals)signal.removeEventListener('abort',aborted);
+    }
+  }
+  async _waitForNativeFrame(video,operation) {
+    let callbackId=null,animationId=null,timer=null,ended,failed;
+    const next=new Promise((resolve,reject)=>{
+      ended=()=>resolve(false);
+      failed=()=>reject(new Error('The source video failed during export. Please retry.'));
+      video.addEventListener('ended',ended,{once:true});video.addEventListener('error',failed,{once:true});
+      if(video.ended){resolve(false);return;}
+      if(typeof video.requestVideoFrameCallback==='function')callbackId=video.requestVideoFrameCallback(()=>resolve(true));
+      else if(typeof requestAnimationFrame==='function')animationId=requestAnimationFrame(()=>resolve(true));
+      else timer=setTimeout(()=>resolve(true),16);
+    });
+    try{return await this._awaitCompletion(next,operation,'waiting for the next source video frame');}
+    finally{
+      video.removeEventListener('ended',ended);video.removeEventListener('error',failed);
+      if(callbackId!==null)video.cancelVideoFrameCallback?.(callbackId);
+      if(animationId!==null && typeof cancelAnimationFrame==='function')cancelAnimationFrame(animationId);
+      clearTimeout(timer);
+    }
+  }
+
+  async _prepareRecording(progress) {
+    const player=this.player;
+    if (player?.streamComplete === false || (player?.streamPromise && !player.streamComplete)) {
+      progress(0.02,'Downloading the complete recording before export…');
+      if(player.waitForCompleteRecording) {
+        await player.waitForCompleteRecording(45000,(loaded,total)=>{
+          const received=total ? `${Math.min(100,Math.floor(loaded/total*100))}%` : `${(loaded/1048576).toFixed(1)} MB`;
+          progress(0.02,`Downloading recording: ${received} received…`);
+        });
+      } else if(player.streamPromise) {
+        let timer;
+        try { await Promise.race([player.streamPromise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('Recording download stalled. Check the connection and retry.')),45000);})]); }
+        finally {clearTimeout(timer);}
+      }
+      if(!player.streamComplete) throw new Error('The complete recording is unavailable. Reopen the recording and retry export.');
+    }
+    if(player?.loadError) throw player.loadError;
+    if(!player?.manifest) throw new Error('Open a recording before exporting.');
+  }
+
   static assets = {
     wheel: null,
     wordmark: null,
@@ -62,12 +134,8 @@ class ClipExporter {
     const exportW = includeMap ? 1920 : 1280;
     const exportH = includeMap ? (hasTelemetryBar ? 1080 : 960) : (hasTelemetryBar ? 1040 : 960);
 
-    if (player?.streamPromise && !player.streamComplete) {
-      progress(0.02, 'Waiting for the complete recording…');
-      await player.streamPromise;
-    }
-    if (player?.loadError) throw player.loadError;
-    if (!player?.manifest) throw new Error('Open a recording before exporting.');
+    await this._prepareRecording(progress);
+    const operation=this._operationContext(options);this._checkOperation(operation);
 
     const manifest = player.manifest;
     const units = player.accessUnits;
@@ -97,7 +165,7 @@ class ClipExporter {
     let submitted = 0;
     let flushed = false;
     const bitmaps = new Map();
-    const pending = new Set();
+    const pending = new Set(),openFrames=new Set();let disposed=false;
     const mapping = { ...(player.cameraMapping || {}) };
     const p0Fr = mapping.phase0 !== 'leftRight';
 
@@ -140,12 +208,15 @@ class ClipExporter {
       if (typeof VideoDecoder !== 'undefined' && units?.length && player.assembler) {
         decoder = new VideoDecoder({
           output: frame => {
+            if(disposed){frame.close();return;}
+            openFrames.add(frame);
             const job = createImageBitmap(frame).then(bitmap => {
+              if(disposed){bitmap.close();return;}
               bitmaps.set(frame.timestamp, bitmap);
             }).catch(e => {
               decodeError = e;
             }).finally(() => {
-              frame.close();
+              frame.close();openFrames.delete(frame);
               pending.delete(job);
             });
             pending.add(job);
@@ -163,6 +234,7 @@ class ClipExporter {
 
       let targetIndex = 0;
       for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
+        this._checkOperation(operation);
         const time = start + frameIndex / fps;
 
         if (nativeVideo) {
@@ -202,24 +274,28 @@ class ClipExporter {
         if (decoder) {
           const ahead = Math.min(units.length, targetIndex + 16);
           const began = performance.now();
-          while (!bitmaps.has(p0) || !bitmaps.has(p1)) {
+          while ((!units[p0]?.damaged && !bitmaps.has(p0)) || (!units[p1]?.damaged && !bitmaps.has(p1))) {
             if (decodeError) throw new Error('The source recording could not be decoded for export: ' + decodeError.message);
             while (submitted < ahead && decoder.decodeQueueSize < 8) {
               const au = units[submitted++];
+              if(au.damaged)continue;
               decoder.decode(new EncodedVideoChunk({ type: au.isKeyFrame ? 'key' : 'delta', timestamp: au.index, data: au.avcc }));
             }
             if (submitted === units.length && !flushed) {
               flushed = true;
-              await decoder.flush();
-              await Promise.all([...pending]);
+              await this._awaitCompletion(decoder.flush(),operation,'flushing source video frames');
+              await this._awaitCompletion(Promise.all([...pending]),operation,'preparing source frame bitmaps');
             }
-            if (performance.now() - began > 15000) throw new Error('Timed out waiting for source frames. No incomplete export was saved.');
+            this._checkOperation(operation);
+            if (performance.now() - began > operation.timeoutMs) throw new Error('Timed out waiting for source frames. No incomplete export was saved.');
             await new Promise(r => setTimeout(r, 0));
           }
         }
 
-        const b0 = bitmaps.get(p0) || player.decodedFrames?.get(p0);
-        const b1 = bitmaps.get(p1) || player.decodedFrames?.get(p1);
+        const b0 = units?.[p0]?.damaged ? null : bitmaps.get(p0) || player.decodedFrames?.get(p0);
+        const b1 = units?.[p1]?.damaged ? null : bitmaps.get(p1) || player.decodedFrames?.get(p1);
+        if(units?.[p0]?.damaged)player[p0Fr?'lastFrFrame':'lastLrFrame']=null;
+        if(units?.[p1]?.damaged)player[p0Fr?'lastLrFrame':'lastFrFrame']=null;
         if (b0) {
           if (p0Fr) player.lastFrFrame = b0;
           else player.lastLrFrame = b0;
@@ -230,7 +306,7 @@ class ClipExporter {
         }
         const fr = player.lastFrFrame;
         const lr = player.lastLrFrame;
-        if (!fr && !lr) throw new Error('No camera image is available for export.');
+        if (!fr && !lr && !units?.[p0]?.damaged && !units?.[p1]?.damaged) throw new Error('No camera image is available for export.');
 
         this.renderFrame(canvas, {
           view: view,
@@ -252,7 +328,10 @@ class ClipExporter {
           frame.close();
         }
 
+        const queueBegan=Date.now();
         while (encoder.encodeQueueSize > 4) {
+          this._checkOperation(operation);
+          if(Date.now()-queueBegan>=operation.timeoutMs)throw new Error('The video encoder stopped responding. No incomplete export was saved. Please retry.');
           if (encodeError) throw encodeError;
           await new Promise(r => setTimeout(r, 4));
         }
@@ -269,7 +348,7 @@ class ClipExporter {
       }
 
       progress(0.94, 'Finalizing M4V video…');
-      await encoder.flush();
+      await this._awaitCompletion(encoder.flush(),operation,'finalizing the video encoder');
       if (encodeError) throw encodeError;
       muxer.finalize();
       progress(1, 'Ready to save');
@@ -280,6 +359,7 @@ class ClipExporter {
         duration
       };
     } finally {
+      disposed=true;
       if (nativeVideo) {
         try {
           nativeVideo.currentTime = origTime;
@@ -296,8 +376,10 @@ class ClipExporter {
       }
       if (decoder && decoder.state !== 'closed') decoder.close();
       if (encoder && encoder.state !== 'closed') encoder.close();
-      await Promise.allSettled([...pending]);
-      for (const bitmap of bitmaps.values()) bitmap.close();
+      for(const frame of openFrames){try{frame.close();}catch(_){}}openFrames.clear();
+      // A browser bitmap promise may never settle. Late results close themselves;
+      // resource cleanup must not await the same stalled promise that caused failure.
+      for (const bitmap of bitmaps.values()) bitmap.close();bitmaps.clear();
     }
   }
 
@@ -335,12 +417,8 @@ class ClipExporter {
     const exportW = includeMap ? 1920 : 1280;
     const exportH = includeMap ? (hasTelemetryBar ? 1080 : 960) : (hasTelemetryBar ? 1040 : 960);
 
-    if (player?.streamPromise && !player.streamComplete) {
-      progress(0.02, 'Waiting for the complete recording…');
-      await player.streamPromise;
-    }
-    if (player?.loadError) throw player.loadError;
-    if (!player?.manifest) throw new Error('Open a recording before exporting.');
+    await this._prepareRecording(progress);
+    const operation=this._operationContext(options);this._checkOperation(operation);
 
     const manifest = player.manifest;
     const parser = player.parser;
@@ -385,7 +463,7 @@ class ClipExporter {
     const chunks = [];
     const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: exportW > 1280 ? 6000000 : 4500000 });
     recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
-    recorder.start(100);
+    recorder.onerror=e=>{operation.error=e.error || new Error('The video recorder failed. Please retry.');};
 
     const nativeVideo = player._nativeVideo;
     const mapping = { ...(player.cameraMapping || {}) };
@@ -393,6 +471,8 @@ class ClipExporter {
     const frameDelayMs = 1000 / fps;
 
     let playedSmoothly = false;
+    try {
+    recorder.start(100);
     if (nativeVideo && typeof nativeVideo.play === 'function' && typeof requestAnimationFrame === 'function') {
       try {
         if (Math.abs(nativeVideo.currentTime - start) > 0.05) {
@@ -403,23 +483,26 @@ class ClipExporter {
             nativeVideo.currentTime = start;
           });
         }
-        await nativeVideo.play();
+        await this._awaitCompletion(nativeVideo.play(),operation,'starting source video playback');
         playedSmoothly = true;
-      } catch (_) {
+      } catch (error) {
+        if(error.name==='AbortError' || error.name==='TimeoutError')throw error;
         playedSmoothly = false;
       }
     }
 
-    try {
+      this._checkOperation(operation);
       if (playedSmoothly) {
         const endTime = start + duration;
         const track = stream.getVideoTracks ? stream.getVideoTracks()[0] : null;
-        let lastRenderedTime = -1;
+        let lastRenderedTime = -1,lastAdvance=Date.now();
 
         while (!nativeVideo.paused && !nativeVideo.ended && nativeVideo.currentTime < endTime) {
+          this._checkOperation(operation);
           const curTime = nativeVideo.currentTime;
+          if(Date.now()-lastAdvance>=operation.timeoutMs)throw new Error('The source video stopped advancing. No incomplete export was saved. Please retry.');
           if (curTime !== lastRenderedTime) {
-            lastRenderedTime = curTime;
+            lastRenderedTime = curTime;lastAdvance=Date.now();
             if (player._nativePairs && player._nativePairs.length >= 2) {
               player._nativePairs[0].getContext('2d').drawImage(nativeVideo, 0, 0, 1280, 480, 0, 0, 1280, 480);
               player._nativePairs[1].getContext('2d').drawImage(nativeVideo, 0, 480, 1280, 480, 0, 0, 1280, 480);
@@ -448,19 +531,12 @@ class ClipExporter {
             progress(0.1 + 0.85 * pct, `Recording video · ${Math.round(100 * pct)}%`);
           }
 
-          await new Promise(r => {
-            if (typeof nativeVideo.requestVideoFrameCallback === 'function') {
-              nativeVideo.requestVideoFrameCallback(r);
-            } else if (typeof requestAnimationFrame === 'function') {
-              requestAnimationFrame(r);
-            } else {
-              setTimeout(r, 16);
-            }
-          });
+          if(!await this._waitForNativeFrame(nativeVideo,operation))break;
         }
         try { nativeVideo.pause(); } catch (_) {}
       } else {
         for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
+          this._checkOperation(operation);
           const time = start + frameIndex / fps;
           if (nativeVideo) {
             if (Math.abs(nativeVideo.currentTime - time) > 0.002) {
@@ -513,14 +589,12 @@ class ClipExporter {
       }
 
       progress(0.96, 'Finalizing video…');
-      const stopPromise = new Promise(resolve => {
-        recorder.onstop = resolve;
-      });
+      const stopPromise = new Promise(resolve => {recorder.onstop=resolve;});
       recorder.stop();
-      await stopPromise;
+      await this._awaitCompletion(stopPromise,operation,'finalizing the video recorder');
 
       const blob = new Blob(chunks, { type: mimeType });
-      const arrayBuffer = await blob.arrayBuffer();
+      const arrayBuffer = await this._awaitCompletion(blob.arrayBuffer(),operation,'saving the recorded video');
       const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
 
       progress(1, 'Ready to save');
@@ -534,6 +608,9 @@ class ClipExporter {
       if (recorder.state !== 'inactive') {
         try { recorder.stop(); } catch (_) {}
       }
+      recorder.onstop=null;recorder.onerror=null;recorder.ondataavailable=null;
+      for(const track of (stream.getTracks?.() || stream.getVideoTracks?.() || []))track.stop?.();
+      if(nativeVideo){try{nativeVideo.pause();}catch(_){}}
     }
   }
 

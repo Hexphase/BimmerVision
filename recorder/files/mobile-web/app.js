@@ -197,8 +197,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     status.textContent = message || ({playing:'Playing',paused:'Paused',loading:'Preparing video…',buffering:'Buffering…',ended:'Drive complete',idle:'Choose a recording',error:'Playback unavailable'}[state] || state);
     status.dataset.state=state;
     document.getElementById('playbackProgress').hidden=state!=='buffering';
-    if (state === 'loading') { if(message)loadingModalStatus.textContent=message;document.getElementById('loadingProgress').textContent=total ? `${Math.min(100,Math.round(loaded/total*100))}% received` : 'Your original recording stays unchanged'; }
-    hudElements.playBtn.disabled=state==='loading'||state==='error';
+    if (state === 'loading') { if(message)loadingModalStatus.textContent=message;document.getElementById('loadingProgress').textContent=total ? `${Math.min(100,Math.round(loaded/total*100))}% received` : loaded ? `${formatBytes(loaded)} received` : 'Waiting for recording data…'; }
+    hudElements.playBtn.disabled=!player.streamComplete||state==='loading'||state==='error';
     if(state==='error' && !videoLoadingModal.style.display.includes('flex')) document.getElementById('playbackRetryBtn').hidden=false;
   };
   document.getElementById('playbackRetryBtn').addEventListener('click',()=>{if(activeClip)playClipInDrive(activeClip,true,player.currentTime);});
@@ -300,7 +300,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const data = await res.json();
     if(quiet && !viewRecordings.classList.contains('active'))return;
     const rawClips = (data.recordings || []).filter(clip=>clip.complete===true);
-    const signature=JSON.stringify(rawClips.map(c=>[c.id,c.locked,c.bytes,c.durationSeconds]));
+    const signature=JSON.stringify(rawClips.map(c=>[c.id,c.locked,c.bytes,c.durationSeconds,c.routeStatus,(c.route||[]).length,c.endpoints]));
     if(onlyChanged && signature===librarySignature)return;
     librarySignature=signature;
 
@@ -346,7 +346,7 @@ document.addEventListener("DOMContentLoaded", async () => {
               </div>
               <p class="drive-route-summary" style="margin:0;font-size:12px;color:var(--tesla-muted);display:flex;align-items:center;gap:6px;">
                 <span class="route-marker" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--m-blue);box-shadow:0 0 8px var(--m-blue);"></span>
-                ${escapeHtml(location === 'Location unavailable' ? 'Location not recorded' : location)}
+                ${escapeHtml(location === 'Location unavailable' ? (drive.segments.some(s=>s.clip.routeStatus==='indexing')?'Loading recorded location…':'Location not recorded') : location)}
               </p>
             </div>
             <div style="display:flex;align-items:center;gap:6px;">
@@ -551,6 +551,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     endpointEndTime.textContent = drive.endpoints.end.time ? `Arrived ${drive.endpoints.end.time}` : drive.endpoints.end.coords;
 
     // Update Overview Map
+    overviewMap.emptyMessage=drive.segments.some(s=>s.clip.routeStatus==='indexing')?'Loading recorded location…':'Location was not recorded';
     overviewMap.setTrack(drive.route);
 
     // Update Live Tracking Map track
@@ -794,6 +795,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function playClipInDrive(clip, autoPlay = true, startAt = 0) {
     const token = ++loadToken;
+    player.cancelLoad();
     lastOpen={clip,autoPlay,startAt};
     const drive=detectedDrives.find(d=>d.segments.some(s=>s.clip.id===clip.id));
     if(drive) {activeDrive=drive;timeline.setDrive(drive);}

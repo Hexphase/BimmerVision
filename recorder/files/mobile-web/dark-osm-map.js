@@ -80,7 +80,7 @@ class DarkOsmMap {
       ctx.font = "12px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("Location was not recorded", w / 2, h / 2);
+      ctx.fillText(this.emptyMessage || "Location was not recorded", w / 2, h / 2);
       this._drawAttribution(ctx, w, h);
       return;
     }

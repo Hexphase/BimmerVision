@@ -5,6 +5,8 @@
 class RtpH264Assembler {
   constructor(options = {}) {
     this.startMonotonicUs = options.startMonotonicUs || 0;
+    this._lastSequenceBySsrc = new Map();
+    this.currentAuDamaged = false;
     this.currentFu = null; // Buffer array for FU-A fragments
     this.currentFuNalHeader = 0;
     this.currentAuNals = [];
@@ -104,6 +106,7 @@ class RtpH264Assembler {
     }
 
     let auNals = this.auNals || [];
+    let damaged = this.currentAuDamaged || false;
     let currentRtpTs = this.currentRtpTs !== undefined ? this.currentRtpTs : null;
     let currentAtUs = this.currentAtUs !== undefined ? this.currentAtUs : null;
     let currentSsrc = this.currentSsrc !== undefined ? this.currentSsrc : null;
@@ -158,13 +161,21 @@ class RtpH264Assembler {
         currentSsrc = ssrc;
       }
 
-      // Check for timestamp change (new access unit) if marker bit was missing
-      if (rtpTimestamp !== currentRtpTs && auNals.length > 0) {
-        this._emitAu(auNals, currentRtpTs, currentAtUs, currentSsrc, pairMap);
-        auNals = [];
+      // A timestamp boundary also terminates an incomplete fragmented picture.
+      if (rtpTimestamp !== currentRtpTs) {
+        if (auNals.length || this.currentFu || damaged) this._emitAu(auNals, currentRtpTs, currentAtUs, currentSsrc, pairMap, damaged || !!this.currentFu);
+        auNals = []; damaged = false; this.currentFu = null;
         currentRtpTs = rtpTimestamp;
         currentAtUs = rec.atUs;
         currentSsrc = ssrc;
+      }
+      const previousSeq=this._lastSequenceBySsrc.get(ssrc);
+      this._lastSequenceBySsrc.set(ssrc,seq);
+      if(previousSeq!==undefined && seq!==((previousSeq+1)&65535)) {
+        // Quarantine the picture instead of submitting partial slices to WebCodecs.
+        // Retain its bytes for diagnostics/legacy consumers and a timed placeholder
+        // so alternating camera identities do not shift after missing footage.
+        damaged=true;
       }
 
       // Extract NALs based on RFC 6184
@@ -201,6 +212,8 @@ class RtpH264Assembler {
             this.currentFu = [payload.subarray(2)];
           } else if (this.currentFu) {
             this.currentFu.push(payload.subarray(2));
+          } else {
+            damaged=true;
           }
 
           if (endBit && this.currentFu) {
@@ -224,9 +237,9 @@ class RtpH264Assembler {
       }
 
       // Marker bit signals the completion of this Access Unit
-      if (marker && auNals.length > 0) {
-        this._emitAu(auNals, currentRtpTs, currentAtUs, currentSsrc, pairMap);
-        auNals = [];
+      if (marker && (auNals.length > 0 || damaged || this.currentFu)) {
+        this._emitAu(auNals, currentRtpTs, currentAtUs, currentSsrc, pairMap, damaged || !!this.currentFu);
+        auNals = []; damaged = false; this.currentFu=null;
         currentRtpTs = null;
         currentAtUs = null;
         currentSsrc = null;
@@ -234,6 +247,7 @@ class RtpH264Assembler {
     }
 
     this.auNals = auNals;
+    this.currentAuDamaged=damaged;
     this.currentRtpTs = currentRtpTs;
     this.currentAtUs = currentAtUs;
     this.currentSsrc = currentSsrc;
@@ -250,8 +264,9 @@ class RtpH264Assembler {
         }
       }
     }
-    if (this.auNals && this.auNals.length > 0) {
-      this._emitAu(this.auNals, this.currentRtpTs, this.currentAtUs, this.currentSsrc, pairMap);
+    if ((this.auNals && this.auNals.length > 0) || this.currentFu || this.currentAuDamaged) {
+      this._emitAu(this.auNals || [], this.currentRtpTs, this.currentAtUs, this.currentSsrc, pairMap, this.currentAuDamaged || !!this.currentFu);
+      this.currentFu=null;this.currentAuDamaged=false;
       this.auNals = [];
       this.currentRtpTs = null;
       this.currentAtUs = null;
@@ -319,8 +334,8 @@ class RtpH264Assembler {
     }
   }
 
-  _emitAu(nals, rtpTimestamp, atUs, ssrc, pairMap) {
-    if (!nals || nals.length === 0) return;
+  _emitAu(nals, rtpTimestamp, atUs, ssrc, pairMap, damaged = false) {
+    if ((!nals || nals.length === 0) && !damaged) return;
 
     // Determine camera pair and phase
     const phase = this.accessUnits.length % 2;
@@ -369,7 +384,7 @@ class RtpH264Assembler {
       if (type === 7 || type === 8) continue;
       avccSize += 4 + nal.length;
     }
-    if (avccSize === 0) return;
+    if (avccSize === 0 && !damaged) return;
     const avcc = new Uint8Array(avccSize);
     let avccOffset = 0;
 
@@ -408,6 +423,7 @@ class RtpH264Assembler {
       time: timeSec,
       ssrc: ssrc,
       isKeyFrame: isKeyFrame,
+      damaged: Boolean(damaged),
       phase: phase,
       pair: pair,
       data: annexB,

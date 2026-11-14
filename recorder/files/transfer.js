@@ -497,6 +497,14 @@ Transfer.prototype.handle = async function (req, res, generation) {
     this.json(res, 200, Object.assign({}, status, { apiVersion: 1 }));
     return;
   }
+  if (route === "/api/v1/speed-limit" && req.method === "GET") {
+    var query = require('querystring').parse(req.url.split('?').slice(1).join('?'));
+    var limit = query.lat != null && query.lon != null ? await require('./speed-limit').lookup(query.lat, query.lon) : null;
+    live();
+    if (session !== this.session) throw failure(401, "Session revoked");
+    this.json(res, 200, limit || {limit:null, source:'unavailable'});
+    return;
+  }
   if (route === "/api/v1/recordings" && req.method === "GET") {
     var list = await this.library.list();
     live();

@@ -6,3 +6,9 @@ test('UID changes stop old recorder before starting new UID and retain camera ve
 test('failed or missing camera never sets verified flags or starts recorder',async()=>{const f=fake();f.uid(12341);f.deps.probe=()=>Promise.reject(Error('Waiting for supported camera streams'));const b=new Bootstrap(f.deps);await assert.rejects(b.tick(),/camera/);assert.equal(f.config(),null);assert.deepEqual(f.starts,[]);await b.stop();});
 test('shutdown cancels probe and cannot start recording after late completion',async()=>{const f=fake();f.uid(12341);let resolve,cancelled=false;const p=new Promise(r=>{resolve=r;});p.cancel=()=>{cancelled=true;resolve({streams:2});};f.deps.probe=()=>p;const b=new Bootstrap(f.deps),tick=b.tick();await new Promise(r=>setImmediate(r));await b.stop();await tick;assert.equal(cancelled,true);assert.deepEqual(f.starts,[]);});
 test('app removal during probe discards the result instead of enrolling stale UID',async()=>{const f=fake();f.uid(12341);f.deps.probe=async()=>{f.uid(null);return {streams:2};};const b=new Bootstrap(f.deps);await b.tick();assert.equal(f.config(),null);assert.deepEqual(f.starts,[]);await b.stop();});
+
+test('production bootstrap can prepare the recorder control directory through the exported runtime contract',async t=>{
+ const fs=require('fs'),os=require('os'),path=require('path'),main=require('../recorder/files/main');
+ const root=fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()),'bv-controls-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+ const directory=path.join(root,'control');await main.prepareControls(directory,process.getuid());assert.equal(fs.statSync(directory).mode&511,448);assert.equal(fs.statSync(directory).uid,process.getuid());
+});

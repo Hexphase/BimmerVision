@@ -7,6 +7,11 @@
 - The app explains a required first-install iDrive restart; the software does not reboot a car automatically.
 - Existing verified standalone BimmerVision recorder setups can migrate locally; recordings on USB are preserved.
 
+- Playback downloads each complete recording before enabling Play, cancels obsolete timeline loads, and handles damaged camera packets and end-of-clip decoding.
+- Export completion waits now have cancellation and bounded failure handling instead of waiting indefinitely.
+- Recorded GPS is indexed for drive maps; speed limits use explicit mapped limits when available.
+- Web Settings includes a single BimmerVision.App website button.
+
 Supported release target: iDrive 7 MGU Linux x86-64 with supported camera hardware. The Store’s installed-app icon follows the iDrive menu icon, as required by this Store version.
 
 See `CAR-SHA256SUMS` for the two release artifacts.

@@ -1,6 +1,6 @@
 /**
  * BimmerVision Mobile Video Player & Cockpit HUD Controller
- * Hardware-accelerated decoding via WebCodecs VideoDecoder with Range-Streaming,
+ * Hardware-accelerated decoding via WebCodecs VideoDecoder after complete source download,
  * Bounded Memory Management, Camera Identity Mapping, and Real Telemetry Sync.
  */
 function bvFetch(url, options) {
@@ -124,25 +124,29 @@ class BimmerVisionPlayer {
   }
 
   _setState(state, message = '') {
+    if (this.manifest && !this.streamComplete && state !== 'error' && state !== 'idle' && state !== 'loading') return;
     this.playbackState = state;
     if (this.onStateChange) this.onStateChange({state, message, time: this.currentTime, duration: this.duration, loaded: this.loadedByteOffset, total: this.totalBytes});
   }
 
   _fail(error) {
-    this.pause(); this.loadError = error instanceof Error ? error : new Error(String(error));
+    this.pause(); this._activeStreamAbort?.abort(); this.loadError = error instanceof Error ? error : new Error(String(error));
     this._setState('error', this.loadError.message);
   }
 
   _initDecoder() {
     const epoch = ++this._decoderEpoch;
     this._pendingFrames = new Set();
+    this._decoderFlushPromise=null;
+    this._decoderMissingFrames=new Set();
+    const bitmapJobs=new Set();this._decoderOutputJobs=bitmapJobs;
     if (this.decoder && this.decoder.state !== 'closed') this.decoder.close();
     if (typeof VideoDecoder === 'undefined') return;
     const decoder = new VideoDecoder({
       output: frame => {
         const index = frame.timestamp;
         if (epoch !== this._decoderEpoch || index < this.currentAuIndex - 4) { if (epoch === this._decoderEpoch) this._pendingFrames.delete(index); frame.close(); return; }
-        createImageBitmap(frame).then(bitmap => {
+        const job=createImageBitmap(frame).then(bitmap => {
           if (epoch !== this._decoderEpoch) { bitmap.close(); return; }
           const old = this.decodedFrames.get(index); if (old) old.close();
           this.decodedFrames.set(index, bitmap);
@@ -150,7 +154,8 @@ class BimmerVisionPlayer {
           this._evictFrames();
           this._renderFrameAtTime(this.currentTime);
           if (this._hasFramesAt(this.currentTime)) this._setState(this.isPlaying ? 'playing' : 'paused');
-        }).catch(e => { if (epoch === this._decoderEpoch) this._fail(e); }).finally(() => frame.close());
+        }).catch(e => { if (epoch === this._decoderEpoch) this._fail(e); }).finally(() => {frame.close();bitmapJobs.delete(job);});
+        bitmapJobs.add(job);
       },
       error: e => { if (epoch === this._decoderEpoch) this._fail(new Error('This recording could not be decoded. Retry or use the computer preview server. ' + e.message)); }
     });
@@ -168,15 +173,85 @@ class BimmerVisionPlayer {
   cancelLoad() {
     ++this._clipEpoch; ++this._decoderEpoch;
     this.pause();
+    this._speedLimitAbort?.abort(); this._speedLimitAbort=null; this._speedLimitPending=null;
+    this.currentSpeedLimit=null; this._speedLimitLocationKey=null; this._lastSpeedLimitLookupCoord=null;
     this._activeStreamAbort?.abort();
     if (this.decoder && this.decoder.state !== 'closed') this.decoder.close();
     this.decoder = null;
     if (this._nativeVideo) { this._nativeVideo.pause(); this._nativeVideo.removeAttribute('src'); this._nativeVideo.load(); this._nativeVideo.remove(); this._nativeVideo = null; }
     this._clearFrameCache(); this.lastFrFrame = null; this.lastLrFrame = null;
+    if (this._nativeMediaUrl) { URL.revokeObjectURL(this._nativeMediaUrl); this._nativeMediaUrl=null; }
+    this.streamPromise=null; this.streamComplete=false;
     this.manifest = null; this.parser = null; this.nativeInfo = null;
   }
 
+  // Bound each network operation by inactivity, and release aborted readers on clip changes.
+  async _loadOperation(operation, signal, timeoutMs = this.loadTimeoutMs || 45000) {
+    if (signal.aborted) throw new DOMException('Cancelled','AbortError');
+    let timer, aborted;
+    try {
+      return await Promise.race([operation, new Promise((_, reject) => {
+        aborted=()=>reject(new DOMException('Cancelled','AbortError'));
+        signal.addEventListener('abort',aborted,{once:true});
+        timer=setTimeout(()=>{
+          reject(new Error('The recording connection stopped responding. Check the connection and retry.'));
+          if (this._activeStreamAbort?.signal === signal) this._activeStreamAbort.abort();
+        },timeoutMs);
+      })]);
+    } finally { clearTimeout(timer); signal.removeEventListener('abort',aborted); }
+  }
+
+  async _downloadRecording(url, signal, onChunk, expectedBytes = 0) {
+    const response=await this._loadOperation(bvFetch(url,{signal}),signal);
+    if (!response.ok) throw new Error('Recording download unavailable: HTTP '+response.status);
+    this.totalBytes=Number(response.headers.get('Content-Length')) || expectedBytes || 0;
+    this.loadedByteOffset=0;
+    this._setState('loading','Downloading the complete recording…');
+    const reader=response.body.getReader();
+    try {
+      while (true) {
+        const {done,value}=await this._loadOperation(reader.read(),signal);
+        if (signal.aborted) throw new DOMException('Cancelled','AbortError');
+        if (done) break;
+        this.loadedByteOffset+=value.byteLength;
+        onChunk(value);
+        this._setState('loading','Downloading the complete recording…');
+        await new Promise(resolve=>setTimeout(resolve,0));
+      }
+      if (this.totalBytes && this.loadedByteOffset !== this.totalBytes) throw new Error('The recording download was incomplete. Check the connection and retry.');
+    } finally {
+      // cancel() also releases an outstanding read on custom/non-fetch streams.
+      if(signal.aborted) await reader.cancel().catch(()=>{});
+      reader.releaseLock();
+    }
+  }
+
+  async waitForCompleteRecording(timeoutMs = 45000, onProgress = () => {}) {
+    const epoch=this._clipEpoch;
+    let lastBytes=this.loadedByteOffset, progressedAt=Date.now();
+    while (true) {
+      if(epoch!==this._clipEpoch) throw new DOMException('Recording changed. Reopen export for the selected recording.','AbortError');
+      if(this.loadError) throw this.loadError;
+      if(!this.manifest) throw new Error('Open a recording before exporting.');
+      if(this.streamComplete) return;
+      if(lastBytes!==this.loadedByteOffset) {lastBytes=this.loadedByteOffset;progressedAt=Date.now();}
+      if(Date.now()-progressedAt>=timeoutMs) throw new Error('The recording connection stopped responding. Check the connection and retry.');
+      onProgress(this.loadedByteOffset,this.totalBytes);
+      await new Promise(resolve=>setTimeout(resolve,25));
+    }
+  }
+
   async loadClip(manifestUrl, bvrUrl, clipId = null) {
+    const pending=this._loadClip(manifestUrl,bvrUrl,clipId), epoch=this._clipEpoch;
+    try { return await pending; }
+    catch(error) {
+      // A superseded load must never overwrite the next clip's state.
+      if(error.name!=='AbortError' && epoch===this._clipEpoch) this._fail(error);
+      throw error;
+    }
+  }
+
+  async _loadClip(manifestUrl, bvrUrl, clipId = null) {
     this.cancelLoad();
     const epoch = this._clipEpoch;
     const controller = new AbortController(); this._activeStreamAbort = controller;
@@ -186,9 +261,9 @@ class BimmerVisionPlayer {
     this.loadedByteOffset = 0; this.totalBytes = 0; this.accessUnits = [];
     this.bvrUrl = bvrUrl;
     this._setState('loading', 'Reading recording information…');
-    const response = await bvFetch(manifestUrl, {signal});
+    const response = await this._loadOperation(bvFetch(manifestUrl, {signal}),signal);
     if (!response.ok) throw new Error('Recording information unavailable: HTTP ' + response.status);
-    const manifest = await response.json();
+    const manifest = await this._loadOperation(response.json(),signal);
     if (signal.aborted || epoch !== this._clipEpoch) throw new DOMException('Cancelled', 'AbortError');
     this.manifest = manifest; this.duration = manifest.durationSeconds || 0;
     this.activeClipId = clipId || (manifest && manifest.id) || null;
@@ -204,32 +279,19 @@ class BimmerVisionPlayer {
       while(released<assembler.accessUnits.length) assembler.accessUnits[released++].data=null;
     }});
     this.parser = parser; this.accessUnits = assembler.accessUnits;
-    const stream = await bvFetch(bvrUrl, {signal});
-    if (!stream.ok) throw new Error('Recording stream unavailable: HTTP ' + stream.status);
-    this.totalBytes = Number(stream.headers.get('Content-Length')) || manifest.bytes || 0;
-    this.streamPromise = (async () => {
-      const reader = stream.body.getReader();
-      try {
-        while (true) {
-          const {done,value} = await reader.read();
-          if (signal.aborted || epoch !== this._clipEpoch) return;
-          if (done) break;
-          this.loadedByteOffset += value.byteLength; parser.append(value);
-          if (!this.decoder && this.accessUnits.length >= 2) this._initDecoder();
-          this._decodeAhead();
-          if (this.playbackState === 'loading') this._setState('loading', 'Preparing the first camera frames…');
-          await new Promise(resolve => setTimeout(resolve, 0));
-        }
-        assembler.flush(parser.cameraPairEvents);
-        while(released<assembler.accessUnits.length) assembler.accessUnits[released++].data=null;
-        this.streamComplete = true;
-        if (!this.decoder && this.accessUnits.length) this._initDecoder();
-        this._decodeAhead();
-        if (!this.accessUnits.length) throw new Error('No usable video frames in this recording.');
-        if (this.liveMap) this.liveMap.setTrack(parser.getRouteSeries(manifest.startMonotonicUs));
-      } catch (e) { if (!signal.aborted && epoch === this._clipEpoch) this._fail(e); }
-      finally { reader.releaseLock(); }
-    })();
+    this.streamPromise = this._downloadRecording(bvrUrl,signal,value=>{
+      parser.append(value);
+    },manifest.bytes).then(()=>{
+      if(signal.aborted || epoch!==this._clipEpoch) throw new DOMException('Cancelled','AbortError');
+      assembler.flush(parser.cameraPairEvents);
+      while(released<assembler.accessUnits.length) assembler.accessUnits[released++].data=null;
+      if (!this.accessUnits.length) throw new Error('No usable video frames in this recording.');
+      this.streamComplete=true;
+      this._setState('loading','Preparing camera frames…');
+      this._initDecoder(); this._decodeAhead();
+      if(this.liveMap)this.liveMap.setTrack(parser.getRouteSeries(manifest.startMonotonicUs));
+    });
+    await this.streamPromise;
     const start = performance.now();
     while (!this._hasFramesAt(0)) {
       if (signal.aborted || epoch !== this._clipEpoch) throw new DOMException('Cancelled','AbortError');
@@ -242,11 +304,17 @@ class BimmerVisionPlayer {
 
   async _loadNative(manifest, epoch, signal) {
     this._setState('loading', 'Preparing a phone-friendly video. The first open may take a moment…');
-    const response = await bvFetch(`/api/v1/preview/${encodeURIComponent(manifest.id)}`, {signal});
-    if (!response.ok) { const body = await response.json().catch(() => ({})); throw new Error(body.error || 'Native preview unavailable'); }
-    const info = await response.json();
+    const response = await this._loadOperation(bvFetch(`/api/v1/preview/${encodeURIComponent(manifest.id)}`, {signal}),signal,120000);
+    if (!response.ok) { const body = await this._loadOperation(response.json(),signal).catch(() => ({})); throw new Error(body.error || 'Native preview unavailable'); }
+    const info = await this._loadOperation(response.json(),signal);
     if (signal.aborted || epoch !== this._clipEpoch) throw new DOMException('Cancelled','AbortError');
     this.nativeInfo = info;
+    const parts=[];
+    this.streamPromise=this._downloadRecording(info.mediaUrl,signal,chunk=>parts.push(chunk));
+    await this.streamPromise;
+    if(signal.aborted || epoch!==this._clipEpoch) throw new DOMException('Cancelled','AbortError');
+    this._nativeMediaUrl=URL.createObjectURL(new Blob(parts,{type:'video/mp4'}));
+    this._setState('loading','Preparing camera frames…');
     this.parser = new StreamingBvrParser({}); this.parser.telemetryRecords = info.telemetry || [];
     this.assembler = null; this.accessUnits = [];
     const video = document.createElement('video'); this._nativeVideo = video;
@@ -267,11 +335,11 @@ class BimmerVisionPlayer {
       const aborted = () => finish(new DOMException('Cancelled','AbortError'));
       const ready = () => finish(); const failed = () => finish(new Error('Video preview could not be loaded.'));
       const finish = error => { clearTimeout(timer); signal.removeEventListener('abort',aborted); video.removeEventListener('loadeddata',ready); video.removeEventListener('error',failed); error ? reject(error) : resolve(); };
-      signal.addEventListener('abort',aborted,{once:true}); video.addEventListener('loadeddata',ready,{once:true}); video.addEventListener('error',failed,{once:true}); video.src=info.mediaUrl; video.load();
+      signal.addEventListener('abort',aborted,{once:true}); video.addEventListener('loadeddata',ready,{once:true}); video.addEventListener('error',failed,{once:true}); video.src=this._nativeMediaUrl; video.load();
     });
     if (!live()) throw new DOMException('Cancelled','AbortError');
     this.duration = Number.isFinite(video.duration) ? video.duration : this.duration;
-    this.streamComplete = true; this.loadedByteOffset = this.totalBytes = manifest.bytes || 0;
+    this.streamComplete = true;
     if (this.liveMap) this.liveMap.setTrack(this.parser.getRouteSeries(manifest.startMonotonicUs));
     this._renderNativeFrame(); this._updateScrubber(); this._updateTelemetryHud(); this._setState('paused');
   }
@@ -298,11 +366,12 @@ class BimmerVisionPlayer {
     let lo=0,hi=this.accessUnits.length-1,best=0;
     while(lo<=hi) { const mid=(lo+hi)>>1; if(this.accessUnits[mid].time<=time) {best=mid;lo=mid+1;} else hi=mid-1; } return best;
   }
+  _frameUnavailable(index) { return this.accessUnits[index]?.damaged || this._decoderMissingFrames?.has(index); }
   _hasFramesAt(time) {
     if (!this.accessUnits.length) return false;
     const i=this._indexAt(time);
     if (time > this.accessUnits[this.accessUnits.length-1].time + 0.08 && !this.streamComplete) return false;
-    return this.decodedFrames.has(i) && this.decodedFrames.has(i > 0 ? i-1 : Math.min(1,this.accessUnits.length-1));
+    return [i,i > 0 ? i-1 : Math.min(1,this.accessUnits.length-1)].every(index=>this._frameUnavailable(index) || this.decodedFrames.has(index));
   }
   _resetDecoderForSeek(target) {
     this._clearFrameCache(); this.lastFrFrame=null; this.lastLrFrame=null;
@@ -317,14 +386,28 @@ class BimmerVisionPlayer {
     const end=Math.min(this.accessUnits.length,this.currentAuIndex+26);
     while(this.nextDecodeIdx<end && decoder.decodeQueueSize<8) {
       const au=this.accessUnits[this.nextDecodeIdx];
-      if (!au?.avcc?.byteLength) {this.nextDecodeIdx++;continue;}
+      if (au?.damaged || !au?.avcc?.byteLength) {this.nextDecodeIdx++;continue;}
       try { this._pendingFrames?.add(au.index); decoder.decode(this._makeChunk({type:au.isKeyFrame?'key':'delta',timestamp:au.index,data:au.avcc})); this.nextDecodeIdx++; }
       catch(e) {this._fail(e);break;}
+    }
+    if(this.streamComplete && this.accessUnits.length && this.nextDecodeIdx>=this.accessUnits.length && !this._decoderFlushPromise && typeof decoder.flush==='function') {
+      const epoch=this._decoderEpoch, jobs=this._decoderOutputJobs || new Set(), signal=this._activeStreamAbort?.signal;
+      // An empty decode queue does not mean all pictures have been output. AVC
+      // decoders can retain trailing pictures until an explicit end-of-stream flush.
+      const draining=(async()=>{await decoder.flush();await Promise.allSettled([...jobs]);})();
+      this._decoderFlushPromise=(signal?this._loadOperation(draining,signal,15000):draining).then(()=>{
+        if(epoch!==this._decoderEpoch)return;
+        // Some decoders omit an unrenderable tail picture without an error. Keep
+        // its source-time slot unavailable instead of buffering forever at EOF.
+        for(const index of this._pendingFrames)this._decoderMissingFrames.add(index);
+        this._pendingFrames.clear();
+        this._renderFrameAtTime(this.currentTime);
+      }).catch(error=>{if(epoch===this._decoderEpoch)this._fail(error);});
     }
     this._evictFrames();
   }
   async play({restartAtEnd=true} = {}) {
-    if (this.isPlaying || !this.manifest || this.loadError) return;
+    if (this.isPlaying || !this.manifest || !this.streamComplete || this.loadError) return;
     if (restartAtEnd && this.currentTime >= this.duration-0.05) this.seek(0);
     if (this._nativeVideo) {
       try { await this._nativeVideo.play(); } catch (_) { this._setState('paused','Ready. Tap Play to start video.'); return; }
@@ -398,20 +481,17 @@ class BimmerVisionPlayer {
     if(this._nativeVideo) return this._renderNativeFrame();
     if(!this.accessUnits.length) return false;
     const index=this._indexAt(time);
-    let b0=null, b1=null;
+    let b0=null, b1=null, resolved0=false, resolved1=false;
     for (let i = index; i >= Math.max(0, index - 12); i--) {
-      const u = this.accessUnits[i];
-      const uPhase = (u && u.phase !== undefined) ? u.phase : (i % 2);
-      if (uPhase === 0 && !b0) b0 = this.decodedFrames.get(u.index);
-      if (uPhase === 1 && !b1) b1 = this.decodedFrames.get(u.index);
-      if (b0 && b1) break;
+      const u=this.accessUnits[i], phase=u.phase!==undefined?u.phase:i%2;
+      if(phase===0 && !resolved0 && (this._frameUnavailable(u.index) || this.decodedFrames.has(u.index))) {b0=this._frameUnavailable(u.index)?null:this.decodedFrames.get(u.index);resolved0=true;}
+      if(phase===1 && !resolved1 && (this._frameUnavailable(u.index) || this.decodedFrames.has(u.index))) {b1=this._frameUnavailable(u.index)?null:this.decodedFrames.get(u.index);resolved1=true;}
+      if(resolved0 && resolved1)break;
     }
-    if (!b0) b0 = this.decodedFrames.get(index % 2 === 0 ? index : index - 1);
-    if (!b1) b1 = this.decodedFrames.get(index % 2 === 1 ? index : Math.max(1, index - 1));
     const p0Fr=this.cameraMapping.phase0==='frontRear';
-    if(b0) this[p0Fr?'lastFrFrame':'lastLrFrame']=b0;
-    if(b1) this[p0Fr?'lastLrFrame':'lastFrFrame']=b1;
-    if(!this.lastFrFrame && !this.lastLrFrame) return false;
+    if(resolved0)this[p0Fr?'lastFrFrame':'lastLrFrame']=b0;
+    if(resolved1)this[p0Fr?'lastLrFrame':'lastFrFrame']=b1;
+    if(!resolved0 && !resolved1 && !this.lastFrFrame && !this.lastLrFrame)return false;
     this._drawToCanvas(this.lastFrFrame,this.lastLrFrame); this.liveMap?.setTime(time); return true;
   }
 
@@ -558,7 +638,7 @@ class BimmerVisionPlayer {
       lr = this._nativePairs[p0Fr ? 1 : 0] || lr;
     }
 
-    if (telem && telem.speedLimit == null && this.currentSpeedLimit) {
+    if (telem && telem.speedLimit == null && this._speedLimitFor(telem)) {
       telem.speedLimit = this.currentSpeedLimit.limit;
       telem.speedLimitUnit = this.currentSpeedLimit.unit;
     }
@@ -659,7 +739,7 @@ class BimmerVisionPlayer {
       }
       let limitVal = telem.speedLimit;
       let limitUnit = telem.speedLimitUnit || "mph";
-      if (limitVal == null && this.currentSpeedLimit) {
+      if (limitVal == null && this._speedLimitFor(telem)) {
         limitVal = this.currentSpeedLimit.limit;
         limitUnit = this.currentSpeedLimit.unit || "mph";
       }
@@ -728,26 +808,49 @@ class BimmerVisionPlayer {
     }
   }
 
-  _resolveSpeedLimit(lat, lon) {
-    if (lat == null || lon == null) return;
-    const key = `${Number(lat).toFixed(3)},${Number(lon).toFixed(3)}`;
-    if (this._speedLimitCache.has(key)) {
-      this.currentSpeedLimit = this._speedLimitCache.get(key);
-      return;
+  _speedLimitFor(telem) {
+    if (!telem || !Number.isFinite(telem.latitude) || !Number.isFinite(telem.longitude)) return null;
+    const key = `${telem.latitude.toFixed(4)},${telem.longitude.toFixed(4)}`;
+    const value=this.currentSpeedLimit;
+    if(!value)return null;
+    if(value.key===key)return value;
+    const points=value.geometry||[],lat=telem.latitude,lon=telem.longitude,c=Math.cos(lat*Math.PI/180);
+    for(let i=1;i<points.length;i++){
+      const a=points[i-1],b=points[i];if(!Number.isFinite(a.lat)||!Number.isFinite(a.lon)||!Number.isFinite(b.lat)||!Number.isFinite(b.lon))continue;
+      const x=(a.lon-lon)*111320*c,y=(a.lat-lat)*111320,dx=(b.lon-a.lon)*111320*c,dy=(b.lat-a.lat)*111320,z=dx*dx+dy*dy,t=z?Math.max(0,Math.min(1,-(x*dx+y*dy)/z)):0;
+      if(Math.hypot(x+t*dx,y+t*dy)<=12)return value;
     }
-    if (this._lastSpeedLimitLookupCoord === key) return;
-    this._lastSpeedLimitLookupCoord = key;
-    bvFetch(`/api/v1/speed-limit?lat=${lat}&lon=${lon}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data && data.limit != null) {
-          const limitObj = { limit: data.limit, unit: data.unit || "mph" };
-          this._speedLimitCache.set(key, limitObj);
-          this.currentSpeedLimit = limitObj;
-          this._updateTelemetryHud();
-        }
-      })
-      .catch(() => {});
+    return null;
+  }
+
+  _resolveSpeedLimit(lat, lon) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat)>90 || Math.abs(lon)>180 || (lat===0 && lon===0)) {
+      this.currentSpeedLimit=null; this._speedLimitLocationKey=null; return Promise.resolve();
+    }
+    const key = `${lat.toFixed(4)},${lon.toFixed(4)}`;
+    this._speedLimitLocationKey=key; this._speedLimitPosition={latitude:lat,longitude:lon};
+    if (this._speedLimitFor(this._speedLimitPosition)) return Promise.resolve();
+    this.currentSpeedLimit=null;
+    const cached=this._speedLimitCache.get(key);
+    if (cached && Date.now()<cached.until) {this.currentSpeedLimit=cached.value;return Promise.resolve();}
+    if (this._speedLimitPending) return this._speedLimitPending;
+    const epoch=this._clipEpoch, abort=new AbortController();
+    this._speedLimitAbort=abort;
+    const timer=setTimeout(()=>abort.abort(),8000);
+    let request;
+    request=bvFetch(`/api/v1/speed-limit?lat=${lat}&lon=${lon}`,{signal:abort.signal})
+      .then(r=>r.ok?r.json():null)
+      .then(data=>{
+        if (epoch!==this._clipEpoch || abort.signal.aborted) return;
+        const valid=data && data.isEstimated!==true && Number.isFinite(data.limit) && data.limit>0 && data.limit<=200 && ['mph','km/h'].includes(data.unit);
+        const value=valid?{limit:data.limit,unit:data.unit,source:data.source||'Map speed limit',geometry:Array.isArray(data.geometry)?data.geometry:[],key}:null;
+        this._speedLimitCache.delete(key);
+        this._speedLimitCache.set(key,{value,until:Date.now()+(value?3600000:30000)});
+        while(this._speedLimitCache.size>1000)this._speedLimitCache.delete(this._speedLimitCache.keys().next().value);
+        if(this._speedLimitLocationKey===key){this.currentSpeedLimit=value;this._updateTelemetryHud();}else if(value){const previous=this.currentSpeedLimit;this.currentSpeedLimit=value;if(this._speedLimitFor(this._speedLimitPosition))this._updateTelemetryHud();else this.currentSpeedLimit=previous;}
+      }).catch(()=>{}).finally(()=>{clearTimeout(timer);if(this._speedLimitPending===request)this._speedLimitPending=null;if(this._speedLimitAbort===abort)this._speedLimitAbort=null;});
+    this._speedLimitPending=request;
+    return request;
   }
 
   _formatTime(seconds) {

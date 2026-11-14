@@ -34,6 +34,13 @@ The blinking indicator lets you check at a glance that recording is running.
 
 Compatibility has been physically tested on the project’s iDrive 7 setup. Camera-stream and vehicle-information availability can vary between cars.
 
+### BMW Drive Recorder subscription
+
+BimmerVision’s direct camera capture in **development builds 0.2.10 and newer** does not use BMW’s licensed Drive Recorder recording service or perform a subscription check. It requests the camera stream directly and records the compressed footage to USB.
+
+On the tested iDrive 7 car, recording works with the official BMW Drive Recorder setting switched **off**, including while the official app is suspended. That car still has an activated Drive Recorder entitlement, so operation on a car without an active subscription has **not yet been physically verified**. Earlier published builds may depend on an already-active camera stream; this direct-capture behavior should not be assumed for them.
+
+
 ## Install from MGU Store
 
 1. Add **Hexphase/BimmerVision** as a source in MGU Store.

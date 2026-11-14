@@ -1,0 +1,19 @@
+[Unit]
+Description=BimmerVision recorder
+RequiresMountsFor=/var/opt
+After=local-fs.target oapcontroller.service
+StartLimitIntervalSec=600
+StartLimitBurst=20
+
+[Service]
+WorkingDirectory=/var/opt/bimmervision-recorder/current
+ExecStart=/usr/bin/node /var/opt/bimmervision-recorder/current/bootstrap.js
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+KillMode=mixed
+UMask=0077
+LimitCORE=1
+
+[Install]
+WantedBy=multi-user.target

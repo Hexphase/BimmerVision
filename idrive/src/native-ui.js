@@ -140,6 +140,11 @@ UI.prototype.press = async function (row) {
   if (this.closed || !this.visible) return;
   var desk = this.desk(),
     intent = this.intent();
+  if (desk.setupPending && ["HOME_ALL", "HOME_REAR", "HOME_DELETE"].indexOf(row) >= 0) {
+    this.message = desk.state || "Recorder setup pending";
+    await this.render();
+    return;
+  }
   if (this.page === "home") {
     if (row === "HOME_ALL") {
       if (!desk.drive)

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "file": "perception-receiver",
+  "sha256": "908369103f3a1f1997686f0d8a1bbc0e4a81113f5e1965d1a34f1c6ad9d86ef5",
+  "source": "Vehicle-Software-Audit-2026-11-12: iteriodev-comfort/versions/0.5.1/hmictl",
+  "platform": "Linux x86-64",
+  "protocol": "hmictl serve; fixed read-only sub commands only",
+  "sourceAvailable": false
+}

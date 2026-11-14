@@ -5,19 +5,44 @@
       "id": "bimmervision",
       "kind": "app",
       "title": "BimmerVision",
-      "version": "0.2.3",
-      "description": "BimmerVision - Tested only on iDrive 7",
+      "version": "0.2.4",
+      "description": "BimmerVision for iDrive 7. Recorder companion installs automatically.",
       "mguHmi": [
         "ID7"
       ],
+      "requires": {
+        "bimmervision-recorder": "0.2.4"
+      },
       "artifact": {
-        "name": "bimmervision@0.2.3.tgz",
-        "size": 45391,
-        "sha256": "b15eae3ef79fd182486267659ee2146191a80631bb80a1d12a5ac150de754062",
-        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision@0.2.3.tgz"
+        "name": "bimmervision@0.2.4.tgz",
+        "size": 62457,
+        "sha256": "7335d4fa20c42d53cc3d823db30bb89924f467bc0fecaaa6440731e9f0471a15",
+        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision@0.2.4.tgz"
       },
       "icon": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/store-icon.png",
       "iconSha256": "2699dd3db86fef702d0889c7c6bd7b231bb62490898a257dc41113a48a158836"
+    },
+    {
+      "id": "bimmervision-recorder",
+      "kind": "tool",
+      "title": "BimmerVision Recorder",
+      "version": "0.2.4",
+      "description": "Required recorder service for BimmerVision. Sets up this car automatically; never includes another car’s credentials.",
+      "mguHmi": [
+        "ID7"
+      ],
+      "requires": {
+        "mgu-deploy": "0.8.18",
+        "mgu-updater": "0.8.45"
+      },
+      "optional": true,
+      "uninstallable": true,
+      "artifact": {
+        "name": "bimmervision-recorder@0.2.4.tgz",
+        "size": 1672735,
+        "sha256": "3735d34371b3278c9776a6f5676539fdc01fd21242439ce38029bcfca22a3040",
+        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision-recorder@0.2.4.tgz"
+      }
     }
   ]
 }

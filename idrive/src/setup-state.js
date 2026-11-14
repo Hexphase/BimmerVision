@@ -1,0 +1,4 @@
+'use strict';
+var fs=require('fs');
+function read(options){var o=options||{},file=o.file||'/var/opt/bimmervision-recorder/setup-status.json';try{var s=fs.lstatSync(file);if(!s.isFile()||s.isSymbolicLink()||s.uid!==(o.owner===undefined?0:o.owner)||s.size>4096)return null;var v=JSON.parse(fs.readFileSync(file,'utf8'));if(!v||v.phase==='ready')return null;var state;if(v.phase==='restart-required'){var boot=fs.readFileSync(o.bootFile||'/proc/sys/kernel/random/boot_id','utf8').trim();state=v.bootId===boot?'Restart iDrive to finish setup':'Starting recorder setup';}else if(v.phase==='preparing'){var allowed=['Waiting for BimmerVision app','Preparing recorder','Checking camera streams','Waiting for supported camera streams','Recorder setup pending'];state=allowed.indexOf(v.state)>=0?v.state:'Recorder setup pending';}else return null;return {state:state,error:null,setupPending:true};}catch(e){return null;}}
+module.exports={read:read};

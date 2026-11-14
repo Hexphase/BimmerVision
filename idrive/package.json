@@ -1,6 +1,6 @@
 {
   "name": "bimmervision",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "BimmerVision - Tested only on iDrive 7",
   "main": "src/app.js",
   "license": "MIT",

@@ -1,10 +1,13 @@
 {
   "schema": 1,
   "id": "bimmervision",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "BimmerVision - Tested only on iDrive 7",
   "mguHmi": [
     "ID7"
   ],
-  "title": "BimmerVision"
+  "title": "BimmerVision",
+  "requires": {
+    "bimmervision-recorder": "0.2.4"
+  }
 }

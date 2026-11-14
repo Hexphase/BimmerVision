@@ -1,0 +1,335 @@
+{
+  "id": "bimmervision-recorder",
+  "kind": "tool",
+  "version": "0.2.4",
+  "title": "BimmerVision Recorder",
+  "description": "Required recorder service for BimmerVision. Sets up this car automatically; never includes another car’s credentials.",
+  "optional": true,
+  "uninstallable": true,
+  "mguHmi": [
+    "ID7"
+  ],
+  "requires": {
+    "mgu-deploy": "0.8.18",
+    "mgu-updater": "0.8.45"
+  },
+  "files": [
+    {
+      "path": "RECEIVER-PROVENANCE.json",
+      "mode": "0644",
+      "sha256": "3f93c5322b362a9ccd269427e37d85d05a3ff8ee75d9dfea7a7a5124d68c4c3f",
+      "from": "files/RECEIVER-PROVENANCE.json"
+    },
+    {
+      "path": "activate.js",
+      "mode": "0644",
+      "sha256": "502acb256cccc66f9e15f93889bda73863046fbe82b3835c01f751e217b924c4",
+      "from": "files/activate.js"
+    },
+    {
+      "path": "archive.js",
+      "mode": "0644",
+      "sha256": "8045064d35dc33c1d01fd125a5f33d59af15e85548d0820ab43c76ad699e9f5d",
+      "from": "files/archive.js"
+    },
+    {
+      "path": "bootstrap.js",
+      "mode": "0644",
+      "sha256": "040d0aa79b1184b8098fca324f81636dc5b65727fec42f038f74d667147da61d",
+      "from": "files/bootstrap.js"
+    },
+    {
+      "path": "browser.js",
+      "mode": "0644",
+      "sha256": "cf8cf7b2baad8b76da37ee3a39c9d5e4d1730804302cadb516d2a0ef109ecb53",
+      "from": "files/browser.js"
+    },
+    {
+      "path": "check.js",
+      "mode": "0644",
+      "sha256": "5907ff223d3fffbc1035b288bcd7be3813905ffe692737c52eac42ef8b0381b3",
+      "from": "files/check.js"
+    },
+    {
+      "path": "drive-actions.js",
+      "mode": "0644",
+      "sha256": "dac61cc2e5da246d03301d47b12af70c3e60ea758a35b34097733f35ccb0a195",
+      "from": "files/drive-actions.js"
+    },
+    {
+      "path": "io.js",
+      "mode": "0644",
+      "sha256": "79f2d0c1608b1567ed7a90abfff8dce570f14a9019a1290490a3f424ee95ec71",
+      "from": "files/io.js"
+    },
+    {
+      "path": "library.js",
+      "mode": "0644",
+      "sha256": "22ae0b5adb850f23c47034f39d3829d3c93ec1f140e3cc23e86e6186161d9844",
+      "from": "files/library.js"
+    },
+    {
+      "path": "main.js",
+      "mode": "0644",
+      "sha256": "b1a54699fd0cc9d7c8d5d99a308c8f79b503d4a8ccd49abd74b7e8dfa38432ef",
+      "from": "files/main.js"
+    },
+    {
+      "path": "map-tiles.js",
+      "mode": "0644",
+      "sha256": "1558c9b72187dd4afbf2dce5c024dcb450b562024a36039e131819998763265c",
+      "from": "files/map-tiles.js"
+    },
+    {
+      "path": "mobile-web/app.js",
+      "mode": "0644",
+      "sha256": "d4774421ee0e6535f4607838faa722f1ba8261c145d34dd25597a92a8a400d6e",
+      "from": "files/mobile-web/app.js"
+    },
+    {
+      "path": "mobile-web/assets/bimmervision-eye.png",
+      "mode": "0644",
+      "sha256": "22d57673393109884a4d1388061c9b7edca66bf66069be5f9cb1bebc6880391e",
+      "from": "files/mobile-web/assets/bimmervision-eye.png"
+    },
+    {
+      "path": "mobile-web/assets/bimmervision-wordmark.png",
+      "mode": "0644",
+      "sha256": "c87ea4d3e34a9063c7f4f4594af4601580a04d7d9b78add5f88ab345bc87348b",
+      "from": "files/mobile-web/assets/bimmervision-wordmark.png"
+    },
+    {
+      "path": "mobile-web/assets/bimmervision.ico",
+      "mode": "0644",
+      "sha256": "12ec5d746065bdb73cb1b871cfe847eae7a8659d313eb92cf9ae5a86f0ec46d2",
+      "from": "files/mobile-web/assets/bimmervision.ico"
+    },
+    {
+      "path": "mobile-web/assets/sedan-topdown.png",
+      "mode": "0644",
+      "sha256": "0674b72f1e8d0a8122162c4f737a24b4fca5d1ea9f4b3001171ce6931b7263e8",
+      "from": "files/mobile-web/assets/sedan-topdown.png"
+    },
+    {
+      "path": "mobile-web/assets/wheel-face.png",
+      "mode": "0644",
+      "sha256": "620c0beb05d7ffed64dedfcf7b238940edbdedb304612136a8d829f8d9692047",
+      "from": "files/mobile-web/assets/wheel-face.png"
+    },
+    {
+      "path": "mobile-web/bvr-parser.js",
+      "mode": "0644",
+      "sha256": "b7b3982b0de48140ec799c58c263f20be7168e5e71d5312dee04df6d155c3eee",
+      "from": "files/mobile-web/bvr-parser.js"
+    },
+    {
+      "path": "mobile-web/camera-store.js",
+      "mode": "0644",
+      "sha256": "e149259f3002d4e807b1620aad412496f1ee3033d2bfa426f2ec31d50ed24ee8",
+      "from": "files/mobile-web/camera-store.js"
+    },
+    {
+      "path": "mobile-web/catalog-refresh.js",
+      "mode": "0644",
+      "sha256": "234fb1e3da2e679d6be13169b4f8adbb81f7970224b0c23565923291ca7e9c48",
+      "from": "files/mobile-web/catalog-refresh.js"
+    },
+    {
+      "path": "mobile-web/dark-osm-map.js",
+      "mode": "0644",
+      "sha256": "f0e0816b012bfec2423e09c3844d123fb14927fff9146ec4a189b2e98d26b77e",
+      "from": "files/mobile-web/dark-osm-map.js"
+    },
+    {
+      "path": "mobile-web/drive-grouper.js",
+      "mode": "0644",
+      "sha256": "e7063694889fa0cfefe82a7635e90595be8f1f80ce805f689500f0e0498b7090",
+      "from": "files/mobile-web/drive-grouper.js"
+    },
+    {
+      "path": "mobile-web/drive-timeline.js",
+      "mode": "0644",
+      "sha256": "119fcdecc6215b7741dafd81990969a88e466f95473588097cbe43a8cfe1e06e",
+      "from": "files/mobile-web/drive-timeline.js"
+    },
+    {
+      "path": "mobile-web/exporter.js",
+      "mode": "0644",
+      "sha256": "384b6e25ae8f7841e1f609c27ba713708a975e4b0dfe4c298ee2b5b428f1fff6",
+      "from": "files/mobile-web/exporter.js"
+    },
+    {
+      "path": "mobile-web/index.html",
+      "mode": "0644",
+      "sha256": "91c802a6257d46a1ec9e6572cf7c9ab1ec13a69318d267df0c074ccb243647ba",
+      "from": "files/mobile-web/index.html"
+    },
+    {
+      "path": "mobile-web/mobile.css",
+      "mode": "0644",
+      "sha256": "79dfba88f923741fff476a7987ce8fad1333954645ffc5d810db052b7b38b41f",
+      "from": "files/mobile-web/mobile.css"
+    },
+    {
+      "path": "mobile-web/mp4-muxer.js",
+      "mode": "0644",
+      "sha256": "6edd39c02a5b9d629e7e2d645f48e2058cb498919cbc4cee9a4b00b3eed1e6f0",
+      "from": "files/mobile-web/mp4-muxer.js"
+    },
+    {
+      "path": "mobile-web/player.js",
+      "mode": "0644",
+      "sha256": "b8c44d5a7ed5d56336c44ddeb3ecd19bfe0cbd3f76c61f138dee087a4ef88850",
+      "from": "files/mobile-web/player.js"
+    },
+    {
+      "path": "mobile-web/release-checker.js",
+      "mode": "0644",
+      "sha256": "231036498837021baaf4cc3360eb5b3ae3480b40f8abfbb51d3dfc00f2ebd60f",
+      "from": "files/mobile-web/release-checker.js"
+    },
+    {
+      "path": "mobile-web/rtp-h264.js",
+      "mode": "0644",
+      "sha256": "64c7a5a75afdcc310f892de0e3053cc55e06363e95307e7eace14dd127d1b9c1",
+      "from": "files/mobile-web/rtp-h264.js"
+    },
+    {
+      "path": "mobile-web/sedan-selector.js",
+      "mode": "0644",
+      "sha256": "e97aa91ea0b9cc5c3a90d717f74e4da3ee48412f6f97309e4258a03fca896412",
+      "from": "files/mobile-web/sedan-selector.js"
+    },
+    {
+      "path": "mobile-web/style.css",
+      "mode": "0644",
+      "sha256": "997ddae0e89fa3fd10f768b436e05a1ecbccd852ff41396ac5e281e8a31a5f55",
+      "from": "files/mobile-web/style.css"
+    },
+    {
+      "path": "oem-signals.js",
+      "mode": "0644",
+      "sha256": "9c423f32552bd54aca3e4a99542262f7c1fda612febf1ee967540dde9e2042da",
+      "from": "files/oem-signals.js"
+    },
+    {
+      "path": "pack.js",
+      "mode": "0644",
+      "sha256": "7010976c9a3ddbbb1a7eb61df2e8ccd872f1ce5e3e945e578c82ead1a52c386b",
+      "from": "files/pack.js"
+    },
+    {
+      "path": "perception-receiver",
+      "mode": "0755",
+      "sha256": "908369103f3a1f1997686f0d8a1bbc0e4a81113f5e1965d1a34f1c6ad9d86ef5",
+      "from": "files/perception-receiver"
+    },
+    {
+      "path": "perception-schema.json",
+      "mode": "0644",
+      "sha256": "452307af697492219416c89527b1ffda6d71d508413efbe50765bfd1ced66663",
+      "from": "files/perception-schema.json"
+    },
+    {
+      "path": "perception-transport.json",
+      "mode": "0644",
+      "sha256": "512ba45b46193a9182be7a5ce369563184c17854f8b4010879c77c89c5943819",
+      "from": "files/perception-transport.json"
+    },
+    {
+      "path": "perception.js",
+      "mode": "0644",
+      "sha256": "7979105c5c5da5ea184c721446a0e5ed7682171890795d2335d7524f953d698d",
+      "from": "files/perception.js"
+    },
+    {
+      "path": "phone-network.js",
+      "mode": "0644",
+      "sha256": "90270089f13e47aec04a7990210131ecd299fd20ec355f038071bdfbe4873431",
+      "from": "files/phone-network.js"
+    },
+    {
+      "path": "receiver",
+      "mode": "0755",
+      "sha256": "ac8bdc18c40a5864294193f92e817b4c1e5429c75a8ec335b9a5d9266ac10b80",
+      "from": "files/receiver"
+    },
+    {
+      "path": "recorder.js",
+      "mode": "0644",
+      "sha256": "bd7fa442aca8ae3a7bbdd6b1e4c96df7ebff7a539924c9aae21816ff83ea019f",
+      "from": "files/recorder.js"
+    },
+    {
+      "path": "recovery.js",
+      "mode": "0644",
+      "sha256": "9d088569747158dc9a93890fc39b224b47d26131830d26cef182f00457aa5d05",
+      "from": "files/recovery.js"
+    },
+    {
+      "path": "rtp.js",
+      "mode": "0644",
+      "sha256": "0e906581d68b00548a0b99c841b2b07182eab1d6ec62720b8e798994062c6d32",
+      "from": "files/rtp.js"
+    },
+    {
+      "path": "setup.js",
+      "mode": "0644",
+      "sha256": "85054ecf104a0fa733ca53ecd6e521721b510dbb1ee9c977b758589b339974af",
+      "from": "files/setup.js"
+    },
+    {
+      "path": "telemetry.js",
+      "mode": "0644",
+      "sha256": "03ce9f31c132e64355ce71dfe8e372befd04edf213dbecc538bd28545129ca80",
+      "from": "files/telemetry.js"
+    },
+    {
+      "path": "transfer.js",
+      "mode": "0644",
+      "sha256": "89bfaace0ca256de5c5ea76de770297ac9eb73169f105018f578f73378740842",
+      "from": "files/transfer.js"
+    },
+    {
+      "path": "usb.js",
+      "mode": "0644",
+      "sha256": "43daa0f88ce0646e881919ebba7fb6655c14b85b38c9a16cd1e67ed92317e8e0",
+      "from": "files/usb.js"
+    },
+    {
+      "path": "version.json",
+      "mode": "0644",
+      "sha256": "87999c2e4d83c8594cbb36ba317be96b44ecd6289d498657777cbd38b4b53c06",
+      "from": "files/version.json"
+    }
+  ],
+  "units": [
+    {
+      "name": "bimmervision-recorder.service",
+      "from": "units/bimmervision-recorder.service"
+    }
+  ],
+  "enable": [
+    {
+      "unit": "bimmervision-recorder.service",
+      "target": "multi-user.target"
+    }
+  ],
+  "recmgr": [
+    "bimmervision-recorder"
+  ],
+  "crashNames": [
+    "receiver",
+    "perception-rece"
+  ],
+  "restart": [
+    "bimmervision-recorder.service"
+  ],
+  "activate": [
+    "node",
+    "activate.js"
+  ],
+  "check": [
+    "check.js"
+  ]
+}

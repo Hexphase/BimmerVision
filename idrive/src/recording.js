@@ -1,5 +1,6 @@
 "use strict";
-var fs = require("fs"),
+var setupState = require("./setup-state"),
+  fs = require("fs"),
   path = require("path"),
   crypto = require("crypto");
 function uid() {
@@ -48,7 +49,9 @@ function Recording(dir) {
 Recording.prototype.read = function () {
   try {
     directory(this.directory);
-    var s = read(this.statusFile);
+    var s = read(this.statusFile), pending = setupState.read();
+    if (pending) Object.keys(pending).forEach(function (k) { s[k] = pending[k]; });
+    if (!s.state) s.state = "Starting recorder";
     if (!Array.isArray(s.drives)) s.drives = [];
     return s;
   } catch (e) {

@@ -8,10 +8,20 @@
       "path": "idrive",
       "manifest": "mgu-app.json",
       "icon": "store-icon.png",
+      "requires": {
+        "bimmervision-recorder": "0.2.4"
+      },
       "build": {
         "node": "idrive/build-store.js",
         "output": "idrive/store-output.tgz"
       }
+    },
+    {
+      "id": "bimmervision-recorder",
+      "kind": "tool",
+      "title": "BimmerVision Recorder",
+      "path": "recorder",
+      "optional": true
     }
   ]
 }

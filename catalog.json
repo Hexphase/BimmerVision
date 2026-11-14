@@ -1,0 +1,21 @@
+{
+  "schema": 2,
+  "components": [
+    {
+      "id": "masel_cameras",
+      "kind": "app",
+      "title": "BimmerVision",
+      "version": "0.2.2",
+      "description": "BimmerVision USB recorder status and paired transfer",
+      "mguHmi": [
+        "ID7"
+      ],
+      "artifact": {
+        "name": "masel_cameras@0.2.2.tgz",
+        "size": 45392,
+        "sha256": "e69d7ab36f1c31e3a7f5ae75dc84f494086cc51dbbdf3b05ee3a1f2fdc2aba81",
+        "url": "https://github.com/Hexphase/BimmerVision/releases/download/v0.2.2/masel_cameras@0.2.2.tgz"
+      }
+    }
+  ]
+}

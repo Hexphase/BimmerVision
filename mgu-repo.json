@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "components": [
+    {
+      "id": "bimmervision",
+      "kind": "app",
+      "title": "BimmerVision",
+      "path": "idrive",
+      "manifest": "mgu-app.json",
+      "icon": "icon.png",
+      "build": {
+        "node": "idrive/build-store.js",
+        "output": "idrive/store-output.tgz"
+      }
+    }
+  ]
+}

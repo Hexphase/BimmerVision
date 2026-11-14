@@ -1,3 +1,10 @@
+# BimmerVision 0.2.5
+
+- Removed the artificial 1 MiB/s recording-download cap when the recorder explicitly reports no write in progress.
+- Idle downloads use larger bounded reads; capture status and USB validity are still checked between reads.
+- Starting recording during a download restores the recording-priority rate cap, and queued capture data always takes priority.
+- Complete-recording buffering before playback remains enabled.
+
 # BimmerVision 0.2.4
 
 - One Store Install action now installs the iDrive interface and its required recorder companion.

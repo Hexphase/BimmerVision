@@ -57,6 +57,7 @@ function Transfer(o) {
       var t = process.hrtime();
       return t[0] * 1000 + t[1] / 1e6;
     };
+  this.explicitBandwidth = o.bytesPerSecond !== undefined;
   this.bandwidth = Math.max(
     32768,
     Math.min(1048576, o.bytesPerSecond || 1048576)
@@ -643,16 +644,20 @@ Transfer.prototype.handle = async function (req, res, generation) {
           : {}
       )
     );
+    var initialStatus = await this.status();
+    var idleRead = initialStatus && initialStatus.writeInProgress === false && !initialStatus.activeId;
+    live();
     source = fs.createReadStream(file, {
       start: start,
       end: end,
-      highWaterMark: this.devMode ? 262144 : 32768,
+      highWaterMark: this.devMode || (!this.explicitBandwidth && idleRead) ? 262144 : 32768,
       flags: fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW,
     });
     this.streams.add(source);
     await new Promise(function (resolve, reject) {
       var timer = null,
-        finished = false;
+        finished = false,
+        paced = true;
       async function priority() {
         if (finished) return;
         try {
@@ -671,6 +676,10 @@ Transfer.prototype.handle = async function (req, res, generation) {
             timer = setTimeout(priority, 25);
             return;
           }
+          // Full buffering must not inherit the capture-protection speed cap
+          // while the recorder explicitly reports no write in progress.
+          paced = !self.devMode && (self.explicitBandwidth || !status ||
+            status.writeInProgress !== false || !!status.activeId);
           if ((await self.library.resolve(match[1], match[2])) !== file)
             throw failure(503, "USB recording path changed");
           if (finished) return;
@@ -720,7 +729,7 @@ Transfer.prototype.handle = async function (req, res, generation) {
             drained = true;
             next();
           });
-        if (self.devMode) {
+        if (!paced) {
           elapsed = true;
           next();
         } else {

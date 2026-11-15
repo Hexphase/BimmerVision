@@ -22,6 +22,8 @@ function UI(o) {
   this.closed = false;
   this.listeners = [];
   this.cache = {};
+  this.rendering = null;
+  this.renderAgain = false;
   this.visit = null;
   this.drivePage = 0;
   this.qrUrl = "";
@@ -121,6 +123,17 @@ UI.prototype.initialize = async function () {
   await this.rhmi.mapEntryState(this.entry, home);
   await this.render();
 };
+UI.prototype.showRecordingAlert = async function (notice) {
+  if(this.closed)return;
+  var expiresAt=Date.now()+1800;
+  var overlay=this.component('RECORDING_ALERT'),text=this.component('RECORDING_ALERT_TEXT');
+  if(!overlay||!text||!text.setValue)throw Error('Recording notification overlay unavailable');
+  if(overlay.updateResources)await overlay.updateResources();
+  await text.setValue(0,'Description_Text',notice.message,'Text');
+  if(this.closed||notice.kind!=='test'&&this.intent().continuous===false)return;
+  if(Date.now()>expiresAt)throw Error('Recording notification expired');
+  await this.rhmi.openState('RECORDING_ALERT');
+};
 UI.prototype.openMenu = async function () {
   if (this.closed) return;
   this.clearDeleteNotice();
@@ -140,7 +153,7 @@ UI.prototype.press = async function (row) {
   if (this.closed || !this.visible) return;
   var desk = this.desk(),
     intent = this.intent();
-  if (desk.setupPending && ["HOME_ALL", "HOME_REAR", "HOME_DELETE"].indexOf(row) >= 0) {
+  if (desk.setupPending && (this.page === "home" && ["HOME_ALL", "HOME_LEFT"].indexOf(row) >= 0 || this.page === "usb" && row === "HOME_DELETE" || this.page === "delete-confirm" && row === "HOME_ALL")) {
     this.message = desk.state || "Recorder setup pending";
     await this.render();
     return;
@@ -151,21 +164,29 @@ UI.prototype.press = async function (row) {
         this.message = "Connect a writable USB drive before recording.";
       else {
         this.message = "";
-        this.update({ continuous: intent.continuous === false });
+        this.update({ continuous: intent.continuous !== true });
       }
     }
     else if (row === "HOME_FRONT") {
+      this.message = "";
+      this.update({ cluster: { enabled: !(intent.cluster && intent.cluster.enabled === true) } });
+    }
+    else if (row === "HOME_REAR") {
       this.clearDeleteNotice();
       this.page = "usb";
       this.drivePage = 0;
-    } else if (row === "HOME_REAR") {
+    } else if (row === "HOME_LEFT") {
       if(!desk.drive){this.message="Connect a writable USB drive first.";await this.render();return;}
       this.revoke();
       this.visit = crypto.randomBytes(16).toString("hex");
       this.page = "connect";
       this.beat();
     }
-    else if (row === "HOME_LEFT") {this.page="settings";this.message="";}
+    else if (row === "HOME_RIGHT") {this.page="settings";this.message="";}
+  } else if (this.page === "settings") {
+    var navigation = { HOME_ALL: "always", HOME_FRONT: "blinkers", HOME_REAR: "off" }[row];
+    if (navigation) { this.message = ""; this.update({ cluster: { navigation: navigation } }); }
+    else if (row === "HOME_LEFT") { this.message = ""; this.update({ cluster: { blinkersOnly: !(intent.cluster && intent.cluster.blinkersOnly === true) } }); }
   } else if (this.page === "delete-confirm") {
     if(row === "HOME_ALL"){
       if(!desk.drive||desk.drive.mount!==this.deleteVolume){this.message="The selected USB drive changed. Nothing deleted.";this.page="usb";}
@@ -216,7 +237,21 @@ function bytes(n) {
   } while (n >= 1024 && i < 3);
   return n.toFixed(1) + " " + units[i];
 }
-UI.prototype.render = async function () {
+UI.prototype.render = function () {
+  if (this.closed) return Promise.resolve();
+  if (this.rendering) { this.renderAgain = true; return this.rendering; }
+  var self = this;
+  this.rendering = (async function () {
+    try {
+      do {
+        self.renderAgain = false;
+        await self.renderPage();
+      } while (self.renderAgain && !self.closed);
+    } finally { self.rendering = null; }
+  })();
+  return this.rendering;
+};
+UI.prototype.renderPage = async function () {
   if (this.closed) return;
   var desk = this.desk(),
     intent = this.intent(),
@@ -231,10 +266,10 @@ UI.prototype.render = async function () {
   }
   if(this.visible && desk.state==="Recording" && desk.activeId && !desk.error && !desk.deleting) labels.HOME_TITLE="BimmerVision   "+(Math.floor(this.nowMs()/500)%2?"○":"●")+" REC";
   if(this.page === "connect" && !drive){this.revoke();this.page="home";this.message="USB disconnected. Connect Phone unavailable.";}
-  var enabled = intent.continuous !== false;
+  var enabled = intent.continuous === true;
   if (this.page === "home") {
     labels.HOME_STATUS =
-      (desk.state || "Recorder unavailable") + (drive && typeof desk.recordingCount === "number" ? " · " + desk.recordingCount + " recordings" : "") +
+      ((desk.state === "Recording" || desk.activeId) ? "Recording" : (desk.state || "Recorder unavailable")) + (drive && typeof desk.recordingCount === "number" ? " · " + desk.recordingCount + " recordings" : "") +
       "\n" +
       (drive
         ? (drive.name || drive.mount || "USB") +
@@ -255,9 +290,13 @@ UI.prototype.render = async function () {
         ? "Pause recording"
         : "Enable recording"
       : "Enable recording";
-    labels.HOME_FRONT = "USB storage";
-    labels.HOME_REAR = "Connect Phone";
-    labels.HOME_LEFT = "Settings / About";
+    var clusterEnabled = intent.cluster && intent.cluster.enabled === true,
+      cluster = desk.cluster || {},
+      clusterStatus = cluster.error ? "Preview unavailable" : { starting: "Starting", showing: "Live", hidden: "Hidden", waiting: "Waiting", error: "Preview unavailable" }[cluster.state];
+    labels.HOME_FRONT = "Cluster cameras: " + (clusterEnabled ? "On" + (clusterStatus ? " · " + clusterStatus : "") : "Off");
+    labels.HOME_REAR = "USB storage";
+    labels.HOME_LEFT = "Connect Phone";
+    labels.HOME_RIGHT = "Settings / About";
   } else if (this.page === "delete-confirm") {
     labels.HOME_STATUS="Erase all unlocked recordings?\n"+(drive ? drive.name||drive.mount : "USB disconnected")+" · "+(desk.lockedRecordingCount==null?"Locked count unavailable":desk.lockedRecordingCount+" locked")+"\nLocked recordings are kept. This cannot be undone.";
     labels.HOME_ALL="Erase unlocked recordings";labels.HOME_FRONT="Cancel";labels.HOME_AUTO="Back";
@@ -291,13 +330,18 @@ UI.prototype.render = async function () {
     if (drives.length > 4) labels.HOME_RIGHT = "Next drives";
     labels.HOME_AUTO = "Back";
   } else if(this.page==="settings") {
+    var navigation = intent.cluster && intent.cluster.navigation || "blinkers";
+    labels.HOME_ALL = (navigation === "always" ? "✓ " : "") + "Navigation: Always";
+    labels.HOME_FRONT = (navigation === "blinkers" ? "✓ " : "") + "Navigation: Blinkers only";
+    labels.HOME_REAR = (navigation === "off" ? "✓ " : "") + "Navigation: Off";
+    labels.HOME_LEFT = "Only blinker cameras: " + (intent.cluster && intent.cluster.blinkersOnly === true ? "On" : "Off");
     labels.HOME_STATUS="BimmerVision "+require('../package.json').version+" · GitHub: Hexphase/BimmerVision\nComputer: Visit BimmerVision.App and connect your USB drive to view footage.\nPhone: Connect Phone on the previous page connects directly to your car.";
     labels.HOME_AUTO="Back";
   } else {
     labels.HOME_STATUS = "Connect Phone" +
       (transfer.paired ? " · Connected" : transfer.code ? " · Code " + transfer.code : "") + "\n" +
       (transfer.paired ? "One device connected" : transfer.code ? (transfer.url||"").split("/?")[0] : transfer.error || "Starting connection…") +
-      "\nBMW Wi-Fi / CarPlay · Keep this screen open";
+      "\n" + "BMW Wi-Fi / CarPlay · Keep this screen open";
     labels.HOME_AUTO = "Back";
   }
   var notice=this.message||desk.storageWarning||desk.error||deletionNotice;
@@ -311,7 +355,8 @@ UI.prototype.render = async function () {
     if (value !== undefined) await this.text(name, value);
     if (name === "HOME_ALL" && c && c.setEnabled)
       await c.setEnabled(this.page !== "home" || !!drive);
-    if(name === "HOME_REAR" && c && c.setEnabled) await c.setEnabled(this.page !== "home" || !!drive);
+    if(name === "HOME_FRONT" && c && c.setEnabled) await c.setEnabled(true);
+    if(name === "HOME_LEFT" && c && c.setEnabled) await c.setEnabled(this.page !== "home" || !!drive);
     if(name === "HOME_DELETE" && c && c.setEnabled) await c.setEnabled(!!drive && !desk.deleting);
     if (name === "HOME_QR" && c && c.setVisible)
       await c.setVisible(this.page === "connect" && transfer.on === true && !!transfer.url && !this.preferExternalQr);
@@ -339,7 +384,6 @@ UI.prototype.publishQr = async function (url) {
 };
 UI.prototype.paint = async function () {
   if (this.closed || !this.visible) return;
-  this.beat();
   if (this.page === "connect" && this.visit) {
     var transfer = this.desk().transfer || {};
     if (transfer.url && transfer.url !== this.qrUrl && this.display) {

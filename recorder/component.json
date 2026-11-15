@@ -1,7 +1,7 @@
 {
   "id": "bimmervision-recorder",
   "kind": "tool",
-  "version": "0.2.8",
+  "version": "0.2.24",
   "title": "BimmerVision Recorder",
   "description": "Required recorder service for BimmerVision. Sets up this car automatically; never includes another car’s credentials.",
   "optional": true,
@@ -11,7 +11,8 @@
   ],
   "requires": {
     "mgu-deploy": "0.8.18",
-    "mgu-updater": "0.8.45"
+    "mgu-updater": "0.8.45",
+    "cluster-render": "0.6.0"
   },
   "files": [
     {
@@ -33,9 +34,15 @@
       "from": "files/archive.js"
     },
     {
+      "path": "blind-spot.js",
+      "mode": "0644",
+      "sha256": "e651da3183a77b5a86f2d8d018ccd83186e8f3e6d764f178134833228d381774",
+      "from": "files/blind-spot.js"
+    },
+    {
       "path": "bootstrap.js",
       "mode": "0644",
-      "sha256": "d9b29306bb81566ecfaef391fe4cd13074448329ea3afd531d5eb5a9d8625dc7",
+      "sha256": "5f7fdf6873c1731b21eeb466c5dd73d4aec2d8f353047b4b138446dc05001413",
       "from": "files/bootstrap.js"
     },
     {
@@ -45,10 +52,148 @@
       "from": "files/browser.js"
     },
     {
+      "path": "camera-control.js",
+      "mode": "0644",
+      "sha256": "4d1c8584c71b8dfa40c4cfe33118b1712aacb66105cef0558b5d2b13c01c8edd",
+      "from": "files/camera-control.js"
+    },
+    {
       "path": "check.js",
       "mode": "0644",
       "sha256": "5907ff223d3fffbc1035b288bcd7be3813905ffe692737c52eac42ef8b0381b3",
       "from": "files/check.js"
+    },
+    {
+      "path": "cluster/DECODER-PROVENANCE.json",
+      "mode": "0644",
+      "sha256": "7af520f50759a5df24bda14d2379866788e2e044ddd0dcb16fea04fdba317cd2",
+      "from": "files/cluster/DECODER-PROVENANCE.json"
+    },
+    {
+      "path": "cluster/LICENSE.bvcamera-decode",
+      "mode": "0644",
+      "sha256": "31c8f670c81686499ce4fc8e8ee45d9d57964ea706e188d58866736e95353166",
+      "from": "files/cluster/LICENSE.bvcamera-decode"
+    },
+    {
+      "path": "cluster/LICENSE.intel-mediasdk",
+      "mode": "0644",
+      "sha256": "dfd67773578903698f9ff4a61eb8f2d84810cbecd56f3f3cee8c649f813b6ea6",
+      "from": "files/cluster/LICENSE.intel-mediasdk"
+    },
+    {
+      "path": "cluster/THIRD-PARTY.md",
+      "mode": "0644",
+      "sha256": "61972f8ae326eff3f17e5031eeeb7ad19da6d49068939c60cf523c75a885f3c0",
+      "from": "files/cluster/THIRD-PARTY.md"
+    },
+    {
+      "path": "cluster/bvcamera-decode",
+      "mode": "0755",
+      "sha256": "fd1f8fe3c09fb1ec3698d286fc1fb20592472819f3b237facbe23539a49bfcd5",
+      "from": "files/cluster/bvcamera-decode"
+    },
+    {
+      "path": "cluster/camera-pair.js",
+      "mode": "0644",
+      "sha256": "92c42dd2a2a3d941b11945716f8afc6b1524bc07ea5c4da3e0acfed7832d64b8",
+      "from": "files/cluster/camera-pair.js"
+    },
+    {
+      "path": "cluster/controller.js",
+      "mode": "0644",
+      "sha256": "1185386703c2492556b6f00b3b4ee05128ab52380fd3a3c4a7830bcef753ebb7",
+      "from": "files/cluster/controller.js"
+    },
+    {
+      "path": "cluster/decoded-frame.js",
+      "mode": "0644",
+      "sha256": "671af23772e171bd0bb78e9dd230c8bc231306e4589e82526cd582ff533c4881",
+      "from": "files/cluster/decoded-frame.js"
+    },
+    {
+      "path": "cluster/decoder-session.js",
+      "mode": "0644",
+      "sha256": "73aa96d01aa5fcc4bfa2cefe886e3258139b5e2f06bd03ceecaa02755b0571f7",
+      "from": "files/cluster/decoder-session.js"
+    },
+    {
+      "path": "cluster/fifo-writer.js",
+      "mode": "0644",
+      "sha256": "d930fd2153696be3a29aaf41cdbb06535fa887bb43032a8ff8514a99fb398bda",
+      "from": "files/cluster/fifo-writer.js"
+    },
+    {
+      "path": "cluster/frame-feeder.js",
+      "mode": "0644",
+      "sha256": "418db212bc90bbdfe7ef42b0df0cd6d8a445b62b657f96d8e903b4d0a6ddcf08",
+      "from": "files/cluster/frame-feeder.js"
+    },
+    {
+      "path": "cluster/independent-worker.js",
+      "mode": "0644",
+      "sha256": "e170e4e4023ca5073bb27eb50fd284e41bc21a90119e355583b69844cec9f9a4",
+      "from": "files/cluster/independent-worker.js"
+    },
+    {
+      "path": "cluster/input.js",
+      "mode": "0644",
+      "sha256": "f297ec3ce7b0a0d95a2a6103d0a800445ef1dbd24bdb84daa23b4e2fbc14f9a8",
+      "from": "files/cluster/input.js"
+    },
+    {
+      "path": "cluster/pacer.js",
+      "mode": "0644",
+      "sha256": "3d4803e7baf253f8b0fdb899530867ba79b93acde1ff1618b9e37c6c1cd972cf",
+      "from": "files/cluster/pacer.js"
+    },
+    {
+      "path": "cluster/process.js",
+      "mode": "0644",
+      "sha256": "0363b0034d7393e496fdea3de44123774319b8d23d041cc58db899f1355e2d92",
+      "from": "files/cluster/process.js"
+    },
+    {
+      "path": "cluster/progress-watch.js",
+      "mode": "0644",
+      "sha256": "9f9f3e075a684ca2d3cec8bfe5fa54d7b017a19acb131388bd7743b9937865da",
+      "from": "files/cluster/progress-watch.js"
+    },
+    {
+      "path": "cluster/renderer-link.js",
+      "mode": "0644",
+      "sha256": "0e2cac43d8275d9d664b504cfc5255e864cddb6d5ab53db3b188a8071e131a0c",
+      "from": "files/cluster/renderer-link.js"
+    },
+    {
+      "path": "cluster/rgba-output.js",
+      "mode": "0644",
+      "sha256": "80f4297a5d78ea9ce0f1361de42637488b819fc3c9d36e39d73a5b662878d077",
+      "from": "files/cluster/rgba-output.js"
+    },
+    {
+      "path": "cluster/worker.js",
+      "mode": "0644",
+      "sha256": "a7f508f90f63493af89936dacda1c50e3a30966210ca7d36fb0bca8c08df1d2f",
+      "from": "files/cluster/worker.js"
+    },
+    {
+      "path": "cluster-manager.js",
+      "mode": "0644",
+      "sha256": "a964b4b840bc1544d74816c97a9593f430d7167472ef17177543cd1f2da622b6",
+      "from": "files/cluster-manager.js"
+    },
+    {
+      "path": "cluster-navigation.js",
+      "mode": "0644",
+      "sha256": "5870f797232fa5bc5a6c3c74eb499bcf113023331c1c187805a147fd8863d1c5",
+      "from": "files/cluster-navigation.js"
+    },
+    {
+      "path": "cluster-preference.js",
+      "mode": "0644",
+      "sha256": "54719e230254b44e4fdcda34b7406299d4731e7ee23c369c2536165bfb2334e7",
+      "from": "files/cluster-preference.js"
     },
     {
       "path": "drive-actions.js",
@@ -71,19 +216,19 @@
     {
       "path": "main.js",
       "mode": "0644",
-      "sha256": "2d5c3a9a33370de155437b68b4a082c06e7e09633d00c29d73ece3d859c974bf",
+      "sha256": "067766ab41dba24e892ab0ddf9ed260b77314b2076658014d80e9fd9ac1e4257",
       "from": "files/main.js"
     },
     {
       "path": "map-tiles.js",
       "mode": "0644",
-      "sha256": "1558c9b72187dd4afbf2dce5c024dcb450b562024a36039e131819998763265c",
+      "sha256": "b85c1a25ac8127762540052b183c1813f516163b441487808fb01268a479ccac",
       "from": "files/map-tiles.js"
     },
     {
       "path": "mobile-web/app.js",
       "mode": "0644",
-      "sha256": "b5d27d9d2cfd971fa4f7256dc3f862aacd786a35a9a13f1252eaa8671a67e44c",
+      "sha256": "329edb51699ccf49516712ad5ef4cbd1d38d3cd09bc89c11f26c7b0413198b53",
       "from": "files/mobile-web/app.js"
     },
     {
@@ -119,7 +264,7 @@
     {
       "path": "mobile-web/bvr-parser.js",
       "mode": "0644",
-      "sha256": "b7b3982b0de48140ec799c58c263f20be7168e5e71d5312dee04df6d155c3eee",
+      "sha256": "995e991cd67edd17f72206c454a960757938ca7de4c0ba62fdf53eb1aca54025",
       "from": "files/mobile-web/bvr-parser.js"
     },
     {
@@ -137,7 +282,7 @@
     {
       "path": "mobile-web/dark-osm-map.js",
       "mode": "0644",
-      "sha256": "6165a9dac06fcbeb018bf779241db888e859db9b48d990e0253044729429ce80",
+      "sha256": "c006e33924b3e8df40bbed7595df08bb78ee7fff9f690648d445e6733b16e475",
       "from": "files/mobile-web/dark-osm-map.js"
     },
     {
@@ -155,19 +300,19 @@
     {
       "path": "mobile-web/exporter.js",
       "mode": "0644",
-      "sha256": "4a63e53c253cb92f3c42be446aa465ed293b6103099e7417a63cddedc037dd02",
+      "sha256": "1b0f427a6e593d3b22c03e49c84cb1b4028eef6356f229c14aa9852bf3860160",
       "from": "files/mobile-web/exporter.js"
     },
     {
       "path": "mobile-web/index.html",
       "mode": "0644",
-      "sha256": "6e7170853895ecb2ad4bcd4ed7850a6ce43d8d72e8f19340a2b3a2480cbcd85f",
+      "sha256": "cb0adefbdcbca9ce3f9a126e1dfc3c5576062f73eb5da8c31bb418cf5d91cfdb",
       "from": "files/mobile-web/index.html"
     },
     {
       "path": "mobile-web/mobile.css",
       "mode": "0644",
-      "sha256": "79dfba88f923741fff476a7987ce8fad1333954645ffc5d810db052b7b38b41f",
+      "sha256": "9de59d37ae9ef864f5b9d841dae53f998a104ac5e40bfb490d7383a4ec05d4d0",
       "from": "files/mobile-web/mobile.css"
     },
     {
@@ -179,8 +324,14 @@
     {
       "path": "mobile-web/player.js",
       "mode": "0644",
-      "sha256": "c38da013b9bf3efe171a3028fb341e9660da152bf47dc651832aaaa4ab7e818c",
+      "sha256": "2c110af18b0bceac8e76b8de164ad25449ad67bb6cc40406bdc8a23efad360ca",
       "from": "files/mobile-web/player.js"
+    },
+    {
+      "path": "mobile-web/recording-notice.js",
+      "mode": "0644",
+      "sha256": "c4bb1b3449ef6af7e6cb37af9b2888a4f84567cdef30d5fb1cf7761399f1135f",
+      "from": "files/mobile-web/recording-notice.js"
     },
     {
       "path": "mobile-web/release-checker.js",
@@ -209,7 +360,7 @@
     {
       "path": "mobile-web/style.css",
       "mode": "0644",
-      "sha256": "997ddae0e89fa3fd10f768b436e05a1ecbccd852ff41396ac5e281e8a31a5f55",
+      "sha256": "71dbefcdf8c77b6335237ce7403df99bf09e9b2338a7f4be88c9beec0459da1e",
       "from": "files/mobile-web/style.css"
     },
     {
@@ -233,26 +384,38 @@
     {
       "path": "perception-schema.json",
       "mode": "0644",
-      "sha256": "452307af697492219416c89527b1ffda6d71d508413efbe50765bfd1ced66663",
+      "sha256": "9214327af3946fcf07eeb6b1d3521afaba45aafd38d2aca86fdc6ecb37c380b8",
       "from": "files/perception-schema.json"
     },
     {
       "path": "perception-transport.json",
       "mode": "0644",
-      "sha256": "512ba45b46193a9182be7a5ce369563184c17854f8b4010879c77c89c5943819",
+      "sha256": "ac4555bd9119ae2f5d714564a1835cd9452122d64c3869736e37b4a949c90b5b",
       "from": "files/perception-transport.json"
     },
     {
       "path": "perception.js",
       "mode": "0644",
-      "sha256": "7979105c5c5da5ea184c721446a0e5ed7682171890795d2335d7524f953d698d",
+      "sha256": "10f8b1e6eff18ff91a8b5627d3cb9a546534acf74c4ea0e09ea5d0d36e3ce6c5",
       "from": "files/perception.js"
+    },
+    {
+      "path": "phone-lease.js",
+      "mode": "0644",
+      "sha256": "40364ce07a66f1c1658bd76a42baed2607550f0e43ddbf7300a35c3b4cf1be96",
+      "from": "files/phone-lease.js"
     },
     {
       "path": "phone-network.js",
       "mode": "0644",
       "sha256": "90270089f13e47aec04a7990210131ecd299fd20ec355f038071bdfbe4873431",
       "from": "files/phone-network.js"
+    },
+    {
+      "path": "raw-zip.js",
+      "mode": "0644",
+      "sha256": "13b0ef542b8ab73391d2eef30ad0a774ee7ec917e9e1bb31d3923b50583b4702",
+      "from": "files/raw-zip.js"
     },
     {
       "path": "receiver",
@@ -263,7 +426,7 @@
     {
       "path": "recorder.js",
       "mode": "0644",
-      "sha256": "bd7fa442aca8ae3a7bbdd6b1e4c96df7ebff7a539924c9aae21816ff83ea019f",
+      "sha256": "2f324ff0b38866bcfdfd1e588a7cc32856b99b2b572654dc103298f90b989268",
       "from": "files/recorder.js"
     },
     {
@@ -271,6 +434,12 @@
       "mode": "0644",
       "sha256": "d08be34bb622bbb9e24a5d639ab0dc5ccc6eb50abf384468c94015033b43cdbc",
       "from": "files/recording-overview.js"
+    },
+    {
+      "path": "recording-preference.js",
+      "mode": "0644",
+      "sha256": "a6789015d556ee82da127f45bf3570289c2e12abf95d4c6db91ae328497851b4",
+      "from": "files/recording-preference.js"
     },
     {
       "path": "recovery.js",
@@ -293,7 +462,7 @@
     {
       "path": "speed-limit.js",
       "mode": "0644",
-      "sha256": "028547d7f1ebf5734dd1ed7a1a9a423e00ec50567b30cc230658e5e59508c1b9",
+      "sha256": "34cbd7a9e4bd6dc551e674abc1ca1d988cdef3b76a086fd3b55dc5c9c29399a0",
       "from": "files/speed-limit.js"
     },
     {
@@ -305,7 +474,7 @@
     {
       "path": "transfer.js",
       "mode": "0644",
-      "sha256": "a7f410ec8b414ef8c69b323d1c46cc9caf4f7fc470476f9029c2c7996a3342ba",
+      "sha256": "efdd188e2ccd3de1941c96e0ccc6956911563d0e6bcb21033f6676874766856c",
       "from": "files/transfer.js"
     },
     {
@@ -317,7 +486,7 @@
     {
       "path": "version.json",
       "mode": "0644",
-      "sha256": "b69768a08f0a80531a34c41b464ef6c42ab1f8129f8cbfe079cd5daf2381cd33",
+      "sha256": "8159f0944f6dfce2129a39f7f11a10c3d238b13c48f42ec778b40c1d724c129f",
       "from": "files/version.json"
     }
   ],

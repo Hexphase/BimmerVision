@@ -212,6 +212,30 @@
           ]
         }
       }
+    },
+    "100": {
+      "type": "overlay",
+      "name": "RECORDING_ALERT",
+      "properties": {
+        "Timeout": {
+          "value": 9000,
+          "type": "UInt"
+        }
+      },
+      "components": {
+        "101": {
+          "type": "label",
+          "name": "RECORDING_ALERT_TEXT",
+          "rows": [
+            {
+              "Description_Text": {
+                "value": "SID_RECORDING_ALERT",
+                "type": "StringId"
+              }
+            }
+          ]
+        }
+      }
     }
   }
 }

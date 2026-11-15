@@ -1,43 +1,74 @@
-# BimmerVision 0.2.8
+# BimmerVision 0.2.24 — testing prerelease
 
-- Enables direct pairing and recording access from BimmerVision Web hosted on GitHub Pages or BimmerVision.App.
-- Hosted connections use the existing one-device pairing code, origin-bound bearer authentication and a fixed website allowlist.
-- Adds browser preflight support while preserving the car’s built-in player, USB safety and recording-priority transfers.
+Continuous recording of BMW’s 360° cameras directly to USB on iDrive 7, plus live side-camera views in the instrument cluster when you signal.
 
-# BimmerVision 0.2.7
+- **Cluster cameras** has its own switch below Enable/Pause recording. Recording and preview work independently, with recording taking priority.
+- See the front camera between signals, or enable **Only blinker cameras** to show side views only while signaling.
+- Choose **Always**, **Blinkers only**, or **Off** for camera views during navigation.
+- A new BimmerVision hardware preview decoder and renderer client use bounded queues, paced frames and camera fades. Each switch uses a fresh camera image while background layers retain the cluster's Map area.
+- Includes the phone connection/playback fixes and persistent recording preferences from the development updates.
 
-- Fits both computer USB and direct phone viewing instructions into iDrive’s three-line About area.
-- Includes the export, navigation, speed-limit fallback and GitHub Release fixes from 0.2.6.
+## Install this test update
 
-# BimmerVision 0.2.6
+1. In MGU Store, add this prerelease catalog as a URL source: [0.2.24 test catalog](https://github.com/Hexphase/BimmerVision/releases/download/v0.2.24/catalog.json).
+2. Install or update **BimmerVision** from that source. Its matching **BimmerVision Recorder 0.2.24** companion is required; the catalog declares it as an automatic dependency.
+3. Keep **Cluster renderer 0.6.0+** installed separately. Add [robertnisipeanu/idrive-apps](https://github.com/robertnisipeanu/idrive-apps) as a Store source if it is unavailable.
+4. Keep the car parked for the first camera check. Select Map in the cluster, enable Cluster cameras, then check front/left/right/cancel and recording status.
 
-- Fixed export branding overlapping the date/time and enlarged exported turn arrows and steering wheel.
-- Removed the HTTPS speed suggestion from export controls.
-- Connect Phone has a single Back action; Settings/About explains computer USB viewing at BimmerVision.App and direct phone connection.
-- Update checks fetch fresh GitHub Release information directly from the viewing device.
-- Speed-limit lookup can use the viewing device’s Internet connection when the car cannot retrieve an explicit mapped limit; unknown limits remain blank.
+The release also includes both matching install packages for manual installation. Keep the app and recorder on the same version.
 
-# BimmerVision 0.2.5
+## Validation
 
-- Removed the artificial 1 MiB/s recording-download cap when the recorder explicitly reports no write in progress.
-- Idle downloads use larger bounded reads; capture status and USB validity are still checked between reads.
-- Starting recording during a download restores the recording-priority rate cap, and queued capture data always takes priority.
-- Complete-recording buffering before playback remains enabled.
+**Hardware testing is pending.** 194 automated tests pass, native host tests pass under sanitizers, and the Linux decoder builds reproducibly. The new decoder has not yet run on BMW hardware, so camera appearance, camera order, smoothness, sustained performance and recording/phone concurrency still need vehicle validation. Compatible iDrive 7 MGU with 360° Surround View is required; iDrive 8 is untested.
 
-# BimmerVision 0.2.4
+Keep your current app and recorder packages for rollback. This testing prerelease does not replace the stable Store catalog. Updating does not erase your USB recordings.
 
-- One Store Install action now installs the iDrive interface and its required recorder companion.
-- The companion is managed by the Store, including its service, recovery registration, enablement and updates.
-- Each car creates its own private phone certificates and discovers its actual installed app identity. No copied hardware enrollment, keys or SSH setup is needed.
-- Fresh camera setup validates the actual multiplexed RTP/H.264 stream. Missing or unsupported streams remain pending and retry.
-- The app explains a required first-install iDrive restart; the software does not reboot a car automatically.
-- Existing verified standalone BimmerVision recorder setups can migrate locally; recordings on USB are preserved.
+## Cluster renderer
 
-- Playback downloads each complete recording before enabling Play, cancels obsolete timeline loads, and handles damaged camera packets and end-of-clip decoding.
-- Export completion waits now have cancellation and bounded failure handling instead of waiting indefinitely.
-- Recorded GPS is indexed for drive maps; speed limits use explicit mapped limits when available.
-- Web Settings includes a single BimmerVision.App website button.
+Cluster camera display uses the separately downloaded [Cluster renderer](https://github.com/robertnisipeanu/idrive-apps). It is required and must remain installed.
 
-Supported release target: iDrive 7 MGU Linux x86-64 with supported camera hardware. The Store’s installed-app icon follows the iDrive menu icon, as required by this Store version.
+# BimmerVision 0.2.23
 
-See `CAR-SHA256SUMS` for the two release artifacts.
+BimmerVision is the first app to enable continuous recording of BMW’s 360° camera system directly to a USB flash drive on iDrive 7. This update also integrates live cameras in the instrument cluster: use the left or right blinker to see the matching side camera, with fades between views.
+
+- **Cluster cameras** has its own On/Off control directly below Enable/Pause recording. Recording and preview work independently; recording always takes priority.
+- Use the front camera between signals, or enable **Only blinker cameras** to keep the Map visible until you signal, regardless of navigation.
+- Choose **Always**, **Blinkers only**, or **Off** while navigating. Off hides every cluster camera during navigation.
+- Bounded preview queues, a separate low-priority decoder, coalesced camera selection and paced 15 FPS output handle rapid switching and varying frame arrival times.
+- Connect Phone stays available with cluster preview enabled. Library loading and phone playback were confirmed stable on the test car after fixing session expiry and server cleanup races.
+- Recording preferences persist across head-unit restarts. Direct capture requests the camera stream without using BMW’s Drive Recorder subscription service or performing a subscription check.
+- Playback handles parking-camera takeovers, and the phone player supports downloading original recordings with metadata. Recording slowdown notices and interruption/recovery notifications are included.
+
+## Requirements and installation
+
+For compatible **iDrive 7 MGU** cars with **360° Surround View**. A rear camera alone is insufficient; iDrive 8 and other head units are untested. Recording needs a writable USB drive; preview does not.
+
+**Cluster renderer (`cluster-render`) 0.6.0+ is required for cluster cameras.** Add `robertnisipeanu/idrive-apps` as a source in MGU Store if it cannot resolve this dependency. BimmerVision’s recorder companion is installed automatically. The separate Turn View app is not required.
+
+Add `Hexphase/BimmerVision` in MGU Store, then install or update BimmerVision and its matching recorder companion together. Select Map in the cluster and turn on Cluster cameras in BimmerVision.
+
+## Validation and limits
+
+169 automated tests pass. On the project’s car, the owner confirmed camera switching/fades, independent recording and preview, navigation policies, blinker-only mode, and phone connection/playback with preview enabled. The latest preview pacing was benchmarked while parked; a full road test of that pacing and a complete head-unit sleep/wake cycle remain unverified. Occasional preview hitches may remain; saved recording playback was reported smooth.
+
+The tested vehicle has an activated BMW Drive Recorder entitlement. Recording was verified with the official Drive Recorder disabled and suspended, but a vehicle without an entitlement has not yet been physically tested. Compatibility depends on vehicle hardware and software.
+
+## Rollback
+
+Keep the previous release’s app and recorder packages and `CAR-SHA256SUMS`. Turn cluster cameras off, then reinstall both matching packages from that release through MGU Store. Updating or rolling back does not erase USB recordings. The previous public release is [0.2.8](https://github.com/Hexphase/BimmerVision/releases/tag/v0.2.8); it does not have integrated cluster cameras.
+
+# BimmerVision 0.2.18
+
+- Enable and Pause recording are saved persistently and survive head-unit restarts.
+- A missing preference consistently displays Enable recording and stays paused until enabled; the first press enables recording.
+- Existing explicit recording preferences migrate during upgrade. Phone pairing and erase commands remain temporary.
+
+# BimmerVision 0.2.12
+
+- Recorded parking/front-wide/rear-wide camera takeovers play as intact images with one matching label, instead of being split into four labelled camera tiles. Normal recorder mode restores the selected camera layout.
+- Camera view labels follow archived timestamps during playback and seeking. The camera selector and calibration action are unavailable during a takeover.
+- Camera state is seeded at each new recording segment. Unknown state displays a generic raw view; legacy recordings without camera-state metadata retain their existing mapping.
+- Temporary camera-status gaps recover when the same mode is observed again. A seek into the brief interval before a new mode's first frame shows a labelled blank rather than a stale image or a timeout.
+- Retain the recording/download notice, native camera activation, and existing blind-spot/sign metadata. No camera-request or transfer-pacing policy changes.
+
+This update is for the web player served directly by the car. The separate hosted viewer, Mac preview and export compositor are unchanged.

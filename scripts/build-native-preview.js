@@ -1,0 +1,18 @@
+'use strict';
+const fs=require('fs'),path=require('path'),cp=require('child_process'),crypto=require('crypto');
+const root=path.resolve(__dirname,'..'),native=path.join(root,'native/bvcamera-decode'),output=path.join(root,'recorder/files/cluster');
+const zig=process.env.ZIG||'zig';
+const version=cp.spawnSync(zig,['version'],{encoding:'utf8'});
+if(version.error||version.status!==0||version.stdout.trim()!=='0.14.1')throw Error('Set ZIG to a verified official Zig0.14.1 executable');
+const build=cp.spawnSync('/bin/sh',[path.join(native,'build.sh'),'--linux'],{cwd:root,env:{...process.env,ZIG:zig},stdio:'inherit'});
+if(build.error||build.status!==0)throw Error('Native preview decoder build failed');
+const digest=b=>crypto.createHash('sha256').update(b).digest('hex');
+let files=['main.c','frame.c','frame.h','build.sh','verify-elf.py','LICENSE'];
+files=files.concat(fs.readdirSync(path.join(native,'vendor/intel-mediasdk')).sort().map(n=>'vendor/intel-mediasdk/'+n));
+const binary=fs.readFileSync(path.join(native,'build/bvcamera-decode'));
+if(binary.toString('hex',0,4)!=='7f454c46'||binary[4]!==2||binary.readUInt16LE(18)!==62)throw Error('Preview decoder must be Linuxx86_64 ELF');
+fs.writeFileSync(path.join(output,'bvcamera-decode'),binary,{mode:0o755});fs.chmodSync(path.join(output,'bvcamera-decode'),0o755);
+fs.copyFileSync(path.join(native,'LICENSE'),path.join(output,'LICENSE.bvcamera-decode'));
+fs.copyFileSync(path.join(native,'vendor/intel-mediasdk/LICENSE'),path.join(output,'LICENSE.intel-mediasdk'));
+fs.writeFileSync(path.join(output,'DECODER-PROVENANCE.json'),JSON.stringify({schema:1,name:'BimmerVision hardware preview decoder',sha256:digest(binary),source:'native/bvcamera-decode',license:'MIT',copyright:'2026 Hexphase',compiler:{name:'Zig',version:'0.14.1',target:'x86_64-linux-gnu.2.17'},buildCommand:'ZIG=<verified Zig0.14.1 executable> node scripts/build-native-preview.js',intelHeaders:{repository:'Intel-Media-SDK/MediaSDK',commit:'d0577708a6b3f209982841077334d395f9089890',license:'MIT'},sources:files.map(n=>({path:'native/bvcamera-decode/'+n,sha256:digest(fs.readFileSync(path.join(native,n)))}))},null,2)+'\n');
+console.log('Packaged original BimmerVision decoder '+digest(binary));

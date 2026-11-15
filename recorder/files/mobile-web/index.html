@@ -9,8 +9,8 @@
   <meta name="theme-color" content="#0b0b0c">
   <title>BimmerVision</title>
   <link rel="icon" type="image/x-icon" href="assets/bimmervision.ico">
-  <link rel="stylesheet" href="style.css?v=42">
-  <link rel="stylesheet" href="mobile.css?v=50">
+  <link rel="stylesheet" href="style.css?v=65">
+  <link rel="stylesheet" href="mobile.css?v=51">
 </head>
 <body class="mobile-redesign">
   <div class="app-shell">
@@ -61,6 +61,8 @@
       <a id="releaseNoticeLink" href="https://github.com/Hexphase/BimmerVision/releases" target="_blank" rel="noopener noreferrer">View release ↗</a>
       <button id="dismissReleaseNotice" type="button" aria-label="Dismiss update notice">×</button>
     </aside>
+
+    <aside id="recordingDownloadNotice" class="recording-notice" role="status" hidden></aside>
 
     <!-- TAB 1: RECORDINGS VIEW (Drives Library & Full Drive Overview with Route Map) -->
     <!-- Debug Banner (hidden unless 'Diagnostics' is enabled) -->
@@ -237,10 +239,10 @@
                   <span id="hudSpeedVal" class="hud-speed-val">0</span>
                   <span id="hudSpeedUnit" class="hud-speed-unit">MPH</span>
                 </div>
-                <div class="hud-limit-sign" title="Speed Limit">
+                <div class="hud-car-limit"><div class="hud-limit-sign" title="Car-detected speed limit">
                   <span class="hud-limit-label">SPEED</span>
-                  <span id="hudLimitVal" class="hud-limit-text">45</span>
-                </div>
+                  <span id="hudLimitVal" class="hud-limit-text">—</span>
+                </div><span class="hud-limit-source">Car-detected<br>speed limit</span></div>
               </div>
 
               <!-- Center: Turn Left Blinker, BMW M-Sport Steering Wheel, Turn Right Blinker -->
@@ -497,6 +499,11 @@
           ⬇ Download MP4 Video
         </a>
 
+        <div class="raw-recording-download">
+          <a id="rawRecordingDownloadLink" href="#" download>Download original BVR + metadata (ZIP)</a>
+          <p>Save one folder with the original recording, manifest and readable metadata. This is not an MP4 video.</p>
+        </div>
+
         <div style="text-align: center; margin-top: 10px;">
           <a id="nativeDownloadLink" href="#" style="display: none; font-size: 12px; color: rgba(160, 175, 205, 0.7); text-decoration: underline;" download>Download Raw 4-Cam Source Video (No Overlays)</a>
         </div>
@@ -612,6 +619,7 @@
         <h3 id="loadingModalTitle" class="loading-modal-title">Preparing your recording</h3>
         <p id="loadingModalStatus" class="loading-modal-status" aria-live="polite">Decoding video stream and synchronizing telemetry…</p>
         <p id="loadingProgress" class="loading-progress"></p>
+        <p id="recordingDownloadNoticeLoading" class="recording-notice recording-notice-inline" role="status" hidden></p>
         <div class="loading-actions"><button id="loadingCancelBtn" type="button">Cancel</button><button id="loadingRetryBtn" type="button" hidden>Try again</button></div>
       </div>
     </div>
@@ -619,18 +627,19 @@
 
   <!-- Scripts -->
   <script src="mp4-muxer.js?v=60"></script>
-  <script src="bvr-parser.js?v=60"></script>
+  <script src="bvr-parser.js?v=63"></script>
   <script src="rtp-h264.js?v=60"></script>
   <script src="drive-grouper.js?v=60"></script>
-  <script src="dark-osm-map.js?v=60"></script>
+  <script src="dark-osm-map.js?v=63"></script>
   <script src="sedan-selector.js?v=60"></script>
   <script src="drive-timeline.js?v=60"></script>
   <script src="speed-limit-client.js?v=60"></script>
-  <script src="player.js?v=60"></script>
-  <script src="exporter.js?v=60"></script>
+  <script src="player.js?v=63"></script>
+  <script src="exporter.js?v=64"></script>
   <script src="camera-store.js?v=60"></script>
   <script src="release-checker.js?v=60"></script>
   <script src="catalog-refresh.js?v=60"></script>
-  <script src="app.js?v=60"></script>
+  <script src="recording-notice.js?v=1"></script>
+  <script src="app.js?v=65"></script>
 </body>
 </html>

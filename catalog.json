@@ -5,19 +5,19 @@
       "id": "bimmervision",
       "kind": "app",
       "title": "BimmerVision",
-      "version": "0.2.8",
-      "description": "BimmerVision for iDrive 7. Recorder companion installs automatically.",
+      "version": "0.2.24",
+      "description": "The first app to enable continuous recording of BMW’s 360° camera system directly to a USB flash drive on iDrive 7. View the matching side camera in the instrument cluster when you use a blinker. Recording and preview work independently, with blinker-only and navigation options. Direct capture performs no BMW Drive Recorder subscription check; a car without an entitlement has not yet been physically tested. Requires iDrive 7 MGU, 360° Surround View and Cluster renderer 0.6.0+.",
       "mguHmi": [
         "ID7"
       ],
       "requires": {
-        "bimmervision-recorder": "0.2.8"
+        "bimmervision-recorder": "0.2.24"
       },
       "artifact": {
-        "name": "bimmervision@0.2.8.tgz",
-        "size": 62490,
-        "sha256": "29266175c7645938147e6b1650533f252fad1dc23f74937ae3495c2863c7432e",
-        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision@0.2.8.tgz"
+        "name": "bimmervision@0.2.24.tgz",
+        "size": 66618,
+        "sha256": "133f25c990cca39237afcfc6f82ad49ef0de3f8333c367b46958d15312ad6320",
+        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision@0.2.24.tgz"
       },
       "icon": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/store-icon.png",
       "iconSha256": "2699dd3db86fef702d0889c7c6bd7b231bb62490898a257dc41113a48a158836"
@@ -26,22 +26,23 @@
       "id": "bimmervision-recorder",
       "kind": "tool",
       "title": "BimmerVision Recorder",
-      "version": "0.2.8",
+      "version": "0.2.24",
       "description": "Required recorder service for BimmerVision. Sets up this car automatically; never includes another car’s credentials.",
       "mguHmi": [
         "ID7"
       ],
       "requires": {
         "mgu-deploy": "0.8.18",
-        "mgu-updater": "0.8.45"
+        "mgu-updater": "0.8.45",
+        "cluster-render": "0.6.0"
       },
       "optional": true,
       "uninstallable": true,
       "artifact": {
-        "name": "bimmervision-recorder@0.2.8.tgz",
-        "size": 1682871,
-        "sha256": "4cd79d6ebba2132499beda1021fb71c11c1ee88b33744d6efddc2f35993e298d",
-        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision-recorder@0.2.8.tgz"
+        "name": "bimmervision-recorder@0.2.24.tgz",
+        "size": 1749814,
+        "sha256": "c236b88f66d5b2c45df49081361cd00160aded36a99b020389bc80a3dbfccba4",
+        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision-recorder@0.2.24.tgz"
       }
     }
   ]

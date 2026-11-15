@@ -14,4 +14,10 @@
     </layoutGroup>
     <layoutGroup id="13" name="Titlebar"><component id="12" type="title"/></layoutGroup>
   </container>
+  <container id="100" type="overlay" widget="LT_State_Overlay">
+    <property id="13" value="9000"/>
+    <layoutGroup id="102" name="Table">
+      <component id="101" type="label" widget="LT_Table_Overlay_4Row_1TextDyn"/>
+    </layoutGroup>
+  </container>
 </application>

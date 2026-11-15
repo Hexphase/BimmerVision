@@ -13,7 +13,7 @@ MapTiles.prototype.read=async function(z,x,y,referer){
  var work=new Promise(function(resolve,reject){
   var headers={'User-Agent':'BimmerVision/0.2 (recording viewer)'};
   if(referer)headers.Referer=referer;
-  var request=self.request('https://tile.openstreetmap.org/'+z+'/'+x+'/'+y+'.png',{headers:headers},function(res){
+  var request=self.request({hostname:'tile.openstreetmap.org',path:'/'+z+'/'+x+'/'+y+'.png',headers:headers},function(res){
    if(res.statusCode!==200||!/^image\/png\b/.test(res.headers['content-type']||'')){res.resume();reject(Error('Map tiles unavailable'));return;}
    var chunks=[],length=0;
    res.on('data',function(b){length+=b.length;if(length>1048576){request.destroy();reject(Error('Map tile too large'));}else chunks.push(b);});

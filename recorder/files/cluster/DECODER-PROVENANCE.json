@@ -1,0 +1,81 @@
+{
+  "schema": 1,
+  "name": "BimmerVision hardware preview decoder",
+  "sha256": "fd1f8fe3c09fb1ec3698d286fc1fb20592472819f3b237facbe23539a49bfcd5",
+  "source": "native/bvcamera-decode",
+  "license": "MIT",
+  "copyright": "2026 Hexphase",
+  "compiler": {
+    "name": "Zig",
+    "version": "0.14.1",
+    "target": "x86_64-linux-gnu.2.17"
+  },
+  "buildCommand": "ZIG=<verified Zig0.14.1 executable> node scripts/build-native-preview.js",
+  "intelHeaders": {
+    "repository": "Intel-Media-SDK/MediaSDK",
+    "commit": "d0577708a6b3f209982841077334d395f9089890",
+    "license": "MIT"
+  },
+  "sources": [
+    {
+      "path": "native/bvcamera-decode/main.c",
+      "sha256": "3a078902e482e066f48c615323b027794b1a777b93f96ee9272c1d7f2586285c"
+    },
+    {
+      "path": "native/bvcamera-decode/frame.c",
+      "sha256": "e1bf86537e96d28373132c44d5c2e7a6f91ed5cc4922959058cf575f31434e57"
+    },
+    {
+      "path": "native/bvcamera-decode/frame.h",
+      "sha256": "92fe0123d16560d8ee344e503afc49a747fed92e8accc59c9f6b10ba41682908"
+    },
+    {
+      "path": "native/bvcamera-decode/build.sh",
+      "sha256": "7aca8a37e44f6a96fb570ab62172914e8086ebb27790d177be15febddb2c5631"
+    },
+    {
+      "path": "native/bvcamera-decode/verify-elf.py",
+      "sha256": "a6899b464636a64cfc3a7a6e70cce94d3a83d991f7db02c2746483b82f9dcf92"
+    },
+    {
+      "path": "native/bvcamera-decode/LICENSE",
+      "sha256": "31c8f670c81686499ce4fc8e8ee45d9d57964ea706e188d58866736e95353166"
+    },
+    {
+      "path": "native/bvcamera-decode/vendor/intel-mediasdk/LICENSE",
+      "sha256": "dfd67773578903698f9ff4a61eb8f2d84810cbecd56f3f3cee8c649f813b6ea6"
+    },
+    {
+      "path": "native/bvcamera-decode/vendor/intel-mediasdk/SHA256SUMS",
+      "sha256": "e2574d46ad8789c8fe13bc2662f854c3abca1b89dac367a50be2ffc6012170e1"
+    },
+    {
+      "path": "native/bvcamera-decode/vendor/intel-mediasdk/mfxcommon.h",
+      "sha256": "93c44564e8e4466f72902815ba8bc7fefa880345e5e1ffbf4ac361064d0079ef"
+    },
+    {
+      "path": "native/bvcamera-decode/vendor/intel-mediasdk/mfxdefs.h",
+      "sha256": "13db713b9dc89d49687bd5f7e16943865772ff5c6a5e98c6f4fb118392cd9521"
+    },
+    {
+      "path": "native/bvcamera-decode/vendor/intel-mediasdk/mfxdispatcherprefixedfunctions.h",
+      "sha256": "5737366ffcf9b9a94f135616555d6a342cc8d5eb60f6dbeff997e1dad90bc5d2"
+    },
+    {
+      "path": "native/bvcamera-decode/vendor/intel-mediasdk/mfxsession.h",
+      "sha256": "099db35b12c0f5b4c706161a11186ad702d9d9fc80cfabe4752111e6f258bda6"
+    },
+    {
+      "path": "native/bvcamera-decode/vendor/intel-mediasdk/mfxstructures.h",
+      "sha256": "0517bd31ba4db69cff0a84eecd8b82e6560af23132068b38c3534d0291eb26ac"
+    },
+    {
+      "path": "native/bvcamera-decode/vendor/intel-mediasdk/mfxvideo.h",
+      "sha256": "a92c01992d4e5a4849479d2116132830425a9683be0ebef47420b54e6348e1f8"
+    },
+    {
+      "path": "native/bvcamera-decode/vendor/intel-mediasdk/mfxvstructures.h",
+      "sha256": "9f10adb573171047aa2902ca660c4f690f9ec145496bccf181abe211569b3271"
+    }
+  ]
+}

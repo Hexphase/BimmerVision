@@ -192,6 +192,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById('loadingCancelBtn').addEventListener('click', () => {loadToken++;player.cancelLoad();hideLoadingModal();switchTab('recordings');});
   document.getElementById('loadingRetryBtn').addEventListener('click', () => {if(lastOpen)playClipInDrive(lastOpen.clip,lastOpen.autoPlay,lastOpen.startAt);});
   player.onTimeUpdate = seconds => { timeline.update(activeClip?.id,seconds); };
+  player.onCameraViewChange = view => { if(openCalibrateBtn) openCalibrateBtn.disabled=!!view?.single; };
   player.onStateChange = ({state,message,loaded,total}) => {
     const status = document.getElementById('playbackStatus');
     status.textContent = message || ({playing:'Playing',paused:'Paused',loading:'Preparing video…',buffering:'Buffering…',ended:'Drive complete',idle:'Choose a recording',error:'Playback unavailable'}[state] || state);
@@ -251,6 +252,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     return fetch(url, Object.assign({ credentials: "include" }, options, { headers }));
   }
 
+  startRecordingNotice({fetcher:apiFetch,nodes:[document.getElementById('recordingDownloadNotice'),document.getElementById('recordingDownloadNoticeLoading')]});
   const releaseChecker=new ReleaseChecker({fetcher:fetch.bind(window),storage:sessionStorage});
   let checkingUpdates=false;
   async function checkForUpdates(force=false){
@@ -431,6 +433,7 @@ document.addEventListener("DOMContentLoaded", async () => {
               <small style="display:block;color:var(--tesla-muted);font-size:11px;margin-top:2px;">${DriveTimeline.format(seg.clip.durationSeconds)} · ${formatBytes(seg.clip.bytes||0)}</small>
             </div>
             <div class="clip-row-actions" style="display:flex;align-items:center;gap:6px;">
+              <a class="clip-row-raw" href="/api/v1/recordings/${encodeURIComponent(seg.clip.id)}/raw.zip" download aria-label="Download original Clip ${i+1} and metadata as ZIP" title="Original BVR recording and metadata">Raw ZIP</a>
               <button class="btn-lock-clip" type="button" title="${seg.clip.locked ? 'Recording is locked. Tap to unlock.' : 'Lock recording to prevent deletion'}" style="display:flex;align-items:center;background:rgba(255,255,255,0.06);border:1px solid ${seg.clip.locked ? 'rgba(245,158,11,0.5)' : 'rgba(255,255,255,0.12)'};border-radius:6px;padding:4px 8px;cursor:pointer;color:${seg.clip.locked ? '#f59e0b' : 'var(--tesla-muted)'};transition:all 0.2s ease;">
                 ${getLockSvg(seg.clip.locked, 13)}
               </button>
@@ -824,7 +827,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if(token!==loadToken)return;
       hideLoadingModal();
 
-      if (!isClipIdentified(clip.id)) {
+      if (!isClipIdentified(clip.id) && player.requiresCameraMappingAt(startAt)) {
         openIdentifyModal({
           clip,
           drive,
@@ -1041,6 +1044,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       nativeLink.style.display = native ? "inline-block" : "none";
       nativeLink.href = (native && player.nativeInfo) ? player.nativeInfo.downloadUrl : '#';
     }
+    const rawLink=document.getElementById('rawRecordingDownloadLink');
+    const rawId=player.activeClipId || player.manifest?.id;
+    if(rawLink){rawLink.hidden=!rawId;rawLink.href=rawId?`/api/v1/recordings/${encodeURIComponent(rawId)}/raw.zip`:'#';}
     const nativeNote = document.getElementById('nativeExportNote');
     if (nativeNote) nativeNote.hidden = !native;
 

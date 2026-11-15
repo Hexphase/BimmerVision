@@ -1,7 +1,7 @@
 'use strict';
-// Record-only transport. No getters, setters, decoding or web-visible telemetry.
+// Isolated native helper sessions for perception, mirror reads and ICAM mode supervision.
 var fs=require('fs'),path=require('path'),crypto=require('crypto'),cp=require('child_process'),io=require('./io');
-var definition=require('./perception-schema.json'),transport=require('./perception-transport.json');
+var definition=require('./perception-schema.json'),transport=require('./perception-transport.json'),blindSpot=require('./blind-spot'),cameraControl=require('./camera-control');
 var streams=Object.create(null),MAX_LINE=131200;
 definition.streams.forEach(function(s){streams[s.serviceId+':'+s.eventId]=s;});
 function hex(n){return '0x'+('0000'+n.toString(16)).slice(-4);}
@@ -10,19 +10,23 @@ function commands(){
  definition.streams.forEach(function(s){var key=[s.serviceId,s.instanceId,s.majorVersion,s.eventgroup].join(':');if(!groups[key])groups[key]={source:s,events:[]};groups[key].events.push(s.eventId);});
  return Object.keys(groups).map(function(key){var g=groups[key],s=g.source;return ['sub',hex(s.serviceId),s.instanceId,s.majorVersion,s.eventgroup].concat(g.events.map(hex)).join(' ');});
 }
-function schemaEvent(){return {type:'perception-schema',schemaVersion:1,encoding:'someip-payload-base64',definitionSha256:crypto.createHash('sha256').update(JSON.stringify(definition)).digest('hex'),definition:definition};}
+function schemaEvent(){return {type:'perception-schema',schemaVersion:1,encoding:'someip-payload-base64',definitionSha256:crypto.createHash('sha256').update(JSON.stringify(definition)).digest('hex'),definition:definition,diagnosticSources:[blindSpot.definition],cameraControlSources:[cameraControl.definition]};}
 function Perception(options){
- var o=options||{};this.binary=o.binary||path.join(o.root||__dirname,'perception-receiver');this.spawn=o.spawn||cp.spawn;this.nowUs=o.nowUs||require('./recorder').nowUs;this.nowMs=o.nowMs||Date.now;this.onEvent=o.onEvent||function(){};
+ var o=options||{};this.mirrorOnly=o.mirrorOnly===true;this.cameraOnly=o.cameraOnly===true;if(this.cameraOnly&&this.mirrorOnly)throw Error('Separate camera and mirror sessions required');this.binary=o.binary||path.join(o.root||__dirname,'perception-receiver');this.spawn=o.spawn||cp.spawn;this.nowUs=o.nowUs||require('./recorder').nowUs;this.nowMs=o.nowMs||Date.now;this.onEvent=o.onEvent||function(){};
  this.child=null;this.starting=false;this.closed=false;this.wanted=false;this.epoch=0;this.nextAttempt=0;this.buffer='';this.bufferedBytes=0;this.discardLine=false;this.seen=Object.create(null);this.stopping=null;
  this.stats={notifications:0,payloadBytes:0,malformedLines:0};
+ var self=this;this.mirrorTimer=null;this.blindSpot=new blindSpot.BlindSpot({nowMs:this.nowMs,nowUs:this.nowUs,onEvent:function(e,t){self.emit(e,t);if(e.requiresTransportRestart&&self.child){try{self.child.kill('SIGTERM');}catch(ignore){}}}});
+ this.cameraTimer=null;this.camera=new cameraControl.CameraControl({nowMs:this.nowMs,nowUs:this.nowUs,onEvent:function(e,t){self.emit(e,t);}});
 }
 Perception.prototype.emit=function(event,atUs){if(this.closed)return;if(atUs==null)atUs=this.nowUs();if(!Number.isSafeInteger(atUs)||atUs<0)return;try{return this.onEvent(event,atUs);}catch(e){return false;}};
-Perception.prototype.health=function(state,reason,atUs){return this.emit({type:'perception-status',schemaVersion:1,state:state,reason:String(reason||'').slice(0,240)},atUs);};
+Perception.prototype.health=function(state,reason,atUs){return this.emit({type:'perception-status',schemaVersion:1,channel:this.cameraOnly?'camera-control':this.mirrorOnly?'blind-spot':'perception',state:state,reason:String(reason||'').slice(0,240)},atUs);};
 Perception.prototype.line=function(line){
  if(this.closed)return;
  if(/^error\b/.test(line)){this.health('transport-error',line);return;}
+ if(this.cameraOnly){var notice=/^ev 0x3003 0x8009(?:\s+(.*))?$/i.exec(line);if(notice)this.camera.observe(notice[1]||'');else{var state=/^ok ([0-9a-f]{6})\s*$/i.exec(line);if(state)this.camera.observe(state[1]);}return;}
  var match=/^ev (0x[0-9a-f]+) (0x[0-9a-f]+) ([0-9a-f]*)\s*$/i.exec(line);
  if(!match)return;
+ if(parseInt(match[1],16)===0xf8a6&&parseInt(match[2],16)===0x8001){if(match[3].length%2===0&&match[3].length<=4096)this.blindSpot.receiveProxy(Buffer.from(match[3],'hex'));return;}
  var s=streams[parseInt(match[1],16)+':'+parseInt(match[2],16)];if(!s)return;
  var data=match[3];if(data.length%2||data.length>131072){this.stats.malformedLines++;return;}
  var payload=Buffer.from(data,'hex'),atUs=this.nowUs();
@@ -53,25 +57,35 @@ Perception.prototype.start=async function(){
   function live(){return !self.closed&&self.wanted&&self.epoch===epoch&&self.child===child;}
   child.stdout.on('data',function(b){if(live())self.feed(b);});
   child.stderr.on('data',function(b){if(live())stderr=(stderr+b.toString('utf8')).slice(-2048);});
-  child.on('error',function(e){if(live()){self.nextAttempt=self.nowMs()+30000;self.health('unavailable',e.message);}});
-  child.on('exit',function(code,signal){var unexpected=live();if(self.child===child)self.child=null;if(unexpected){self.nextAttempt=self.nowMs()+30000;self.health('unavailable','Perception transport exited: '+code+' '+(signal||'')+' '+stderr.slice(-160));}});
+  function stopMirror(){if(self.mirrorTimer){clearInterval(self.mirrorTimer);self.mirrorTimer=null;}self.blindSpot.stop();if(self.cameraTimer){clearInterval(self.cameraTimer);self.cameraTimer=null;}self.camera.stop(false);}
+  child.on('error',function(e){if(live()){if(self.mirrorOnly)self.blindSpot.unavailable(e.message);stopMirror();self.nextAttempt=self.nowMs()+30000;self.health('unavailable',e.message);}});
+  child.on('exit',function(code,signal){var unexpected=live();if(self.child===child)self.child=null;if(unexpected){if(self.mirrorOnly)self.blindSpot.unavailable('Mirror transport exited');stopMirror();self.nextAttempt=self.nowMs()+30000;self.health('unavailable','Perception transport exited: '+code+' '+(signal||'')+' '+stderr.slice(-160));}});
   child.stdin.on('error',function(e){if(live()){self.health('transport-error',e.message);try{child.kill('SIGTERM');}catch(ignore){}}});
-  child.stdin.write(commands().join('\n')+'\n');
-  this.health('subscribing','Read-only notification subscriptions requested; no-data is not zero objects');
+  child.stdin.write((this.cameraOnly?['sub 0x3003 1 1 1 0x8009 0x8014']:this.mirrorOnly?['sub 0xf8a6 128 1 1 0x8001']:commands()).join('\n')+'\n');
+  if(this.mirrorOnly){
+   this.blindSpot.start(function(command){if(!live())throw Error('Mirror transport unavailable');child.stdin.write(command+'\n');});
+   this.blindSpot.tick();this.mirrorTimer=setInterval(function(){if(live())self.blindSpot.tick();},500);
+   if(this.mirrorTimer.unref)this.mirrorTimer.unref();
+  }
+  if(this.cameraOnly){this.camera.start(function(command){if(!live())throw Error('Camera control transport unavailable');child.stdin.write(command+'\n');});this.camera.tick();this.cameraTimer=setInterval(function(){if(live())self.camera.tick();},500);if(this.cameraTimer.unref)this.cameraTimer.unref();}
+  this.health('subscribing',this.cameraOnly?'Native ICAM state supervision requested':this.mirrorOnly?'Read-only BDC mirror reads requested; missing data is not OFF':'Read-only perception subscriptions requested; missing data is not zero detections');
  }catch(e){if(this.epoch===epoch&&this.wanted&&!this.closed){this.nextAttempt=this.nowMs()+30000;this.health('unavailable',e.message);}}
  finally{this.starting=false;}
 };
 Perception.prototype.stop=function(){
+ var released=this.cameraOnly&&this.camera.stop();if(this.cameraTimer){clearInterval(this.cameraTimer);this.cameraTimer=null;}
+ if(this.mirrorTimer){clearInterval(this.mirrorTimer);this.mirrorTimer=null;}this.blindSpot.stop();
  this.wanted=false;++this.epoch;this.buffer='';this.bufferedBytes=0;this.discardLine=false;
  if(this.stopping)return this.stopping;
  var child=this.child,self=this;if(!child)return Promise.resolve();
- var resolveStop,done=false,killTimer,limitTimer;
+ var resolveStop,done=false,killTimer,limitTimer,releaseTimer;
  this.stopping=new Promise(function(resolve){resolveStop=resolve;});
- function finish(){if(done)return;done=true;clearTimeout(killTimer);clearTimeout(limitTimer);self.stopping=null;resolveStop();}
+ function finish(){if(done)return;done=true;clearTimeout(killTimer);clearTimeout(limitTimer);clearTimeout(releaseTimer);self.stopping=null;resolveStop();}
  child.once('exit',finish);
  killTimer=setTimeout(function(){try{child.kill('SIGKILL');}catch(e){}},1000);
  limitTimer=setTimeout(function(){self.health('transport-error','Perception shutdown not confirmed; restart withheld until process exits');finish();},2000);
- try{child.stdin.end();child.kill('SIGTERM');}catch(e){this.health('transport-error',e.message);finish();}
+ function terminate(){try{child.stdin.end();child.kill('SIGTERM');}catch(e){self.health('transport-error',e.message);finish();}}
+ if(released)releaseTimer=setTimeout(terminate,300);else terminate();
  if(child.exitCode!=null||child.signalCode!=null)finish();
  return this.stopping||Promise.resolve();
 };

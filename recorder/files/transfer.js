@@ -40,6 +40,7 @@ function fingerprint(cert) {
 }
 function Transfer(o) {
   this.library = o.library;
+  this.lease = o.lease || null;
   this.mapTiles = new (require("./map-tiles").MapTiles)();
   this.network = o.network || null;
   this.status =
@@ -77,9 +78,17 @@ function Transfer(o) {
   this.addressAttempts = Object.create(null);
   this.serial = Promise.resolve();
   this.desiredVisit = null;
+  this.stopping = null;
 }
+Transfer.prototype.refreshLease = function (id, fallback) {
+  var at = fallback;
+  if (this.lease) { var latest = this.lease(); if (!latest || latest.visit !== id) return null; at = latest.atMs; }
+  var now = this.now();
+  return typeof at === "number" && isFinite(at) && at <= now && now - at < 3000 ? at : null;
+};
 Transfer.prototype.alive = function () {
   if (this.devMode) return true;
+  if (this.current) { var fresh = this.refreshLease(this.current, this.lastBeat); if (fresh !== null) this.lastBeat = fresh; else { this.stop(); return false; } }
   if (this.current && this.now() - this.lastBeat >= 3000) {
     this.stop();
     return false;
@@ -87,7 +96,7 @@ Transfer.prototype.alive = function () {
   return !!this.current;
 };
 Transfer.prototype.visit = function (id, observedAtMs) {
-  var at = observedAtMs === undefined ? this.now() : observedAtMs;
+  var at = this.refreshLease(id, observedAtMs === undefined ? this.now() : observedAtMs);
   if (
     typeof at !== "number" ||
     !isFinite(at) ||
@@ -109,7 +118,8 @@ Transfer.prototype.visit = function (id, observedAtMs) {
       }
       await self.stop(true);
       if (self.desiredVisit !== id) return;
-      if (self.now() - at >= 3000) return self.stop();
+      at = self.refreshLease(id, at);
+      if (at === null) return self.stop();
       if (
         !/^(?:\d{1,3}\.){3}\d{1,3}$/.test(self.host || "") ||
         self.host.split(".").some(function (x) {
@@ -164,25 +174,28 @@ Transfer.prototype.visit = function (id, observedAtMs) {
           server.once("error", reject);
           server.listen(port, self.bindHost || self.host, function () {
             server.removeListener("error", reject);
+            if (self.generation !== generation || self.desiredVisit !== id || self.current !== id) {
+              // This listener may have finished binding after stop captured
+              // the old server refs. Close it before exposing or discarding it.
+              try { server.close(function () { reject(failure(403, "Connection screen closed")); }); }
+              catch (e) { reject(e); }
+              return;
+            }
+            // Register ownership before resolving: stop may run in the very
+            // next microtask, before an await/then continuation resumes.
+            if (options) { self.httpsServer=server; self.boundHttpsPort=server.address().port; }
+            else { self.httpServer=server; self.boundHttpPort=server.address().port; }
             resolve(server);
           });
         });
       }
       var http = require("http");
       await bind(http, undefined, self.httpPort)
-        .then(function (server) {
-          self.httpServer = server;
-          self.boundHttpPort = server.address().port;
-        })
         .catch(function (e) {
           self.stop();
           throw e;
         });
       await bind(https, tlsOptions, self.httpsPort)
-        .then(function (server) {
-          self.httpsServer = server;
-          self.boundHttpsPort = server.address().port;
-        })
         .catch(function (e) {
           self.stop();
           throw e;
@@ -191,12 +204,13 @@ Transfer.prototype.visit = function (id, observedAtMs) {
       if (
         self.desiredVisit !== id ||
         self.generation !== generation ||
-        self.now() - at >= 3000
+        self.refreshLease(id, self.lastBeat) === null
       ) {
         await self.stop(true);
         if (self.generation === generation) await self.stop();
         return;
       }
+      self.lastBeat = self.refreshLease(id, self.lastBeat);
       var onError = function () {
         self.stop();
       };
@@ -224,6 +238,7 @@ Transfer.prototype.heartbeat = function (id, observedAtMs) {
 };
 Transfer.prototype.stop = function (preserveVisit) {
   if (!preserveVisit) this.desiredVisit = null;
+  if (this.stopping) return this.stopping;
   this.current = null;
   this.code = "";
   this.fp = "";
@@ -253,7 +268,7 @@ Transfer.prototype.stop = function (preserveVisit) {
       done();
     }
   }
-  return new Promise(function (resolve) {
+  this.stopping = new Promise(function (resolve) {
   var left = 0;
     function step() {
       left--;
@@ -269,6 +284,8 @@ Transfer.prototype.stop = function (preserveVisit) {
     }
     if (!left) resolve();
   }).then(function(){if(this.network)return this.network.close();}.bind(this));
+  var self=this;this.stopping=this.stopping.then(function(){self.stopping=null;},function(e){self.stopping=null;throw e;});
+  return this.stopping;
 };
 Transfer.prototype.acceptHost = function (req) {
   var host = req.headers.host || "";
@@ -554,7 +571,7 @@ Transfer.prototype.handle = async function (req, res, generation) {
     return;
   }
   var match =
-    /^\/api\/v1\/recordings\/([0-9a-f-]+)(?:\/(capture\.bvr|manifest\.json|mapping\.json|download|lock))?$/.exec(
+    /^\/api\/v1\/recordings\/([0-9a-f-]+)(?:\/(capture\.bvr|manifest\.json|mapping\.json|raw\.zip|download|lock))?$/.exec(
       route
     );
   if (!match || !UUID.test(match[1])) throw failure(404, "Unknown endpoint");
@@ -601,6 +618,48 @@ Transfer.prototype.handle = async function (req, res, generation) {
     } finally {
       if (metadataFd !== null) await metadataIO.close(metadataFd);
       metadataRelease();
+    }
+    return;
+  }
+  if (match[2] === "raw.zip") {
+    if(this.active>=(this.devMode?16:1))throw failure(429,'A download is already active');
+    this.active++;
+    var rawRelease=null,rawPackage=null,closed=false;
+    function rawClosed(){closed=true;}
+    res.once('close',rawClosed);
+    try {
+      rawRelease=await this.library.acquire(match[1]);
+      var rawFiles=await this.library.bundle(match[1]),capturePath=rawFiles.filter(function(f){return f.name==='capture.bvr';})[0].path;
+      async function checkRaw(){
+        live();if(closed||res.destroyed||session!==self.session)throw failure(401,'Download session closed');
+        if(await self.library.resolve(match[1],'capture.bvr')!==capturePath)throw failure(503,'USB recording path changed');
+      }
+      async function priorityRaw(){
+        for(;;){await checkRaw();var state=await self.status();if(!state||!((state.metrics&&state.metrics.queuedBytes)||state.queuedBytes))return state;await new Promise(function(r){setTimeout(r,25);});}
+      }
+      async function paceRaw(bytes,state){
+        if(!self.devMode&&(self.explicitBandwidth||!state||state.writeInProgress!==false||state.activeId)){
+          for(var left=bytes;left>0;left-=32768){await new Promise(function(r){setTimeout(r,Math.ceil(Math.min(left,32768)*1000/self.bandwidth));});await checkRaw();}
+        }
+      }
+      async function writeRaw(b){
+        var state=await priorityRaw();
+        if(!res.write(b))await new Promise(function(resolve,reject){
+          function clean(){res.removeListener('drain',drained);res.removeListener('close',ended);res.removeListener('error',failed);}
+          function drained(){clean();resolve();}function ended(){clean();reject(Error('Download cancelled'));}function failed(e){clean();reject(e);}
+          res.once('drain',drained);res.once('close',ended);res.once('error',failed);
+          if(closed||res.destroyed)ended();
+        });
+        await paceRaw(b.length,state);
+      }
+      rawPackage=new (require('./raw-zip').RawZip)(rawFiles,'BimmerVision-'+match[1]);
+      await rawPackage.prepare();await checkRaw();
+      res.writeHead(200,{'Content-Type':'application/zip','Content-Disposition':'attachment; filename="BimmerVision-'+match[1]+'.zip"','Cache-Control':'no-store'});
+      await rawPackage.write(writeRaw,checkRaw,async function(bytes){await paceRaw(bytes,await priorityRaw());});
+      res.end();
+    } finally {
+      res.removeListener('close',rawClosed);
+      try{if(rawPackage)await rawPackage.close();}finally{if(rawRelease)rawRelease();this.active--;}
     }
     return;
   }

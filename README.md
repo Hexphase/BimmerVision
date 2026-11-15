@@ -1,6 +1,6 @@
 # BimmerVision
 
-*0.2.24 is a testing prerelease. The new preview pipeline is built and host-tested; BMW hardware validation is pending. [Download the test update](https://github.com/Hexphase/BimmerVision/releases/tag/v0.2.24).*
+*0.2.24 is available through MGU Store. The new preview pipeline is built and host-tested; BMW hardware validation is pending. [Download 0.2.24](https://github.com/Hexphase/BimmerVision/releases/tag/v0.2.24).*
 
 **The first app to enable continuous recording of BMW’s 360° camera system directly to a USB flash drive on iDrive 7.** Save all four camera views, see the matching side camera in the instrument cluster with your left or right blinker, and review or export your drives on your phone or computer.
 

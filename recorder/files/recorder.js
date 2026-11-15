@@ -17,14 +17,16 @@ Recorder.prototype.status=function(){var warn='';if(this.queuedBytes>=(this.queu
 Recorder.prototype.packet=function(packet,atUs){
  if(this.stopping||this.stopped||this.error)return false;atUs=atUs==null?this.nowUs():atUs;
  var data;try{data=archive.record(1,atUs,packet);}catch(e){this.event({type:'discontinuity',reason:'invalid-packet',message:e.message},Number.isSafeInteger(atUs)&&atUs>=0?atUs:this.nowUs());return false;}
- var p=null,group=null;try{p=rtp.parsePacket(packet);}catch(e){}
+ // Keep parsed views on the immutable archive copy, so the queue neither
+ // retains an extra packet buffer nor depends on the caller retaining it.
+ var p=null,group=null;try{p=rtp.parsePacket(data.slice(24));}catch(e){}
  if(p){if(!Object.prototype.hasOwnProperty.call(this.streamBoundary,p.ssrc)&&Object.keys(this.streamBoundary).length>=8){var retired=Object.keys(this.streamBoundary)[0];if(this.captureGroups[retired]){this.captureGroups[retired].complete=true;this.captureGroups[retired].damaged=true;this.captureGroups[retired].keyframe=false;delete this.captureGroups[retired];}delete this.streamBoundary[retired];}group=this.captureGroups[p.ssrc];if(group&&group.timestamp!==p.timestamp){group.complete=true;group.damaged=true;group.keyframe=false;delete this.captureGroups[p.ssrc];group=null;}
   if(!group){group={timestamp:p.timestamp,complete:false,damaged:false,keyframe:false,first:null,boundary:Object.keys(this.streamBoundary).every(function(k){return this.streamBoundary[k];},this)};this.captureGroups[p.ssrc]=group;}
   if(keyframe(p)&&!group.damaged)group.keyframe=true;this.streamBoundary[p.ssrc]=p.marker;if(p.marker){group.complete=true;delete this.captureGroups[p.ssrc];}
  }
  if(this.queuedBytes+data.length>this.queueLimit){this.dropped++;this.pendingDrops++;this.lastDropUs=atUs;if(group){group.complete=true;group.damaged=true;group.keyframe=false;}this.kick();return false;}
- var item={data:data,type:1,atUs:atUs,group:group};if(group&&!group.first)group.first=item;
- this.queue.push(item);this.queuedBytes+=data.length;this.accepted++;this.latestAt=Math.max(this.latestAt,atUs);this.units.push(packet,atUs);this.kick();return true;
+ var item={data:data,type:1,atUs:atUs,group:group,parsed:p};if(group&&!group.first)group.first=item;
+ this.queue.push(item);this.queuedBytes+=data.length;this.accepted++;this.latestAt=Math.max(this.latestAt,atUs);this.units.push(p||packet,atUs);this.kick();return true;
 };
 Recorder.prototype.event=function(event,atUs){
  if(this.stopping||this.stopped||this.error)return false;atUs=atUs==null?this.nowUs():atUs;
@@ -64,9 +66,9 @@ Recorder.prototype.drain=async function(){
   if(!batch.length)return;
   await this.write(Buffer.concat(batch.map(function(x){return x.data;}),bytes));
   if(priorPackets){this.writtenVideoPackets+=priorPackets;this.lastVideoWriteUs=this.nowUs();}
-  for(var j=0;j<batch.length;j++){var written=batch[j];c.manifest.endMonotonicUs=Math.max(c.manifest.endMonotonicUs,written.atUs);if(written.type===1){c.manifest.packets++;var raw=written.data.slice(24);try{var stream=rtp.parsePacket(raw).ssrc;if(!Object.prototype.hasOwnProperty.call(c.sources,stream)){if(Object.keys(c.sources).length>=8)c.sourceOverflow=true;else c.sources[stream]=false;}}catch(ignore){c.sourceOverflow=true;}// A later recovery IDR cannot make an already retained dependent prefix standalone.
-    var parsed;try{parsed=rtp.parsePacket(raw);if(Object.prototype.hasOwnProperty.call(c.sources,parsed.ssrc)&&!c.sources[parsed.ssrc]&&rtp.opensPredicted(parsed.payload))c.prefixNeeded[parsed.ssrc]=true;}catch(ignore){}
-    c.decoder.push(raw,written.atUs);c.manifest.requiresPrevious=Object.keys(c.prefixNeeded).length>0||c.sourceOverflow||!Object.keys(c.sources).length||Object.keys(c.sources).some(function(k){return !c.sources[k];});}else if(written.event&&written.event.reason==='rtp-sequence-gap')c.manifest.observedSequenceGaps+=written.event.packets||0;}
+  for(var j=0;j<batch.length;j++){var written=batch[j];c.manifest.endMonotonicUs=Math.max(c.manifest.endMonotonicUs,written.atUs);if(written.type===1){c.manifest.packets++;var parsed=written.parsed;if(parsed){var stream=parsed.ssrc;if(!Object.prototype.hasOwnProperty.call(c.sources,stream)){if(Object.keys(c.sources).length>=8)c.sourceOverflow=true;else c.sources[stream]=false;}}else c.sourceOverflow=true;// A later recovery IDR cannot make an already retained dependent prefix standalone.
+    if(parsed&&Object.prototype.hasOwnProperty.call(c.sources,parsed.ssrc)&&!c.sources[parsed.ssrc]&&rtp.opensPredicted(parsed.payload))c.prefixNeeded[parsed.ssrc]=true;
+    c.decoder.push(parsed||written.data.slice(24),written.atUs);c.manifest.requiresPrevious=Object.keys(c.prefixNeeded).length>0||c.sourceOverflow||!Object.keys(c.sources).length||Object.keys(c.sources).some(function(k){return !c.sources[k];});}else if(written.event&&written.event.reason==='rtp-sequence-gap')c.manifest.observedSequenceGaps+=written.event.packets||0;}
   this.queue.splice(0,batch.length);this.queuedBytes-=bytes;await this.flushLoss();var last=batch[batch.length-1].atUs,syncLimit=this.queuedBytes>(this.queueLimit>>2)?SYNC_BUSY_US:SYNC_IDLE_US;if(last-c.lastSyncUs>=syncLimit){await this.guard.check(c.fd);await io.fsync(c.fd);c.lastSyncUs=last;}
  }
 };

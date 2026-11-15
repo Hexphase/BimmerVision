@@ -1,0 +1,13 @@
+# Separate Store and car Apps-page icon sizes — local 0.2.33
+
+The Store updater intentionally chose an installed app's static entry icon before the source's separately specified artwork. BimmerVision's menu image has substantial transparent padding, so that policy made the Store image small despite the correct large source artwork being present.
+
+An interim 0.2.32 app-only attempt referenced the large Store artwork in static entry metadata and retained the existing runtime setIcon call. The owner confirmed that Store looked good but the car Apps-page icon became huge; opening the app did not correct it. That approach was reverted. Do not repeat it.
+
+The final app 0.2.33 keeps the original bimmervision2.png static/runtime menu icon (SHA e2c9d147638fdc4759f7034c2bcb5a5d566463c4cbd5f6e6c5d69b1d2a42db25). Separate Store artwork remains byte-exact SHA2699dd3db86fef702d0889c7c6bd7b231bb62490898a257dc41113a48a158836. Build checks and source/package tests lock both assets and keep the menu reference small.
+
+A minimal local Store updater correction prefers an existing, validated explicit catalog icon; automatic entry-point-derived artwork and missing-source fallbacks retain the prior behavior. It was installed through MGU deploy as local numeric version0.8.46, based on upstream0.8.45; this is not an upstream release. The proposed prerelease version was rejected before installation because the updater supports only numeric x.y.z versions. The patch and original updater backup are retained outside this repository. No Store cache or hash files were manually changed. Upstream updates can replace this local correction; the Store behavior must be carried forward or incorporated upstream for general distribution.
+
+App0.2.33 requires recorder0.2.31. Packaging now takes the recorder version from its own version.json, allowing app-only fixes without restarting recording. The recorder TGZ is byte-identical to the previous release. All266 app tests and the external Store selector test passed. MGU preflight and installation passed; actual Store status chose the approved large PNG, while the compiled native menu reference selected the original small PNG. Recorder PID8822 and systemd NRestarts0 stayed unchanged; recording remained active with zero application drops at verification. The owner confirmed: “Yes, both sizes are correct”—large in Store, normal on the car Apps page.
+
+Private evidence: /Volumes/BMW/store-icon-2026-11-15. Desktop bundle: BimmerVision-v0.2.33-Icon-Fix, with matching app/recorder checksums, local Store package/source patch, and app rollback. Nothing published to GitHub.

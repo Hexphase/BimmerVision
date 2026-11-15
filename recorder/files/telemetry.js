@@ -1,6 +1,6 @@
 'use strict';
 var path=require('path'),io=require('./io');
-var NAMES=['speed','brake','accelerator','blinker','latitude','longitude','steeringAngleDeg'];
+var NAMES=['speed','brake','accelerator','blinker','latitude','longitude','steeringAngleDeg','horn'];
 async function profileFile(source,root){
  var name=source.name.replace(/\./g,'_')+'.json',original=path.join(source.dir,name);
  try{await io.lstat(original);await io.safePath(original,'file');return original;}catch(e){if(e.code!=='ENOENT')throw e;}
@@ -15,8 +15,8 @@ async function profileFile(source,root){
 function Telemetry(options){var o=options||{};this.nowUs=o.nowUs||require('./recorder').nowUs;this.onEvent=o.onEvent||function(){};this.fields={};this.proxies={};this.attempts={};this.unclassified={};this.closed=false;this.connecting=false;this.profileRoot=o.profileRoot||'/var/opt/public/oap';}
 Telemetry.prototype.snapshot=function(atUs){var out={},self=this;NAMES.forEach(function(k){var f=self.fields[k];if(!f)return;out[k]=Object.assign({},f,{ageUs:Math.max(0,atUs-f.atUs),sourceValid:f.valid,latched:k==='blinker',valid:f.valid&&atUs>=f.atUs&&(k==='blinker'||atUs-f.atUs<=2000000)});});return out;};
 Telemetry.prototype.take=function(source,reading,atUs){
- if(this.closed||!Number.isSafeInteger(atUs)||atUs<0)return;var sourceName='BMW SOME/IP: '+source.name,kind=source.kind,self=this,values={};
- if(reading){if(kind==='speed'||(kind==='pace'&&typeof reading.speed==='number'&&isFinite(reading.speed)))values.speed={value:reading.speed,unit:reading.speedUnit};if(kind==='brake')values.brake={value:reading.braking};if(kind==='gas')values.accelerator={value:reading.accelerator};if(kind==='indicator')values.blinker={value:reading.indicator};if(kind==='position'){values.latitude={value:reading.latitude,unit:'deg'};values.longitude={value:reading.longitude,unit:'deg'};}if(kind==='steering')values.steeringAngleDeg={value:reading.degrees,unit:'deg',valid:reading.valid===true};}
+ if(this.closed||!Number.isSafeInteger(atUs)||atUs<0)return;var sourceName=source.sourceName||'BMW SOME/IP: '+source.name,kind=source.kind,self=this,values={};
+ if(reading){if(kind==='speed'||(kind==='pace'&&typeof reading.speed==='number'&&isFinite(reading.speed)))values.speed={value:reading.speed,unit:reading.speedUnit};if(kind==='horn')values.horn={value:reading.horn};if(kind==='brake')values.brake={value:reading.braking};if(kind==='gas')values.accelerator={value:reading.accelerator};if(kind==='indicator')values.blinker={value:reading.indicator};if(kind==='position'){values.latitude={value:reading.latitude,unit:'deg'};values.longitude={value:reading.longitude,unit:'deg'};}if(kind==='steering')values.steeringAngleDeg={value:reading.degrees,unit:'deg',valid:reading.valid===true};}
  if(!reading){Object.keys(this.fields).forEach(function(k){if(self.fields[k].source===sourceName)self.fields[k].valid=false;});if(this.unclassified[kind]==null||atUs-this.unclassified[kind]>2000000){this.unclassified[kind]=atUs;this.onEvent({type:'telemetry-unclassified',source:sourceName,kind:kind,reason:'OEM value did not match validated profile'},atUs);}}
  Object.keys(values).forEach(function(k){var v=values[k],good=v.value!==undefined&&v.value!==null&&(typeof v.value!=='number'||isFinite(v.value));self.fields[k]={value:good?v.value:null,atUs:atUs,valid:good&&v.valid!==false,source:sourceName};if(v.unit)self.fields[k].unit=v.unit;});
  this.onEvent({type:'telemetry',fields:this.snapshot(atUs)},atUs);
@@ -38,11 +38,14 @@ Telemetry.prototype.connect=async function(originalRoot){
  if(this.closed||this.connecting)return;this.connecting=true;var legacy,someip;
  try{try{legacy=require(path.join(originalRoot,'record-clip.js'));}catch(e){if(e.code!=='MODULE_NOT_FOUND')throw e;legacy=require('./oem-signals');}try{someip=require('someip');}catch(e){try{someip=require('/usr/lib/someip.node');}catch(nativeError){someip=require(path.join(originalRoot,'node_modules','someip'));}}
   // Reuse the backed-up source profiles and schema validator, never infer OEM enum values.
-  for(var i=0;i<legacy.SOURCES.length;i++){var source=legacy.SOURCES[i];if(this.closed)break;if(Object.prototype.hasOwnProperty.call(this.proxies,source.kind)||(this.attempts[source.kind]||0)>=3)continue;
+  var own=require('./oem-signals'),sources=legacy.SOURCES.slice();
+  // New optional signals remain available when an older local profile bundle is retained.
+  own.SOURCES.forEach(function(s){if(s.kind==='horn'&&!sources.some(function(old){return old.kind===s.kind;}))sources.push(s);});
+  for(var i=0;i<sources.length;i++){var source=sources[i];if(this.closed)break;if(Object.prototype.hasOwnProperty.call(this.proxies,source.kind)||(this.attempts[source.kind]||0)>=3)continue;
    // Reserve before building: a timed-out remote subscribe may still finish. Never
    // retry it in this process and accumulate hidden duplicate subscriptions.
    this.proxies[source.kind]=null;this.attempts[source.kind]=(this.attempts[source.kind]||0)+1;
-   try{await this.subscribe(someip,source,legacy.readSignal);}catch(e){if(!e.ambiguousSubscription)delete this.proxies[source.kind];this.onEvent({type:'telemetry-unclassified',source:source.name,reason:String(e.message||e)},this.nowUs());}
+   try{await this.subscribe(someip,source,source.kind==='horn'?own.readSignal:legacy.readSignal);}catch(e){if(!e.ambiguousSubscription)delete this.proxies[source.kind];this.onEvent({type:'telemetry-unclassified',source:source.name,reason:String(e.message||e)},this.nowUs());}
   }
  }catch(e){this.onEvent({type:'telemetry-unavailable',reason:String(e.message||e)},this.nowUs());}finally{this.connecting=false;}
 };

@@ -1,8 +1,8 @@
 # BimmerVision
 
-*0.2.24 is available through MGU Store. The new preview pipeline is built and host-tested; BMW hardware validation is pending. [Download 0.2.24](https://github.com/Hexphase/BimmerVision/releases/tag/v0.2.24).*
+*Version 0.2.36 focuses on continuous recording and saved-video playback.*
 
-**The first app to enable continuous recording of BMW’s 360° camera system directly to a USB flash drive on iDrive 7.** Save all four camera views, see the matching side camera in the instrument cluster with your left or right blinker, and review or export your drives on your phone or computer.
+**The first app to enable continuous recording of BMW’s 360° camera system directly to a USB flash drive on iDrive 7.** Save all four camera views and review or export your drives on your phone or computer.
 
 **Requires a compatible BMW with a 360° Surround View camera system and iDrive 7 (MGU).** A rear-view camera on its own is not enough. iDrive 8 and other head units are not currently tested.
 
@@ -10,9 +10,6 @@
 
 ## Features
 
-- **Live blinker cameras in the cluster:** Signal left or right to see that side camera in the cluster’s Map area, with fades between views. Use the front view between signals, or choose **Only blinker cameras**.
-- **Independent controls:** Enable cluster cameras and recording separately. Recording takes priority over the live preview.
-- **Navigation choices:** Keep cameras visible, show them only with a blinker, or hide all cluster cameras while navigating.
 - **Four camera views:** Review the front, rear, left and right cameras, individually or together.
 - **Record directly to USB:** Keep your recordings on your own drive.
 - **Enable once for automatic recording:** BimmerVision remembers your setting and handles future drives when the cameras and USB storage are available.
@@ -25,36 +22,12 @@
 - **Export your way:** Save a camera view or a four-camera video, with your choice of driving overlays, date/time and route map.
 - **One Install action:** MGU Store automatically installs the required recorder companion with BimmerVision.
 
-### Live cameras in the instrument cluster
-
-Turn **Cluster cameras** on directly below **Enable/Pause recording** in BimmerVision. Select **Map** in the cluster’s central display. The front camera appears between signals; the matching side camera appears while a left or right blinker is active. Transitions fade between camera views.
-
-In **Settings**, enable **Only blinker cameras** to leave the Map visible whenever the signals are off, whether or not navigation is active. The navigation setting separately offers **Always**, **Blinkers only**, and **Off**; **Off** suppresses every cluster camera while navigating.
-
-Recording and cluster cameras have independent saved controls: preview works with recording paused, and recording continues with preview off. Preview runs as a separate, bounded, low-priority consumer of the camera stream; recording pressure can temporarily suspend it.
-
-**Cluster renderer (`cluster-render` 0.6.0 or newer) is required.** Keep it installed; add [robertnisipeanu/idrive-apps](https://github.com/robertnisipeanu/idrive-apps) as a Store source if it is unavailable. See the release’s dependency notes before removing any shared tools.
-
-*Validation: the owner confirmed blinker switching, fades, independent controls and both navigation policies on the project’s iDrive 7 car. The latest phone/preview concurrency fix passed a parked connection and playback check. The latest preview pacing has not yet had a full road test; occasional live-preview hitches remain possible.*
-
-### Recording in iDrive
-
-Choose **Enable recording** once and leave it enabled. BimmerVision saves your choice and is designed to record each drive automatically when the car wakes and its cameras and USB drive become available. You do not need to open BimmerVision or press Record before every trip.
-
-Leave a writable USB drive connected with enough free space. Choose **Pause recording** whenever you want to stop automatic recording; enable it again to resume.
-
-The blinking **REC** indicator lets you check at a glance that recording is running.
-
-*Development verification: automatic startup is configured, but a full car sleep/wake cycle has not yet been physically verified.*
-
-![BimmerVision recording in iDrive with its blinking REC indicator](docs/images/recording-indicator.gif)
 
 ## What you need
 
 - A **compatible BMW with a 360° Surround View camera system**.
 - **iDrive 7 (MGU)** with **MGU Store** installed.
-- A writable USB drive connected to a USB port the car can use for recording. Cluster preview itself does not need USB storage.
-- **Cluster renderer 0.6.0+** for cluster cameras.
+- A writable USB drive connected to a USB port the car can use for recording.
 - A phone or computer to review and export footage.
 
 Compatibility has been physically tested on the project’s iDrive 7 setup. Camera-stream and vehicle-information availability can vary between cars.
@@ -73,6 +46,8 @@ On the tested iDrive 7 car, recording works with the official BMW Drive Recorder
 3. If prompted to **Restart iDrive to finish setup**, park the car and use the Store’s restart action.
 4. Connect your USB drive, open **BimmerVision**, and choose **Enable recording**.
 
+On first opening BimmerVision, acknowledge the reminder to turn off other third-party apps that use the cameras. Those apps can interfere with recording and prevent capture of all camera views.
+
 First-time camera setup runs automatically. If setup is still preparing, give it time to finish. BimmerVision does not restart iDrive automatically.
 
 ## Manage your USB drive
@@ -84,6 +59,8 @@ Open **USB storage** in the car app to see available space, the recording count 
 **Erase all unlocked recordings** asks for confirmation and keeps locked recordings. Removing or updating the app does not erase the recordings on your USB drive.
 
 To remove your drive, pause recording and wait until the USB page says **Safe to Remove** before unplugging it.
+
+In 0.2.36, the app writes diagnostic logs only while recording is enabled to **BimmerVision-Logs**, next to the **BimmerVision** recordings folder. App-owned logs rotate under a combined **64 MiB** cap and survive erasing recordings. When reporting a problem, include the approximate incident time and a ZIP of this logs folder. Logs capture recording health, failures and CPU load without raw location telemetry or pairing credentials.
 
 ## Watch on your phone
 
@@ -108,7 +85,7 @@ For the car’s built-in player, use **Connect Phone** on the car app’s main p
 
 ## Updates and rollback
 
-Update the app and recorder together through MGU Store. Before updating, retain the previous release’s app and recorder packages and their checksums. To roll back, turn cluster cameras off and reinstall both matching packages from that release through MGU Store. Recordings on USB are preserved; a rollback across older settings schemas may need those settings selected again.
+Update the app and recorder together through MGU Store. Before updating, retain the previous release’s app and recorder packages and their checksums. To roll back, reinstall the previous app and recorder packages together through MGU Store. Recordings on USB are preserved; a rollback across older settings schemas may need those settings selected again.
 
 ## Updates and available information
 
@@ -122,16 +99,10 @@ GPS, speed limits and other driving information are shown only when the required
 Use a current Node.js version on your development computer. No third-party npm dependencies are required.
 
 ```sh
-npm test
 npm run build
+npm test
 ```
 
 The build creates the BimmerVision app package, required recorder package, Store catalog and `CAR-SHA256SUMS`. The head-unit runtime targets iDrive 7 MGU Linux x86-64 and Node 8. For normal installation, use MGU Store as described above.
 
 </details>
-
-## Cluster renderer
-
-Cluster camera display requires the separately downloaded [Cluster renderer](https://github.com/robertnisipeanu/idrive-apps), version 0.6.0 or newer. Install it through MGU Store and keep it installed with BimmerVision.
-
-BimmerVision is an independent project, unaffiliated with BMW. Use the app’s controls when it is safe to do so.

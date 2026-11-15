@@ -24,6 +24,11 @@ var INDICATOR = {
   hazard: ["BEIDSEITIGES_BLINKEN_EIN"],
   off: ["BLINKEN_AUS"],
 };
+var HORN = {
+  member: "operationHornButton",
+  pressed: ["HORN_MINUS_TASTER_GEDRUECKT"],
+  released: ["KEINE_AKTION"],
+};
 var SOURCES = [
   {
     dir: "/var/opt/public/oap/oap_12247/someipInterfaces",
@@ -81,6 +86,14 @@ var SOURCES = [
     serviceId: 30002,
     kind: "steering",
   },
+  {
+    dir: "/var/opt/public/oap/oap_12230/someipInterfaces",
+    name: "de.bmw.infrastructure.analytics.BasicDataSet",
+    instance: "1",
+    field: "basicDataSet",
+    serviceId: 4096,
+    kind: "horn",
+  },
 ];
 
 function structMember(schema, name) {
@@ -119,6 +132,10 @@ function readSignal(kind, schema, value) {
     var unit = unitName === "UNIT_MPH" ? "mph" : unitName === "UNIT_KMH" ? "km/h" : null;
     if (!unit) return null;
     return { speed: Math.round(speed * 10) / 10, speedUnit: unit };
+  }
+  if (kind === "horn") {
+    var horn = namedState(schema, HORN, value);
+    return typeof horn === "boolean" ? { horn: horn } : null;
   }
   if (kind === "brake") {
     var braking = namedState(schema, BRAKE, value);

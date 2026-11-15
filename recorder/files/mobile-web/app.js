@@ -81,6 +81,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     brakePedal: document.getElementById("brakePedalCard"),
     gasPedal: document.getElementById("gasPedalCard"),
     wheelFace: document.getElementById("wheelFace"),
+    wheelHorn: document.getElementById("wheelHorn"),
     wheelAngleVal: document.getElementById("wheelAngleVal"),
     blinkerLeft: document.getElementById("blinkerLeft"),
     blinkerRight: document.getElementById("blinkerRight")

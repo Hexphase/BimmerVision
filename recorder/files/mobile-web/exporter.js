@@ -117,10 +117,12 @@ class ClipExporter {
     }
     if(player?.loadError) throw player.loadError;
     if(!player?.manifest) throw new Error('Open a recording before exporting.');
+    await ClipExporter.wheelAssetsReady;
   }
 
   static assets = {
     wheel: null,
+    wheelHorn: null,
     wordmark: null,
     eye: null
   };
@@ -982,9 +984,11 @@ class ClipExporter {
       ctx.translate(cx, cy);
       ctx.rotate(angleRad);
       ctx.scale(1.5, 1.5);
-      if (ClipExporter.assets.wheel && ClipExporter.assets.wheel.complete && ClipExporter.assets.wheel.naturalWidth) {
+      const hornWheel = ClipExporter.assets.wheelHorn;
+      const wheel = telem.hornPressed === true && hornWheel && hornWheel.complete && hornWheel.naturalWidth ? hornWheel : ClipExporter.assets.wheel;
+      if (wheel && wheel.complete && wheel.naturalWidth) {
         try {
-          ctx.drawImage(ClipExporter.assets.wheel, -24, -24, 48, 48);
+          ctx.drawImage(wheel, -24, -24, 48, 48);
         } catch (_) {}
       } else {
         // High-fidelity vector steering wheel
@@ -1418,7 +1422,35 @@ class ClipExporter {
 // Preload browser image assets if running in browser
 if (typeof Image !== 'undefined') {
   try {
-    const w = new Image(); w.src = 'assets/wheel-face.png'; ClipExporter.assets.wheel = w;
+    // Finish loading/decoding both wheels before the first encoded frame.
+    // A failed or stalled optional asset stays unavailable for this export path.
+    ClipExporter.wheelAssetsReady = Promise.all([
+      ['wheel', 'assets/wheel-face.png'], ['wheelHorn', 'assets/wheel-horn.png']
+    ].map(([key, src]) => new Promise(resolve => {
+      const img = new Image();
+      let settled = false;
+      const finish = ok => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        img.removeEventListener('load', loaded);
+        img.removeEventListener('error', failed);
+        if (!ok) ClipExporter.assets[key] = null;
+        resolve();
+      };
+      const failed = () => finish(false);
+      const loaded = () => {
+        if (!img.naturalWidth) return failed();
+        if (typeof img.decode === 'function') img.decode().then(() => finish(true), failed);
+        else finish(true);
+      };
+      const timer = setTimeout(failed, 5000);
+      img.addEventListener('load', loaded, {once:true});
+      img.addEventListener('error', failed, {once:true});
+      ClipExporter.assets[key] = img;
+      img.src = src;
+      if (img.complete) loaded();
+    })));
     const wm = new Image(); wm.src = 'assets/bimmervision-wordmark.png'; ClipExporter.assets.wordmark = wm;
     const eye = new Image(); eye.src = 'assets/bimmervision-eye.png'; ClipExporter.assets.eye = eye;
   } catch (_) {}

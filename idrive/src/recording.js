@@ -1,7 +1,6 @@
 "use strict";
 var setupState = require("./setup-state"),
   preference = require("./recording-preference"),
-  clusterPreference = require("./cluster-preference"),
   fs = require("fs"),
   path = require("path"),
   crypto = require("crypto");
@@ -64,29 +63,22 @@ Recording.prototype.read = function () {
 Recording.prototype.intent = function () {
   try {
     directory(this.directory);
-    var current = read(this.controlFile), saved = preference.read(this.preferenceDirectory, uid());
+    var current = preference.controls(read(this.controlFile)), saved = preference.read(this.preferenceDirectory, uid());
     if (saved !== undefined) current.continuous = saved;
     if (typeof current.continuous !== 'boolean') current.continuous = false;
   } catch (e) {
     current = { continuous: false };
   }
-  try {
-    current.cluster = clusterPreference.read(this.preferenceDirectory, uid());
-  } catch (e) {
-    current.cluster = { enabled: false, navigation: "blinkers", blinkersOnly: false };
-  }
   return current;
 };
 Recording.prototype.update = function (patch) {
   directory(this.directory);
-  var current = read(this.controlFile);
+  var current = preference.controls(read(this.controlFile));
+  patch = preference.controls(patch);
   if (Object.prototype.hasOwnProperty.call(patch, 'continuous'))
     preference.write(this.preferenceDirectory, uid(), patch.continuous);
-  var cluster;
-  if (Object.prototype.hasOwnProperty.call(patch, 'cluster'))
-    cluster = clusterPreference.write(this.preferenceDirectory, uid(), patch.cluster);
   Object.keys(patch).forEach(function (k) {
-    current[k] = k === 'cluster' ? cluster : patch[k];
+    current[k] = patch[k];
   });
   var body = JSON.stringify(current);
   if (Buffer.byteLength(body) > 8192)

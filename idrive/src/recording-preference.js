@@ -16,4 +16,5 @@ function write(dir,owner,continuous,initialize){
  try{fd=fs.openSync(tmp,'wx',384);fs.writeFileSync(fd,JSON.stringify({continuous:continuous})+'\n');if(process.getuid()!==owner)fs.fchownSync(fd,owner,owner);fs.fsyncSync(fd);fs.closeSync(fd);fd=null;directory(dir,owner);if(initialize){try{fs.linkSync(tmp,file);}catch(e){if(e.code!=='EEXIST')throw e;}}else fs.renameSync(tmp,file);fd=fs.openSync(dir,'r');try{fs.fsyncSync(fd);}catch(e){if(e.code!=='EINVAL'&&e.code!=='ENOTSUP')throw e;}}
  finally{if(fd!==null)fs.closeSync(fd);try{fs.unlinkSync(tmp);}catch(e){if(e.code!=='ENOENT')throw e;}}
 }
-module.exports={location:location,read:read,write:write};
+function controls(value){var out={};['continuous','volume','transfer','deleteAll','notificationTest'].forEach(function(k){if(value&&Object.prototype.hasOwnProperty.call(value,k))out[k]=value[k];});return out;}
+module.exports={location:location,read:read,write:write,controls:controls};

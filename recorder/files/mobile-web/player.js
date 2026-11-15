@@ -818,6 +818,15 @@ class BimmerVisionPlayer {
     if (this.hud.wheelFace) {
       const angle = telem.steeringAngleDeg || 0;
       this.hud.wheelFace.style.transform = `rotate(${-angle}deg)`;
+      const hornWheel = this.hud.wheelHorn;
+      if (hornWheel) {
+        hornWheel.style.transform = `rotate(${-angle}deg)`;
+        const pressed = telem.hornPressed === true && hornWheel.complete && hornWheel.naturalWidth > 0;
+        // Both images stay mounted and decoded; switching visibility avoids a
+        // blank frame or a different transform interpolation on each press.
+        this.hud.wheelFace.style.visibility = pressed ? 'hidden' : 'visible';
+        hornWheel.style.visibility = pressed ? 'visible' : 'hidden';
+      }
       if (this.hud.wheelAngleVal) {
         this.hud.wheelAngleVal.textContent = `${Math.round(angle)}°`;
       }

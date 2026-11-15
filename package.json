@@ -1,11 +1,10 @@
 {
   "name": "bimmervision-release",
   "private": true,
-  "version": "0.2.24",
+  "version": "0.2.36",
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "build": "node scripts/build-release.js",
-    "build:native-preview": "node scripts/build-native-preview.js"
+    "build": "node scripts/build-release.js"
   },
   "license": "MIT"
 }

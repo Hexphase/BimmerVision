@@ -14,6 +14,9 @@ var ROWS = [
 ];
 function UI(o) {
   this.rhmi = o.rhmi;
+  this.onboarding = o.onboarding || null;
+  this.noticeHandled = false;
+  this.report = o.report || function(e){console.error(String(e.message||e));};
   this.recording = o.recording;
   this.display = o.display;
   this.entry = o.entry;
@@ -139,6 +142,7 @@ UI.prototype.openMenu = async function () {
   this.clearDeleteNotice();
   this.revoke();
   this.page = "home";
+  if(this.onboarding&&!this.noticeHandled){try{if(this.onboarding.pending())this.page="welcome";}catch(e){this.report(e);this.page="welcome";}}
   await this.rhmi.mapEntryState(this.entry, this.component("HOME"));
   try {
     await this.rhmi.openEntryState(this.entry);
@@ -158,6 +162,7 @@ UI.prototype.press = async function (row) {
     await this.render();
     return;
   }
+  if(this.page==="welcome"){if(row==="HOME_ALL"){try{this.onboarding.acknowledge();}catch(e){this.report(e);}this.noticeHandled=true;this.page="home";await this.render();}return;}
   if (this.page === "home") {
     if (row === "HOME_ALL") {
       if (!desk.drive)
@@ -166,10 +171,6 @@ UI.prototype.press = async function (row) {
         this.message = "";
         this.update({ continuous: intent.continuous !== true });
       }
-    }
-    else if (row === "HOME_FRONT") {
-      this.message = "";
-      this.update({ cluster: { enabled: !(intent.cluster && intent.cluster.enabled === true) } });
     }
     else if (row === "HOME_REAR") {
       this.clearDeleteNotice();
@@ -183,10 +184,6 @@ UI.prototype.press = async function (row) {
       this.beat();
     }
     else if (row === "HOME_RIGHT") {this.page="settings";this.message="";}
-  } else if (this.page === "settings") {
-    var navigation = { HOME_ALL: "always", HOME_FRONT: "blinkers", HOME_REAR: "off" }[row];
-    if (navigation) { this.message = ""; this.update({ cluster: { navigation: navigation } }); }
-    else if (row === "HOME_LEFT") { this.message = ""; this.update({ cluster: { blinkersOnly: !(intent.cluster && intent.cluster.blinkersOnly === true) } }); }
   } else if (this.page === "delete-confirm") {
     if(row === "HOME_ALL"){
       if(!desk.drive||desk.drive.mount!==this.deleteVolume){this.message="The selected USB drive changed. Nothing deleted.";this.page="usb";}
@@ -264,12 +261,19 @@ UI.prototype.renderPage = async function () {
     if(result && result.id===this.deleteNoticeId) deletionNotice=result.error || (result.deleted+" recordings erased · "+(result.locked||0)+" locked kept"+(result.retainedDependencies?" · "+result.retainedDependencies+" needed for playback":""));
     else deletionNotice="Erasing unlocked recordings…";
   }
-  if(this.visible && desk.state==="Recording" && desk.activeId && !desk.error && !desk.deleting) labels.HOME_TITLE="BimmerVision   "+(Math.floor(this.nowMs()/500)%2?"○":"●")+" REC";
+  var enabled = intent.continuous === true,
+    finishing = !desk.deleting && (desk.finalizing === true || desk.state === "Saving last video" ||
+      !enabled && (desk.activeId || desk.writeInProgress === true && desk.finalizing === undefined || desk.state === "Recording")),
+    videoWriting = finishing || desk.finalizing === true || desk.activeId || desk.state === "Recording" || desk.state === "Saving last video",
+    writingMessage = "Do not disconnect - " + (videoWriting ? "Saving last video" : "Writing to USB"),
+    recordingState = finishing ? "Saving last video" :
+      ((desk.state === "Recording" || desk.activeId) ? "Recording" : (desk.state || "Recorder unavailable"));
+  if(this.visible && enabled && !finishing && desk.state==="Recording" && desk.activeId && !desk.error && !desk.deleting) labels.HOME_TITLE="BimmerVision   "+(Math.floor(this.nowMs()/500)%2?"○":"●")+" REC";
   if(this.page === "connect" && !drive){this.revoke();this.page="home";this.message="USB disconnected. Connect Phone unavailable.";}
-  var enabled = intent.continuous === true;
-  if (this.page === "home") {
+  if(this.page==="welcome"){labels.HOME_STATUS=require("./first-run-notice").message;labels.HOME_ALL="Understood";labels.HOME_AUTO="Back";}
+  else if (this.page === "home") {
     labels.HOME_STATUS =
-      ((desk.state === "Recording" || desk.activeId) ? "Recording" : (desk.state || "Recorder unavailable")) + (drive && typeof desk.recordingCount === "number" ? " · " + desk.recordingCount + " recordings" : "") +
+      recordingState + (drive && typeof desk.recordingCount === "number" ? " · " + desk.recordingCount + " recordings" : "") +
       "\n" +
       (drive
         ? (drive.name || drive.mount || "USB") +
@@ -283,17 +287,13 @@ UI.prototype.renderPage = async function () {
         : desk.drives && desk.drives.length
           ? "Select a USB drive to record"
           : "No writable USB drive detected\nConnect a USB drive") +
-      (drive ? "\n" + (desk.deleting ? "Do not disconnect - Deleting recordings" : (desk.writeInProgress===true || desk.writeInProgress===undefined && (desk.state === "Recording" || desk.activeId)) ? "Do not disconnect - Saving last video" : desk.safeToRemove===false || desk.error ? "USB error - Safe removal not confirmed" : "Safe to Remove") : "") +
+      (drive ? "\n" + (desk.deleting ? "Do not disconnect - Deleting recordings" : (desk.writeInProgress===true || desk.writeInProgress===undefined && videoWriting) ? writingMessage : desk.safeToRemove===false || desk.error ? "USB error - Safe removal not confirmed" : "Safe to Remove") : "") +
       "";
     labels.HOME_ALL = drive
       ? enabled
         ? "Pause recording"
         : "Enable recording"
       : "Enable recording";
-    var clusterEnabled = intent.cluster && intent.cluster.enabled === true,
-      cluster = desk.cluster || {},
-      clusterStatus = cluster.error ? "Preview unavailable" : { starting: "Starting", showing: "Live", hidden: "Hidden", waiting: "Waiting", error: "Preview unavailable" }[cluster.state];
-    labels.HOME_FRONT = "Cluster cameras: " + (clusterEnabled ? "On" + (clusterStatus ? " · " + clusterStatus : "") : "Off");
     labels.HOME_REAR = "USB storage";
     labels.HOME_LEFT = "Connect Phone";
     labels.HOME_RIGHT = "Settings / About";
@@ -326,15 +326,10 @@ UI.prototype.renderPage = async function () {
       labels.HOME_STATUS +=
         "\nNo writable USB drive detected\nConnect a USB drive";
     if(drive) labels.HOME_DELETE="Erase all unlocked recordings…";
-    if(drive) labels.HOME_STATUS+="\n"+(desk.recordingCount==null?"":desk.recordingCount+" recordings · ")+(desk.lockedRecordingCount==null?"Locked count unavailable · ":desk.lockedRecordingCount+" locked · ")+(desk.deleting?"Do not disconnect - Deleting recordings":desk.writeInProgress?"Do not disconnect - Saving last video":desk.safeToRemove===false||desk.error?"USB error - Safe removal not confirmed":"Safe to Remove");
+    if(drive) labels.HOME_STATUS+="\n"+(desk.recordingCount==null?"":desk.recordingCount+" recordings · ")+(desk.lockedRecordingCount==null?"Locked count unavailable · ":desk.lockedRecordingCount+" locked · ")+(desk.deleting?"Do not disconnect - Deleting recordings":desk.writeInProgress?writingMessage:desk.safeToRemove===false||desk.error?"USB error - Safe removal not confirmed":"Safe to Remove");
     if (drives.length > 4) labels.HOME_RIGHT = "Next drives";
     labels.HOME_AUTO = "Back";
   } else if(this.page==="settings") {
-    var navigation = intent.cluster && intent.cluster.navigation || "blinkers";
-    labels.HOME_ALL = (navigation === "always" ? "✓ " : "") + "Navigation: Always";
-    labels.HOME_FRONT = (navigation === "blinkers" ? "✓ " : "") + "Navigation: Blinkers only";
-    labels.HOME_REAR = (navigation === "off" ? "✓ " : "") + "Navigation: Off";
-    labels.HOME_LEFT = "Only blinker cameras: " + (intent.cluster && intent.cluster.blinkersOnly === true ? "On" : "Off");
     labels.HOME_STATUS="BimmerVision "+require('../package.json').version+" · GitHub: Hexphase/BimmerVision\nComputer: Visit BimmerVision.App and connect your USB drive to view footage.\nPhone: Connect Phone on the previous page connects directly to your car.";
     labels.HOME_AUTO="Back";
   } else {

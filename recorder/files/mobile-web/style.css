@@ -1240,6 +1240,7 @@ body {
 }
 
 .wheel-wrapper {
+  position: relative;
   width: 46px;
   height: 46px;
   display: flex;
@@ -1253,6 +1254,11 @@ body {
   object-fit: contain;
   transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.7));
+}
+
+.wheel-horn {
+  position: absolute;
+  visibility: hidden;
 }
 
 .wheel-angle-label {

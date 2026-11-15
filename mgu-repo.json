@@ -9,7 +9,7 @@
       "manifest": "mgu-app.json",
       "icon": "store-icon.png",
       "requires": {
-        "bimmervision-recorder": "0.2.24"
+        "bimmervision-recorder": "0.2.36"
       },
       "build": {
         "node": "idrive/build-store.js",

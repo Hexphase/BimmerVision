@@ -36,6 +36,32 @@ function recordedSpeedLimitEvent(obj, atUs, payload, expectedCrc) {
   return event;
 }
 
+// Horn samples are observations, never latched state. Match the recorder's 2s
+// freshness limit and keep the archive timestamp separate from the sample time.
+function recordedHornEvent(obj, atUs, payload, expectedCrc) {
+  const dedicated = (obj.type === 'horn' || obj.type === 'horn-status') && obj.source === 'BDC.HUPE_TASTER';
+  const field = obj.type === 'telemetry' && obj.fields && obj.fields.horn;
+  if (!dedicated && !field) return null;
+  let crc = 0xffffffff;
+  for (const byte of payload) { crc ^= byte; for (let bit=0; bit<8; bit++) crc=(crc>>>1)^((crc&1)?0xedb88320:0); }
+  if (((crc ^ 0xffffffff) >>> 0) !== expectedCrc) return {atUs, sampleUs:atUs, pressed:false};
+  if (field) return hornFieldEvent(field, atUs);
+  return {atUs, sampleUs:atUs, pressed:obj.schemaVersion === 1 && obj.type === 'horn' && obj.valid === true && obj.pressed === true};
+}
+
+function hornFieldEvent(field, atUs) {
+  const valid = field && field.valid === true && field.sourceValid === true && field.latched === false &&
+    typeof field.value === 'boolean' && Number.isFinite(field.atUs) && field.atUs >= 0 && field.atUs <= atUs &&
+    Number.isFinite(field.ageUs) && field.ageUs >= 0 && field.ageUs <= 2000000;
+  return {atUs, sampleUs:valid ? field.atUs : atUs, pressed:valid && field.value === true};
+}
+
+function latestRecordedAt(records, targetUs) {
+  let lo=0,hi=records.length-1,best=-1;
+  while (lo<=hi) {const mid=(lo+hi)>>1; if(records[mid].atUs<=targetUs){best=mid;lo=mid+1;}else hi=mid-1;}
+  return records[best] || null;
+}
+
 class BvrParser {
   constructor(arrayBuffer) {
     this.buffer = arrayBuffer;
@@ -46,6 +72,7 @@ class BvrParser {
     this.cameraPairEvents = [];
     this.cameraViewEvents = [];
     this.speedLimitEvents = [];
+    this.hornEvents = [];
     this.startMonotonicUs = null;
     this.endMonotonicUs = null;
     this.parsed = false;
@@ -110,6 +137,8 @@ class BvrParser {
         try {
           const jsonText = textDecoder.decode(payload);
           const obj = JSON.parse(jsonText);
+          const horn = recordedHornEvent(obj, atUs, payload, expectedCrc);
+          if (horn) this.hornEvents.push(horn);
           const speedLimit = recordedSpeedLimitEvent(obj, atUs, payload, expectedCrc);
           if (speedLimit) this.speedLimitEvents.push(speedLimit);
           const cameraView = recordedCameraEvent(obj, atUs, payload, expectedCrc);
@@ -187,10 +216,21 @@ class BvrParser {
     return found && target-found.atUs<=2500000 ? found : {limit:null,unit:null};
   }
 
+  getHornAtTime(seconds, manifestStartUs) {
+    const targetUs=(manifestStartUs ?? this.startMonotonicUs ?? 0)+seconds*1000000;
+    let event=latestRecordedAt(this.hornEvents || [],targetUs);
+    // Native preview supplies the original telemetry snapshots rather than BVR
+    // event records. Never borrow the first (future) snapshot before it occurred.
+    const rec=latestRecordedAt(this.telemetryRecords || [],targetUs);
+    if(rec && (!event || rec.atUs>event.atUs)) event=hornFieldEvent(rec.fields && rec.fields.horn,rec.atUs);
+    return Boolean(event && event.pressed && targetUs>=event.sampleUs && targetUs-event.sampleUs<=2000000);
+  }
+
   getTelemetryAtTime(playbackSeconds, manifestStartUs) {
     const startUs = manifestStartUs !== undefined ? manifestStartUs : (this.startMonotonicUs || 0);
     const targetUs = startUs + playbackSeconds * 1000000.0;
     const carLimit = BvrParser.prototype.getCarSpeedLimitAtTime.call(this, playbackSeconds, startUs);
+    const hornPressed = BvrParser.prototype.getHornAtTime.call(this, playbackSeconds, startUs);
 
     if (!this.telemetryRecords || this.telemetryRecords.length === 0) {
       return {
@@ -200,6 +240,7 @@ class BvrParser {
         gasPressed: false,
         acceleratorPercent: 0,
         steeringAngleDeg: 0,
+        hornPressed,
         indicator: "off",
         latitude: null,
         longitude: null,
@@ -233,6 +274,7 @@ class BvrParser {
         gasPressed: false,
         acceleratorPercent: 0,
         steeringAngleDeg: 0,
+        hornPressed,
         indicator: "off",
         latitude: null,
         longitude: null,
@@ -310,6 +352,7 @@ class BvrParser {
       gasPressed: gasPressed,
       acceleratorPercent: Math.round(acceleratorPercent),
       steeringAngleDeg: Math.round(steeringAngleDeg),
+      hornPressed,
       indicator: indicator,
       latitude: latitude,
       longitude: longitude,
@@ -388,6 +431,7 @@ class StreamingBvrParser {
     this.cameraPairEvents = [];
     this.cameraViewEvents = [];
     this.speedLimitEvents = [];
+    this.hornEvents = [];
     this.startMonotonicUs = null;
     this.endMonotonicUs = null;
   }
@@ -465,6 +509,8 @@ class StreamingBvrParser {
         try {
           const jsonText = this.textDecoder.decode(payload);
           const obj = JSON.parse(jsonText);
+          const horn = recordedHornEvent(obj, atUs, payload, expectedCrc);
+          if (horn) this.hornEvents.push(horn);
           const speedLimit = recordedSpeedLimitEvent(obj, atUs, payload, expectedCrc);
           if (speedLimit) this.speedLimitEvents.push(speedLimit);
           const cameraView = recordedCameraEvent(obj, atUs, payload, expectedCrc);

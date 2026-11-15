@@ -5,19 +5,19 @@
       "id": "bimmervision",
       "kind": "app",
       "title": "BimmerVision",
-      "version": "0.2.24",
-      "description": "The first app to enable continuous recording of BMW’s 360° camera system directly to a USB flash drive on iDrive 7. View the matching side camera in the instrument cluster when you use a blinker. Recording and preview work independently, with blinker-only and navigation options. Direct capture performs no BMW Drive Recorder subscription check; a car without an entitlement has not yet been physically tested. Requires iDrive 7 MGU, 360° Surround View and Cluster renderer 0.6.0+.",
+      "version": "0.2.36",
+      "description": "The first app to enable continuous recording of BMW’s 360° camera system directly to a USB flash drive on iDrive 7. Review, download and export saved recordings on your phone or computer, with recorded vehicle telemetry and horn indicators. Direct capture performs no BMW Drive Recorder subscription check; a car without an entitlement has not yet been physically tested. Requires iDrive 7 MGU and 360° Surround View.",
       "mguHmi": [
         "ID7"
       ],
       "requires": {
-        "bimmervision-recorder": "0.2.24"
+        "bimmervision-recorder": "0.2.36"
       },
       "artifact": {
-        "name": "bimmervision@0.2.24.tgz",
-        "size": 66618,
-        "sha256": "133f25c990cca39237afcfc6f82ad49ef0de3f8333c367b46958d15312ad6320",
-        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision@0.2.24.tgz"
+        "name": "bimmervision@0.2.36.tgz",
+        "size": 66883,
+        "sha256": "67c83eb4c268bf297bac5f959695cb99549d95ae62713d1b577fabeb3e916365",
+        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision@0.2.36.tgz"
       },
       "icon": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/store-icon.png",
       "iconSha256": "2699dd3db86fef702d0889c7c6bd7b231bb62490898a257dc41113a48a158836"
@@ -26,23 +26,22 @@
       "id": "bimmervision-recorder",
       "kind": "tool",
       "title": "BimmerVision Recorder",
-      "version": "0.2.24",
+      "version": "0.2.36",
       "description": "Required recorder service for BimmerVision. Sets up this car automatically; never includes another car’s credentials.",
       "mguHmi": [
         "ID7"
       ],
       "requires": {
         "mgu-deploy": "0.8.18",
-        "mgu-updater": "0.8.45",
-        "cluster-render": "0.6.0"
+        "mgu-updater": "0.8.45"
       },
       "optional": true,
       "uninstallable": true,
       "artifact": {
-        "name": "bimmervision-recorder@0.2.24.tgz",
-        "size": 1749760,
-        "sha256": "47eb93fd3b217d841ba9d10528e50f17c3e4eaa11a99e4ff24a4b33eff600c45",
-        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision-recorder@0.2.24.tgz"
+        "name": "bimmervision-recorder@0.2.36.tgz",
+        "size": 2497165,
+        "sha256": "7893d2b006f76b2feedfb14465de19cfe0cdb358df59e20897349d42641ded5b",
+        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision-recorder@0.2.36.tgz"
       }
     }
   ]

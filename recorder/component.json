@@ -1,7 +1,7 @@
 {
   "id": "bimmervision-recorder",
   "kind": "tool",
-  "version": "0.2.24",
+  "version": "0.2.36",
   "title": "BimmerVision Recorder",
   "description": "Required recorder service for BimmerVision. Sets up this car automatically; never includes another car’s credentials.",
   "optional": true,
@@ -11,8 +11,7 @@
   ],
   "requires": {
     "mgu-deploy": "0.8.18",
-    "mgu-updater": "0.8.45",
-    "cluster-render": "0.6.0"
+    "mgu-updater": "0.8.45"
   },
   "files": [
     {
@@ -64,142 +63,28 @@
       "from": "files/check.js"
     },
     {
-      "path": "cluster/DECODER-PROVENANCE.json",
+      "path": "diagnostic-log.js",
       "mode": "0644",
-      "sha256": "7af520f50759a5df24bda14d2379866788e2e044ddd0dcb16fea04fdba317cd2",
-      "from": "files/cluster/DECODER-PROVENANCE.json"
+      "sha256": "4fe8754fb7fbf535f60e0b3f7683cc14af88c566939cb2a106d7e480b1233daf",
+      "from": "files/diagnostic-log.js"
     },
     {
-      "path": "cluster/LICENSE.bvcamera-decode",
+      "path": "diagnostic-session.js",
       "mode": "0644",
-      "sha256": "31c8f670c81686499ce4fc8e8ee45d9d57964ea706e188d58866736e95353166",
-      "from": "files/cluster/LICENSE.bvcamera-decode"
-    },
-    {
-      "path": "cluster/LICENSE.intel-mediasdk",
-      "mode": "0644",
-      "sha256": "dfd67773578903698f9ff4a61eb8f2d84810cbecd56f3f3cee8c649f813b6ea6",
-      "from": "files/cluster/LICENSE.intel-mediasdk"
-    },
-    {
-      "path": "cluster/THIRD-PARTY.md",
-      "mode": "0644",
-      "sha256": "ffdfe16af7dbcc7284d7ac4528edfbb99dcd79116a80ecfc5dc82ca6465696e9",
-      "from": "files/cluster/THIRD-PARTY.md"
-    },
-    {
-      "path": "cluster/bvcamera-decode",
-      "mode": "0755",
-      "sha256": "fd1f8fe3c09fb1ec3698d286fc1fb20592472819f3b237facbe23539a49bfcd5",
-      "from": "files/cluster/bvcamera-decode"
-    },
-    {
-      "path": "cluster/camera-pair.js",
-      "mode": "0644",
-      "sha256": "92c42dd2a2a3d941b11945716f8afc6b1524bc07ea5c4da3e0acfed7832d64b8",
-      "from": "files/cluster/camera-pair.js"
-    },
-    {
-      "path": "cluster/controller.js",
-      "mode": "0644",
-      "sha256": "1185386703c2492556b6f00b3b4ee05128ab52380fd3a3c4a7830bcef753ebb7",
-      "from": "files/cluster/controller.js"
-    },
-    {
-      "path": "cluster/decoded-frame.js",
-      "mode": "0644",
-      "sha256": "671af23772e171bd0bb78e9dd230c8bc231306e4589e82526cd582ff533c4881",
-      "from": "files/cluster/decoded-frame.js"
-    },
-    {
-      "path": "cluster/decoder-session.js",
-      "mode": "0644",
-      "sha256": "73aa96d01aa5fcc4bfa2cefe886e3258139b5e2f06bd03ceecaa02755b0571f7",
-      "from": "files/cluster/decoder-session.js"
-    },
-    {
-      "path": "cluster/fifo-writer.js",
-      "mode": "0644",
-      "sha256": "d930fd2153696be3a29aaf41cdbb06535fa887bb43032a8ff8514a99fb398bda",
-      "from": "files/cluster/fifo-writer.js"
-    },
-    {
-      "path": "cluster/frame-feeder.js",
-      "mode": "0644",
-      "sha256": "418db212bc90bbdfe7ef42b0df0cd6d8a445b62b657f96d8e903b4d0a6ddcf08",
-      "from": "files/cluster/frame-feeder.js"
-    },
-    {
-      "path": "cluster/independent-worker.js",
-      "mode": "0644",
-      "sha256": "e170e4e4023ca5073bb27eb50fd284e41bc21a90119e355583b69844cec9f9a4",
-      "from": "files/cluster/independent-worker.js"
-    },
-    {
-      "path": "cluster/input.js",
-      "mode": "0644",
-      "sha256": "f297ec3ce7b0a0d95a2a6103d0a800445ef1dbd24bdb84daa23b4e2fbc14f9a8",
-      "from": "files/cluster/input.js"
-    },
-    {
-      "path": "cluster/pacer.js",
-      "mode": "0644",
-      "sha256": "3d4803e7baf253f8b0fdb899530867ba79b93acde1ff1618b9e37c6c1cd972cf",
-      "from": "files/cluster/pacer.js"
-    },
-    {
-      "path": "cluster/process.js",
-      "mode": "0644",
-      "sha256": "0363b0034d7393e496fdea3de44123774319b8d23d041cc58db899f1355e2d92",
-      "from": "files/cluster/process.js"
-    },
-    {
-      "path": "cluster/progress-watch.js",
-      "mode": "0644",
-      "sha256": "9f9f3e075a684ca2d3cec8bfe5fa54d7b017a19acb131388bd7743b9937865da",
-      "from": "files/cluster/progress-watch.js"
-    },
-    {
-      "path": "cluster/renderer-link.js",
-      "mode": "0644",
-      "sha256": "0e2cac43d8275d9d664b504cfc5255e864cddb6d5ab53db3b188a8071e131a0c",
-      "from": "files/cluster/renderer-link.js"
-    },
-    {
-      "path": "cluster/rgba-output.js",
-      "mode": "0644",
-      "sha256": "80f4297a5d78ea9ce0f1361de42637488b819fc3c9d36e39d73a5b662878d077",
-      "from": "files/cluster/rgba-output.js"
-    },
-    {
-      "path": "cluster/worker.js",
-      "mode": "0644",
-      "sha256": "a7f508f90f63493af89936dacda1c50e3a30966210ca7d36fb0bca8c08df1d2f",
-      "from": "files/cluster/worker.js"
-    },
-    {
-      "path": "cluster-manager.js",
-      "mode": "0644",
-      "sha256": "a964b4b840bc1544d74816c97a9593f430d7167472ef17177543cd1f2da622b6",
-      "from": "files/cluster-manager.js"
-    },
-    {
-      "path": "cluster-navigation.js",
-      "mode": "0644",
-      "sha256": "5870f797232fa5bc5a6c3c74eb499bcf113023331c1c187805a147fd8863d1c5",
-      "from": "files/cluster-navigation.js"
-    },
-    {
-      "path": "cluster-preference.js",
-      "mode": "0644",
-      "sha256": "54719e230254b44e4fdcda34b7406299d4731e7ee23c369c2536165bfb2334e7",
-      "from": "files/cluster-preference.js"
+      "sha256": "424a064897d1f0d4fc8094c6a5e4eb314b8eab22c0b04d535e832d99cfe36bc7",
+      "from": "files/diagnostic-session.js"
     },
     {
       "path": "drive-actions.js",
       "mode": "0644",
       "sha256": "dac61cc2e5da246d03301d47b12af70c3e60ea758a35b34097733f35ccb0a195",
       "from": "files/drive-actions.js"
+    },
+    {
+      "path": "horn.js",
+      "mode": "0644",
+      "sha256": "32ff963bcbbd4f39eb36c95ecf8fa2766717440c18b997444b89975c52960baf",
+      "from": "files/horn.js"
     },
     {
       "path": "io.js",
@@ -210,13 +95,13 @@
     {
       "path": "library.js",
       "mode": "0644",
-      "sha256": "9a4cec378827810c1b642757ec453a2f975579a535e190be29c6c7dbb9a34d8f",
+      "sha256": "f37c9761624ac4054e2298eb5a70ed0c55b5d60a19c80ef434b777e4eb936e38",
       "from": "files/library.js"
     },
     {
       "path": "main.js",
       "mode": "0644",
-      "sha256": "067766ab41dba24e892ab0ddf9ed260b77314b2076658014d80e9fd9ac1e4257",
+      "sha256": "97529ea49b4d21f584629c6faba66a33d06e30d46b8898880f7d9af08b8d006f",
       "from": "files/main.js"
     },
     {
@@ -228,7 +113,7 @@
     {
       "path": "mobile-web/app.js",
       "mode": "0644",
-      "sha256": "329edb51699ccf49516712ad5ef4cbd1d38d3cd09bc89c11f26c7b0413198b53",
+      "sha256": "7e6cd9433bc231453d636792d70cdde23d041cfbd09bdbeecfe0edd113c4fd3c",
       "from": "files/mobile-web/app.js"
     },
     {
@@ -262,9 +147,15 @@
       "from": "files/mobile-web/assets/wheel-face.png"
     },
     {
+      "path": "mobile-web/assets/wheel-horn.png",
+      "mode": "0644",
+      "sha256": "336fdb2fcf877d074c193e7486a700e86d9a7f606b932a414389ea99b00c34df",
+      "from": "files/mobile-web/assets/wheel-horn.png"
+    },
+    {
       "path": "mobile-web/bvr-parser.js",
       "mode": "0644",
-      "sha256": "995e991cd67edd17f72206c454a960757938ca7de4c0ba62fdf53eb1aca54025",
+      "sha256": "223e0b20115b3d298670f8baad10ac73e160cf8b9c6600b6dd859a0245bb8e94",
       "from": "files/mobile-web/bvr-parser.js"
     },
     {
@@ -300,13 +191,13 @@
     {
       "path": "mobile-web/exporter.js",
       "mode": "0644",
-      "sha256": "1b0f427a6e593d3b22c03e49c84cb1b4028eef6356f229c14aa9852bf3860160",
+      "sha256": "5acbda52e12e146b098f5324f5891da8bd5e820b59b46eaec795dfa9370d507d",
       "from": "files/mobile-web/exporter.js"
     },
     {
       "path": "mobile-web/index.html",
       "mode": "0644",
-      "sha256": "cb0adefbdcbca9ce3f9a126e1dfc3c5576062f73eb5da8c31bb418cf5d91cfdb",
+      "sha256": "2abd1b3c662222da07938e6992c2527a8e2a0c08a6d883e289c2fef876f26bc7",
       "from": "files/mobile-web/index.html"
     },
     {
@@ -324,7 +215,7 @@
     {
       "path": "mobile-web/player.js",
       "mode": "0644",
-      "sha256": "2c110af18b0bceac8e76b8de164ad25449ad67bb6cc40406bdc8a23efad360ca",
+      "sha256": "11f8903440c00a4178fee4e793e90a2b20244f5d778499d255eeabf94218c14c",
       "from": "files/mobile-web/player.js"
     },
     {
@@ -360,13 +251,13 @@
     {
       "path": "mobile-web/style.css",
       "mode": "0644",
-      "sha256": "71dbefcdf8c77b6335237ce7403df99bf09e9b2338a7f4be88c9beec0459da1e",
+      "sha256": "348014ad1c4522ae7350d1e14a1f6ba2f738f1ca03dfde2d01073bc6862b6fa5",
       "from": "files/mobile-web/style.css"
     },
     {
       "path": "oem-signals.js",
       "mode": "0644",
-      "sha256": "9c423f32552bd54aca3e4a99542262f7c1fda612febf1ee967540dde9e2042da",
+      "sha256": "2fb2a7fe7e380e1c75690d0ef87f0b4c7704accb84b6f78087c9b3690f9d640b",
       "from": "files/oem-signals.js"
     },
     {
@@ -396,7 +287,7 @@
     {
       "path": "perception.js",
       "mode": "0644",
-      "sha256": "10f8b1e6eff18ff91a8b5627d3cb9a546534acf74c4ea0e09ea5d0d36e3ce6c5",
+      "sha256": "827456a86cd9c1034652472a22b448c79dedb4726770a39e3785075c613dc026",
       "from": "files/perception.js"
     },
     {
@@ -426,7 +317,7 @@
     {
       "path": "recorder.js",
       "mode": "0644",
-      "sha256": "2f324ff0b38866bcfdfd1e588a7cc32856b99b2b572654dc103298f90b989268",
+      "sha256": "9ae8aa8b226f79f0159799bd1d316cb7cc36e81dd98a45c8bed49fcbf4504371",
       "from": "files/recorder.js"
     },
     {
@@ -438,7 +329,7 @@
     {
       "path": "recording-preference.js",
       "mode": "0644",
-      "sha256": "a6789015d556ee82da127f45bf3570289c2e12abf95d4c6db91ae328497851b4",
+      "sha256": "53b6748872bc1e3e58a6e1f8933e01b40e87169a0acd3d150fb94ef075a88e98",
       "from": "files/recording-preference.js"
     },
     {
@@ -468,7 +359,7 @@
     {
       "path": "telemetry.js",
       "mode": "0644",
-      "sha256": "03ce9f31c132e64355ce71dfe8e372befd04edf213dbecc538bd28545129ca80",
+      "sha256": "da37fc9d44f56d3b214d5d6099eacfcbc9ad35e7d0881959ef0dd61d6f3c9e53",
       "from": "files/telemetry.js"
     },
     {
@@ -486,7 +377,7 @@
     {
       "path": "version.json",
       "mode": "0644",
-      "sha256": "8159f0944f6dfce2129a39f7f11a10c3d238b13c48f42ec778b40c1d724c129f",
+      "sha256": "d4e67c76e965370bf6048ba41d44af8951cada301b000fb23ce262a1de414bd7",
       "from": "files/version.json"
     }
   ],

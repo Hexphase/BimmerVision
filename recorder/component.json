@@ -84,7 +84,7 @@
     {
       "path": "cluster/THIRD-PARTY.md",
       "mode": "0644",
-      "sha256": "61972f8ae326eff3f17e5031eeeb7ad19da6d49068939c60cf523c75a885f3c0",
+      "sha256": "ffdfe16af7dbcc7284d7ac4528edfbb99dcd79116a80ecfc5dc82ca6465696e9",
       "from": "files/cluster/THIRD-PARTY.md"
     },
     {

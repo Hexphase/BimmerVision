@@ -43,7 +43,7 @@ BimmerVision is the first app to enable continuous recording of BMW’s 360° ca
 
 For compatible **iDrive 7 MGU** cars with **360° Surround View**. A rear camera alone is insufficient; iDrive 8 and other head units are untested. Recording needs a writable USB drive; preview does not.
 
-**Cluster renderer (`cluster-render`) 0.6.0+ is required for cluster cameras.** Add `robertnisipeanu/idrive-apps` as a source in MGU Store if it cannot resolve this dependency. BimmerVision’s recorder companion is installed automatically. The separate Turn View app is not required.
+**Cluster renderer (`cluster-render`) 0.6.0+ is required for cluster cameras.** Add `robertnisipeanu/idrive-apps` as a source in MGU Store if it cannot resolve this dependency. BimmerVision’s recorder companion is installed automatically.
 
 Add `Hexphase/BimmerVision` in MGU Store, then install or update BimmerVision and its matching recorder companion together. Select Map in the cluster and turn on Cluster cameras in BimmerVision.
 

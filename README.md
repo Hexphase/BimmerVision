@@ -33,7 +33,7 @@ In **Settings**, enable **Only blinker cameras** to leave the Map visible whenev
 
 Recording and cluster cameras have independent saved controls: preview works with recording paused, and recording continues with preview off. Preview runs as a separate, bounded, low-priority consumer of the camera stream; recording pressure can temporarily suspend it.
 
-**Cluster renderer (`cluster-render` 0.6.0 or newer) is required.** Keep it installed; add [robertnisipeanu/idrive-apps](https://github.com/robertnisipeanu/idrive-apps) as a Store source if it is unavailable. The separate Turn View app is not needed. See the release’s dependency notes before removing any shared tools.
+**Cluster renderer (`cluster-render` 0.6.0 or newer) is required.** Keep it installed; add [robertnisipeanu/idrive-apps](https://github.com/robertnisipeanu/idrive-apps) as a Store source if it is unavailable. See the release’s dependency notes before removing any shared tools.
 
 *Validation: the owner confirmed blinker switching, fades, independent controls and both navigation policies on the project’s iDrive 7 car. The latest phone/preview concurrency fix passed a parked connection and playback check. The latest preview pacing has not yet had a full road test; occasional live-preview hitches remain possible.*
 

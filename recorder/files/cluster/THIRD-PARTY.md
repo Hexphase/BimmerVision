@@ -1,6 +1,6 @@
 # Cluster preview components — 0.2.24 candidate
 
-The BimmerVision hardware preview decoder and renderer socket client are original Hexphase implementations, licensed under MIT. The candidate package contains neither the Turn View decoder binary nor the copied renderer client from earlier local versions.
+The BimmerVision hardware preview decoder and renderer socket client are original Hexphase implementations, licensed under MIT.
 
 ## Intel Media SDK API headers
 

@@ -40,8 +40,8 @@
       "uninstallable": true,
       "artifact": {
         "name": "bimmervision-recorder@0.2.24.tgz",
-        "size": 1749814,
-        "sha256": "c236b88f66d5b2c45df49081361cd00160aded36a99b020389bc80a3dbfccba4",
+        "size": 1749760,
+        "sha256": "47eb93fd3b217d841ba9d10528e50f17c3e4eaa11a99e4ff24a4b33eff600c45",
         "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision-recorder@0.2.24.tgz"
       }
     }

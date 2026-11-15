@@ -1,10 +1,10 @@
 # BimmerVision 0.2.24 — testing preview pipeline
 
-The candidate replaces two components from the earlier local0.2.23 preview: the TurnView native camera decoder and the copied Cluster renderer JavaScript client. The new decoder and client are original Hexphase MIT implementations from documented Intel APIs, the published renderer protocol and BimmerVision's own functional requirements. Existing recorder, camera-selection policy, preferences, fades and preview priority remain.
+The preview decoder and client are original BimmerVision implementations using documented hardware APIs, the published renderer protocol and BimmerVision's own functional requirements. Existing recorder, camera-selection policy, preferences, fades and preview priority remain.
 
 ## Components
 
-- `native/bvcamera-decode`: original C hardware-only IntelMediaSDK/VA decoder. It consumes unchanged selected AnnexB camera access units and emits BimmerVision's own bounded I420 pipe frames. No renderer client, camera control, FFmpeg implementation or TurnView source/binary is included in this helper.
+- `native/bvcamera-decode`: original C hardware-only IntelMediaSDK/VA decoder. It consumes unchanged selected AnnexB camera access units and emits BimmerVision's own bounded I420 pipe frames. This helper handles video decoding only; camera control and rendering are handled separately.
 - `recorder/files/cluster/renderer-link.js`: original Node8 image-only renderer client with bounded retention, complete-frame coalescing, framing validation, reconnect and explicit close.
 - `decoded-frame.js`, `camera-pair.js`, `decoder-session.js`, `rgba-output.js`, `independent-worker.js`: original Node integration. Camera-pair selection keeps original H264 NAL bytes unchanged. Each camera generation uses a fresh image reference; separate persistent background layers retain Map ownership.
 - Shared Cluster renderer remains a separately installed Store dependency. BimmerVision's client uses its socket interface. Its package retains its own notices; BimmerVision does not ship that service.

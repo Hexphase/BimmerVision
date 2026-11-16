@@ -1,7 +1,7 @@
 {
   "id": "bimmervision-recorder",
   "kind": "tool",
-  "version": "0.2.37",
+  "version": "0.2.38",
   "title": "BimmerVision Recorder",
   "description": "Required recorder service for BimmerVision. Sets up this car automatically; never includes another car’s credentials.",
   "optional": true,
@@ -239,7 +239,7 @@
     {
       "path": "mobile-web/index.html",
       "mode": "0644",
-      "sha256": "f4dbffb3535801eb982d925b58f92ebf6c066feb8bc959865b6af641e51d79de",
+      "sha256": "f085e3d0bc6e2c644445b1c8bb1fa4c78c51dadbd0162b464d4f9f732a994d43",
       "from": "files/mobile-web/index.html"
     },
     {
@@ -263,7 +263,7 @@
     {
       "path": "mobile-web/playback-layout.css",
       "mode": "0644",
-      "sha256": "d9b6560aaefc55212d4ee80525df06d124e5fc46376506a8b26995d393eeed6f",
+      "sha256": "51b7181123ca273c5c59e270358a8c4bd60755aa602060f2ec0a71f9b869a697",
       "from": "files/mobile-web/playback-layout.css"
     },
     {
@@ -335,7 +335,7 @@
     {
       "path": "mobile-web/source-manager.js",
       "mode": "0644",
-      "sha256": "db1403c474dc57845b7cf1846ebfe0a3314d4dc5f41270a8cc0ffcf33f54be63",
+      "sha256": "3dd1852be88cf678dcf37d103f24463f6da996618a79e21524647f9903479d9a",
       "from": "files/mobile-web/source-manager.js"
     },
     {
@@ -509,7 +509,7 @@
     {
       "path": "version.json",
       "mode": "0644",
-      "sha256": "bd9733fa7da43347c65eb0273fc4069e7119570d209a02f7bd7c3b23cd6a3f81",
+      "sha256": "1b81d4655e03ae5000f67cca53480b4d91f9ee66424e68e3f2c1044fac74a08d",
       "from": "files/version.json"
     }
   ],

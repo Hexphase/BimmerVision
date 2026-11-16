@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="recorder/files/mobile-web/assets/bimmervision-wordmark.png" alt="BimmerVision" width="600">
+  <img src="docs/images/bimmervision-readme.png" alt="BimmerVision" width="600">
 </p>
 
 # BimmerVision

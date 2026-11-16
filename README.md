@@ -16,6 +16,10 @@ Record your drives automatically, review all four cameras simultaneously, and ex
 
 ---
 
+## Current release
+
+**0.2.37** brings the redesigned recordings and playback interface from [BimmerVision Web](https://bimmervision.app/) to the car-hosted webserver, including the metadata driving view, detected road signs and optional driving-view export. The car opens directly to saved drives. See [release notes](RELEASE_NOTES.md).
+
 ## Features
 
 ### Continuous 360° Recording

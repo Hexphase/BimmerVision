@@ -5,6 +5,7 @@
  */
 function bvFetch(url, options) {
   options = options || {};
+  if (typeof window !== 'undefined' && window.BVSourceManager) return window.BVSourceManager.fetch(url,options);
   var headers = Object.assign({}, options.headers || {});
   var bearer = sessionStorage.getItem("bimmervision_bearer");
   if (bearer && !headers.Authorization) headers.Authorization = "Bearer " + bearer;
@@ -172,6 +173,7 @@ class BimmerVisionPlayer {
 
   cancelLoad() {
     ++this._clipEpoch; ++this._decoderEpoch;
+    this.drivingView?.reset();
     this.pause();
     this._speedLimitAbort?.abort(); this._speedLimitAbort=null; this._speedLimitPending=null;
     this.currentSpeedLimit=null; this._speedLimitLocationKey=null; this._lastSpeedLimitLookupCoord=null;
@@ -207,7 +209,9 @@ class BimmerVisionPlayer {
     if (!response.ok) throw new Error('Recording download unavailable: HTTP '+response.status);
     this.totalBytes=Number(response.headers.get('Content-Length')) || expectedBytes || 0;
     this.loadedByteOffset=0;
-    this._setState('loading','Downloading the complete recording…');
+    const readingLocal=window.BVSourceManager?.source?.kind==='usb';
+    const loadingText=readingLocal?'Reading the complete recording from your USB drive…':'Downloading the complete recording…';
+    this._setState('loading',loadingText);
     const reader=response.body.getReader();
     try {
       while (true) {
@@ -216,7 +220,7 @@ class BimmerVisionPlayer {
         if (done) break;
         this.loadedByteOffset+=value.byteLength;
         onChunk(value);
-        this._setState('loading','Downloading the complete recording…');
+        this._setState('loading',loadingText);
         await new Promise(resolve=>setTimeout(resolve,0));
       }
       if (this.totalBytes && this.loadedByteOffset !== this.totalBytes) throw new Error('The recording download was incomplete. Check the connection and retry.');
@@ -261,6 +265,7 @@ class BimmerVisionPlayer {
     this.currentTime = 0; this.currentAuIndex = 0; this.nextDecodeIdx = 0;
     this.loadedByteOffset = 0; this.totalBytes = 0; this.accessUnits = [];
     this.bvrUrl = bvrUrl;
+    this.drivingView?.reset('Reading recording metadata…');
     this._setState('loading', 'Reading recording information…');
     const response = await this._loadOperation(bvFetch(manifestUrl, {signal}),signal);
     if (!response.ok) throw new Error('Recording information unavailable: HTTP ' + response.status);
@@ -288,6 +293,7 @@ class BimmerVisionPlayer {
       while(released<assembler.accessUnits.length) assembler.accessUnits[released++].data=null;
       if (!this.accessUnits.length) throw new Error('No usable video frames in this recording.');
       this.streamComplete=true;
+      this.drivingView?.load(parser,manifest);
       this._setState('loading','Preparing camera frames…');
       this._initDecoder(); this._decodeAhead();
       if(this.liveMap)this.liveMap.setTrack(parser.getRouteSeries(manifest.startMonotonicUs));
@@ -305,7 +311,7 @@ class BimmerVisionPlayer {
 
   async _loadNative(manifest, epoch, signal) {
     this._setState('loading', 'Preparing a phone-friendly video. The first open may take a moment…');
-    const response = await this._loadOperation(bvFetch(`/api/v1/preview/${encodeURIComponent(manifest.id)}`, {signal}),signal,120000);
+    const response = await this._loadOperation(bvFetch(`/api/v1/preview/${encodeURIComponent(manifest.id)}`, {signal,timeoutMs:120000}),signal,120000);
     if (!response.ok) { const body = await this._loadOperation(response.json(),signal).catch(() => ({})); throw new Error(body.error || 'Native preview unavailable'); }
     const info = await this._loadOperation(response.json(),signal);
     if (signal.aborted || epoch !== this._clipEpoch) throw new DOMException('Cancelled','AbortError');
@@ -341,6 +347,7 @@ class BimmerVisionPlayer {
     if (!live()) throw new DOMException('Cancelled','AbortError');
     this.duration = Number.isFinite(video.duration) ? video.duration : this.duration;
     this.streamComplete = true;
+    this.drivingView?.loadSource(this.bvrUrl,manifest);
     if (this.liveMap) this.liveMap.setTrack(this.parser.getRouteSeries(manifest.startMonotonicUs));
     this._renderNativeFrame(); this._updateScrubber(); this._updateTelemetryHud(); this._setState('paused');
   }
@@ -466,6 +473,8 @@ class BimmerVisionPlayer {
   setSpeedUnit(unit) {this.speedUnit=unit;this._updateTelemetryHud();}
   setSedanSelector(selector) {this.sedanSelector=selector;}
   setLiveMap(map) {this.liveMap=map;}
+
+  setDrivingView(view) {this.drivingView=view;}
   _tick() {
     if(!this.isPlaying) return;
     const now=performance.now(),dt=Math.min(0.15,Math.max(0,(now-this.lastFrameWallTime)/1000)); this.lastFrameWallTime=now;
@@ -718,7 +727,7 @@ class BimmerVisionPlayer {
   _drawQuadLabels(qCtx) {
     qCtx.save();
     qCtx.font = "bold 18px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-    
+
     const drawBadge = (text, x, y) => {
       qCtx.fillStyle = "rgba(10, 12, 16, 0.75)";
       qCtx.beginPath();
@@ -763,6 +772,7 @@ class BimmerVisionPlayer {
   }
 
   _updateTelemetryHud() {
+    this.drivingView?.setTime(this.currentTime);
     if (!this.parser) return;
     const telem = this.parser.getTelemetryAtTime(this.currentTime, this.manifest ? this.manifest.startMonotonicUs : 0);
 

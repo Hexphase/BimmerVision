@@ -5,19 +5,19 @@
       "id": "bimmervision",
       "kind": "app",
       "title": "BimmerVision",
-      "version": "0.2.36",
+      "version": "0.2.37",
       "description": "The first app to enable continuous recording of BMW’s 360° camera system directly to a USB flash drive on iDrive 7. Review, download and export saved recordings on your phone or computer, with recorded vehicle telemetry and horn indicators. Direct capture performs no BMW Drive Recorder subscription check; a car without an entitlement has not yet been physically tested. Requires iDrive 7 MGU and 360° Surround View.",
       "mguHmi": [
         "ID7"
       ],
       "requires": {
-        "bimmervision-recorder": "0.2.36"
+        "bimmervision-recorder": "0.2.37"
       },
       "artifact": {
-        "name": "bimmervision@0.2.36.tgz",
-        "size": 66883,
-        "sha256": "67c83eb4c268bf297bac5f959695cb99549d95ae62713d1b577fabeb3e916365",
-        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision@0.2.36.tgz"
+        "name": "bimmervision@0.2.37.tgz",
+        "size": 66882,
+        "sha256": "7f4c460a66f04cc1befb0d895c706ee730ece619d24144773e5d16de0a634b1b",
+        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision@0.2.37.tgz"
       },
       "icon": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/store-icon.png",
       "iconSha256": "2699dd3db86fef702d0889c7c6bd7b231bb62490898a257dc41113a48a158836"
@@ -26,7 +26,7 @@
       "id": "bimmervision-recorder",
       "kind": "tool",
       "title": "BimmerVision Recorder",
-      "version": "0.2.36",
+      "version": "0.2.37",
       "description": "Required recorder service for BimmerVision. Sets up this car automatically; never includes another car’s credentials.",
       "mguHmi": [
         "ID7"
@@ -38,10 +38,10 @@
       "optional": true,
       "uninstallable": true,
       "artifact": {
-        "name": "bimmervision-recorder@0.2.36.tgz",
-        "size": 2497165,
-        "sha256": "7893d2b006f76b2feedfb14465de19cfe0cdb358df59e20897349d42641ded5b",
-        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision-recorder@0.2.36.tgz"
+        "name": "bimmervision-recorder@0.2.37.tgz",
+        "size": 3187250,
+        "sha256": "11baa7f3feef4d00db992c0156350ad92ce0682f04654741152a61b6d85f0c7d",
+        "url": "https://raw.githubusercontent.com/Hexphase/BimmerVision/main/bimmervision-recorder@0.2.37.tgz"
       }
     }
   ]

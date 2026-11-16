@@ -1,14 +1,13 @@
-# BimmerVision 0.2.36
+# BimmerVision 0.2.37
 
-Continuous recording of BMW’s 360° camera system to USB, with saved-video playback and export on your phone or computer.
+The car-hosted player now uses the redesigned BimmerVision Web recordings and playback interface, opening directly to saved drives without the hosted homepage.
 
-- Removed live instrument-cluster camera views, their settings, decoder, workers, transport and renderer dependency.
-- Preserved recording, phone connection, saved playback/export, telemetry, horn indicators and USB diagnostic logs.
-- Includes alerts for recording interruptions, unavailable/full USB storage, dropped video and sustained USB write backlog.
-- USB diagnostic logs are written only while recording is enabled. Pause cancels queued logging; existing logs are retained and still survive erasing recordings.
-- Added a first-run camera-app conflict warning with an Understood acknowledgement saved locally, separate from USB logs.
-- Preserved the approved Store and Apps page icon sizes.
+- Edge-to-edge dark playback with a pinned video and compact telemetry bar on mobile, a scrollable timeline, camera selector, driving view and map; desktop keeps these views together.
+- Interactive camera selection, tap to play/pause, edge double-tap to skip ten seconds, and drive-aware previous/next recording navigation.
+- Metadata-based 3D driving view with unbranded vehicles, traffic direction, distances in feet, blinkers, recorded lane information and recognized road signs. Estimated road geometry is illustrative rather than verified lane topology.
+- Optional driving-view video export and bounded preloading of the next two recordings.
+- Preserved car pairing, same-origin authentication, cached map tiles, recording notices and original-recording downloads. The public Web player retains its separate local-folder homepage.
 
-Install app and recorder 0.2.36 together. Older saved preview settings are ignored. Existing recordings and recording preferences are preserved. BimmerVision no longer requires Cluster renderer; other installed applications may still use it.
+Install app and recorder **0.2.37 together**. Recorder behavior and native iDrive controls are unchanged. Existing recordings and recording preferences are preserved. Browser playback processes recordings on the viewing device; map tiles may require network access.
 
-Installed and verified on the test vehicle. The first-run warning and removal of camera controls were confirmed in-car; the automated suite passes all 180 tests. The complete pre-removal project and earlier packages are retained in a separately verified backup for future work or rollback.
+Automated and local browser validation is included in this release. Physical-car validation of this webserver redesign has not been performed; this publication does not install or restart the car application.

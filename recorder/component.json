@@ -1,7 +1,7 @@
 {
   "id": "bimmervision-recorder",
   "kind": "tool",
-  "version": "0.2.36",
+  "version": "0.2.37",
   "title": "BimmerVision Recorder",
   "description": "Required recorder service for BimmerVision. Sets up this car automatically; never includes another car’s credentials.",
   "optional": true,
@@ -113,7 +113,7 @@
     {
       "path": "mobile-web/app.js",
       "mode": "0644",
-      "sha256": "7e6cd9433bc231453d636792d70cdde23d041cfbd09bdbeecfe0edd113c4fd3c",
+      "sha256": "f39d8734bcf9f02639987ba5aefee2d5e0f1021b3182c44eb6603e1cd57715e1",
       "from": "files/mobile-web/app.js"
     },
     {
@@ -141,6 +141,18 @@
       "from": "files/mobile-web/assets/sedan-topdown.png"
     },
     {
+      "path": "mobile-web/assets/vehicles/PROVENANCE.md",
+      "mode": "0644",
+      "sha256": "200993c7c19ca1aa38d08d0101ef97e27e2d834da75f96fae89d1f24c93c7d71",
+      "from": "files/mobile-web/assets/vehicles/PROVENANCE.md"
+    },
+    {
+      "path": "mobile-web/assets/vehicles/sedan.bin.gz",
+      "mode": "0644",
+      "sha256": "79151457d322b83097a8f49ca68ef2912bd39b0f45afb9e35915dbc75b99cf2c",
+      "from": "files/mobile-web/assets/vehicles/sedan.bin.gz"
+    },
+    {
       "path": "mobile-web/assets/wheel-face.png",
       "mode": "0644",
       "sha256": "620c0beb05d7ffed64dedfcf7b238940edbdedb304612136a8d829f8d9692047",
@@ -155,7 +167,7 @@
     {
       "path": "mobile-web/bvr-parser.js",
       "mode": "0644",
-      "sha256": "223e0b20115b3d298670f8baad10ac73e160cf8b9c6600b6dd859a0245bb8e94",
+      "sha256": "448f66a41bf90aabd75a896ae6c6eb556e189d6a99ddc2f72eca062678732515",
       "from": "files/mobile-web/bvr-parser.js"
     },
     {
@@ -163,6 +175,18 @@
       "mode": "0644",
       "sha256": "e149259f3002d4e807b1620aad412496f1ee3033d2bfa426f2ec31d50ed24ee8",
       "from": "files/mobile-web/camera-store.js"
+    },
+    {
+      "path": "mobile-web/car-source.css",
+      "mode": "0644",
+      "sha256": "0dc8513cd81489095c3ae2f2f61748a08bf125f3106204145e7baf02c72b0abc",
+      "from": "files/mobile-web/car-source.css"
+    },
+    {
+      "path": "mobile-web/car-source.js",
+      "mode": "0644",
+      "sha256": "31092e315d432352c6f9f4f628985d7c94562fd9669ed11079e2cc010995b0d5",
+      "from": "files/mobile-web/car-source.js"
     },
     {
       "path": "mobile-web/catalog-refresh.js",
@@ -173,7 +197,7 @@
     {
       "path": "mobile-web/dark-osm-map.js",
       "mode": "0644",
-      "sha256": "c006e33924b3e8df40bbed7595df08bb78ee7fff9f690648d445e6733b16e475",
+      "sha256": "55fa0ff90680ed97a61ca0bf75556d929942b8d3d61b15dca6152e6f7aa90e09",
       "from": "files/mobile-web/dark-osm-map.js"
     },
     {
@@ -189,15 +213,33 @@
       "from": "files/mobile-web/drive-timeline.js"
     },
     {
+      "path": "mobile-web/driving-scene.js",
+      "mode": "0644",
+      "sha256": "f35d7ccc5864d6e2ff4fdf474dc329d7718d4e745733ee94cec07c983f7471a8",
+      "from": "files/mobile-web/driving-scene.js"
+    },
+    {
+      "path": "mobile-web/driving-view.css",
+      "mode": "0644",
+      "sha256": "eee9d65636cfe79c83f4cab1e248f33a53b36d4fb6e5494180aa99f06a04c72b",
+      "from": "files/mobile-web/driving-view.css"
+    },
+    {
+      "path": "mobile-web/driving-view.js",
+      "mode": "0644",
+      "sha256": "ac64176dea94ac1a03f1815f06d791700a3d8962739c833ed8280579de6d63c5",
+      "from": "files/mobile-web/driving-view.js"
+    },
+    {
       "path": "mobile-web/exporter.js",
       "mode": "0644",
-      "sha256": "5acbda52e12e146b098f5324f5891da8bd5e820b59b46eaec795dfa9370d507d",
+      "sha256": "1fe4aa1f383fcedba88905b916e1c80c13692f3f6e2d75339786582b2080fd94",
       "from": "files/mobile-web/exporter.js"
     },
     {
       "path": "mobile-web/index.html",
       "mode": "0644",
-      "sha256": "2abd1b3c662222da07938e6992c2527a8e2a0c08a6d883e289c2fef876f26bc7",
+      "sha256": "f4dbffb3535801eb982d925b58f92ebf6c066feb8bc959865b6af641e51d79de",
       "from": "files/mobile-web/index.html"
     },
     {
@@ -213,10 +255,46 @@
       "from": "files/mobile-web/mp4-muxer.js"
     },
     {
+      "path": "mobile-web/perception-data.js",
+      "mode": "0644",
+      "sha256": "d2aaf7cbaf49931c3d96b5c5fd5c9e6a06ac57b74acfa3b8319220f9c98398d5",
+      "from": "files/mobile-web/perception-data.js"
+    },
+    {
+      "path": "mobile-web/playback-layout.css",
+      "mode": "0644",
+      "sha256": "d9b6560aaefc55212d4ee80525df06d124e5fc46376506a8b26995d393eeed6f",
+      "from": "files/mobile-web/playback-layout.css"
+    },
+    {
+      "path": "mobile-web/playback-layout.js",
+      "mode": "0644",
+      "sha256": "ff72318c33f49fe7a1018418f5783451152583a08595367c8a724a5067931612",
+      "from": "files/mobile-web/playback-layout.js"
+    },
+    {
       "path": "mobile-web/player.js",
       "mode": "0644",
-      "sha256": "11f8903440c00a4178fee4e793e90a2b20244f5d778499d255eeabf94218c14c",
+      "sha256": "dea9de65054fc4f9897f7e831de5122d07ada7bcf53f073f7cf5c0715c0a9def",
       "from": "files/mobile-web/player.js"
+    },
+    {
+      "path": "mobile-web/raw-download.js",
+      "mode": "0644",
+      "sha256": "abcee57655e64d3bf7ea4ef117b0a9e8180c6b295adf99a53659fd4fa7e583b9",
+      "from": "files/mobile-web/raw-download.js"
+    },
+    {
+      "path": "mobile-web/recording-cache.js",
+      "mode": "0644",
+      "sha256": "90dd8e900bc8bfd4a9abf705c8ae9517d491e58c903dd63c6fbaaa58b442f67e",
+      "from": "files/mobile-web/recording-cache.js"
+    },
+    {
+      "path": "mobile-web/recording-navigation.js",
+      "mode": "0644",
+      "sha256": "28664ced31e9c23b78927f9d030066bfc4661c8e37090294a5e679c164963924",
+      "from": "files/mobile-web/recording-navigation.js"
     },
     {
       "path": "mobile-web/recording-notice.js",
@@ -225,10 +303,22 @@
       "from": "files/mobile-web/recording-notice.js"
     },
     {
+      "path": "mobile-web/recordings-layout.css",
+      "mode": "0644",
+      "sha256": "b56423166db1f5eae9c669c90941c75f9bf53705696521855d8da3002af82543",
+      "from": "files/mobile-web/recordings-layout.css"
+    },
+    {
       "path": "mobile-web/release-checker.js",
       "mode": "0644",
       "sha256": "3055b924ab5f94077515d3c15f0ca155c02572bda4807e2cb53fd74ba5620117",
       "from": "files/mobile-web/release-checker.js"
+    },
+    {
+      "path": "mobile-web/road-estimation.js",
+      "mode": "0644",
+      "sha256": "75258fc791805f568f02046492aa52a967cf5e3007869387c5b9affef36ab605",
+      "from": "files/mobile-web/road-estimation.js"
     },
     {
       "path": "mobile-web/rtp-h264.js",
@@ -239,8 +329,14 @@
     {
       "path": "mobile-web/sedan-selector.js",
       "mode": "0644",
-      "sha256": "e97aa91ea0b9cc5c3a90d717f74e4da3ee48412f6f97309e4258a03fca896412",
+      "sha256": "277815b75a3b5b50fbf97baf617e8a54f36d8832f7ad9bd1878400c0d32af3e6",
       "from": "files/mobile-web/sedan-selector.js"
+    },
+    {
+      "path": "mobile-web/source-manager.js",
+      "mode": "0644",
+      "sha256": "db1403c474dc57845b7cf1846ebfe0a3314d4dc5f41270a8cc0ffcf33f54be63",
+      "from": "files/mobile-web/source-manager.js"
     },
     {
       "path": "mobile-web/speed-limit-client.js",
@@ -249,10 +345,46 @@
       "from": "files/mobile-web/speed-limit-client.js"
     },
     {
+      "path": "mobile-web/standard-fleet.js",
+      "mode": "0644",
+      "sha256": "8335dd7f42a5f06379f16d29f4343f8840a3f02f8b31394f51e7b0f044680827",
+      "from": "files/mobile-web/standard-fleet.js"
+    },
+    {
       "path": "mobile-web/style.css",
       "mode": "0644",
       "sha256": "348014ad1c4522ae7350d1e14a1f6ba2f738f1ca03dfde2d01073bc6862b6fa5",
       "from": "files/mobile-web/style.css"
+    },
+    {
+      "path": "mobile-web/traffic-signs.js",
+      "mode": "0644",
+      "sha256": "65c4564df362f3c33c3d5347d2baff6a4faa569e0616a3f04ef796df50ac7c8a",
+      "from": "files/mobile-web/traffic-signs.js"
+    },
+    {
+      "path": "mobile-web/vehicle-motion.js",
+      "mode": "0644",
+      "sha256": "28bbf81ce403741eab99aca7ae64cf19097e8d9bee85a3244b8fe0ffe9e39510",
+      "from": "files/mobile-web/vehicle-motion.js"
+    },
+    {
+      "path": "mobile-web/vendor/three/LICENSE",
+      "mode": "0644",
+      "sha256": "4c40a1ef62450b857c3b2aaf294936304cd552d965fbcd9d32d4c5bcf4ba4454",
+      "from": "files/mobile-web/vendor/three/LICENSE"
+    },
+    {
+      "path": "mobile-web/vendor/three/RoomEnvironment.js",
+      "mode": "0644",
+      "sha256": "625d0d8ac8690a73799ea0e2c577d6260162e0da97698c4fe9b03715909ac214",
+      "from": "files/mobile-web/vendor/three/RoomEnvironment.js"
+    },
+    {
+      "path": "mobile-web/vendor/three/three.module.min.js",
+      "mode": "0644",
+      "sha256": "08fd7545d13d2c7fb65ab691530a802dafefd638596501854f267d0fb13c39e7",
+      "from": "files/mobile-web/vendor/three/three.module.min.js"
     },
     {
       "path": "oem-signals.js",
@@ -377,7 +509,7 @@
     {
       "path": "version.json",
       "mode": "0644",
-      "sha256": "d4e67c76e965370bf6048ba41d44af8951cada301b000fb23ce262a1de414bd7",
+      "sha256": "bd9733fa7da43347c65eb0273fc4069e7119570d209a02f7bd7c3b23cd6a3f81",
       "from": "files/version.json"
     }
   ],

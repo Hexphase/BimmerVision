@@ -1,108 +1,337 @@
 # BimmerVision
 
-*Version 0.2.36 focuses on continuous recording and saved-video playback.*
+**Your BMW's 360° cameras. Now a continuous dashcam.**
 
-**The first app to enable continuous recording of BMW’s 360° camera system directly to a USB flash drive on iDrive 7.** Save all four camera views and review or export your drives on your phone or computer.
+BimmerVision brings continuous, multi-camera dashcam recording to compatible BMW vehicles running **iDrive 7 (MGU)**.
 
-**Requires a compatible BMW with a 360° Surround View camera system and iDrive 7 (MGU).** A rear-view camera on its own is not enough. iDrive 8 and other head units are not currently tested.
+Unlike BMW's factory Drive Recorder, which saves short clips, BimmerVision continuously captures footage from your vehicle's 360° Surround View camera system and saves it **directly to a USB flash drive**.
 
-[Visit BimmerVision.App](https://BimmerVision.App) · [Latest release](https://github.com/Hexphase/BimmerVision/releases/latest)
+Record your drives automatically, review all four cameras simultaneously, and export footage with detailed vehicle telemetry—all from your phone or computer.
+
+**[Website](https://BimmerVision.App)** · **[Latest Release](https://github.com/Hexphase/BimmerVision/releases/latest)**
+
+---
 
 ## Features
 
-- **Four camera views:** Review the front, rear, left and right cameras, individually or together.
-- **Record directly to USB:** Keep your recordings on your own drive.
-- **Enable once for automatic recording:** BimmerVision remembers your setting and handles future drives when the cameras and USB storage are available.
-- **See when recording is active:** A blinking **REC** indicator appears in iDrive.
-- **Driving information:** Review recorded speed, steering, blinkers, brake and accelerator information alongside the video, where available.
-- **Scrub through your drive:** Drag the timeline to seek within a clip or move between recordings. Alternating BMW M colors make clip boundaries easier to spot.
-- **Remember camera assignments:** Identify each camera view and save your choices for that recording.
-- **Protect important footage:** Lock recordings in the player. Erasing unlocked recordings from iDrive keeps locked recordings protected.
-- **Follow your route:** View recorded GPS locations on the map. Speed limits appear when an explicit value is available.
-- **Export your way:** Save a camera view or a four-camera video, with your choice of driving overlays, date/time and route map.
-- **One Install action:** MGU Store automatically installs the required recorder companion with BimmerVision.
+### Continuous 360° Recording
 
+Turn your BMW's existing cameras into a full-time, four-channel dashcam.
 
-## What you need
+- **Four-camera recording:** Capture front, rear, left, and right camera views.
+- **Continuous recording:** Automatically capture your drives without manually starting a new recording.
+- **Direct USB storage:** Footage is saved directly to your connected USB drive.
+- **Automatic storage management:** Older recordings are automatically deleted when storage runs low.
+- **Protected recordings:** Lock important clips to prevent automatic deletion.
+- **Persistent recording:** Enable recording once, and BimmerVision remembers your preference for future drives.
+- **Manual control:** Pause and resume recording whenever needed.
 
-- A **compatible BMW with a 360° Surround View camera system**.
-- **iDrive 7 (MGU)** with **MGU Store** installed.
-- A writable USB drive connected to a USB port the car can use for recording.
-- A phone or computer to review and export footage.
+A recording indicator in iDrive lets you know when recording is active.
 
-Compatibility has been physically tested on the project’s iDrive 7 setup. Camera-stream and vehicle-information availability can vary between cars.
+![Blinking BimmerVision recording indicator in iDrive](docs/images/recording-indicator.gif)
 
-### BMW Drive Recorder subscription
+### How Camera Recording Works
 
-BimmerVision’s direct camera capture in **0.2.10 and newer** does not use BMW’s licensed Drive Recorder recording service or perform a subscription check. It requests the camera stream directly and records the compressed footage to USB.
+BimmerVision normally records all four Surround View cameras simultaneously.
 
-On the tested iDrive 7 car, recording works with the official BMW Drive Recorder setting switched **off**, including while the official app is suspended. That car still has an activated Drive Recorder entitlement, so operation on a car without an active subscription has **not yet been physically verified**. Versions before 0.2.10 may depend on an already-active camera stream; this direct-capture behavior should not be assumed for them.
+However, BMW's built-in camera functions can temporarily change the video stream available to BimmerVision.
 
+| Vehicle activity | Recorded footage |
+|---|---|
+| Normal driving | All four camera views |
+| Reversing / Parking Assistant | Active BMW parking camera view |
+| Front Wide View activated | Front wide-angle camera |
+| Return to normal driving | Four-camera recording resumes |
 
-## Install from MGU Store
+In normal driving conditions, all four cameras are recorded. When a factory BMW camera function takes control of the camera stream, BimmerVision records the available camera view instead.
 
-1. Add **Hexphase/BimmerVision** as a source in MGU Store.
-2. Find **BimmerVision** and press **Install**. Its recorder companion installs automatically—there is no separate companion setup to complete.
-3. If prompted to **Restart iDrive to finish setup**, park the car and use the Store’s restart action.
-4. Connect your USB drive, open **BimmerVision**, and choose **Enable recording**.
+**Important:** Third-party camera applications that modify or take control of the camera stream may interfere with BimmerVision. Running other camera applications simultaneously is not recommended, as this can prevent all four views from being recorded.
 
-On first opening BimmerVision, acknowledge the reminder to turn off other third-party apps that use the cameras. Those apps can interfere with recording and prevent capture of all camera views.
+### Vehicle Telemetry
 
-First-time camera setup runs automatically. If setup is still preparing, give it time to finish. BimmerVision does not restart iDrive automatically.
+BimmerVision does more than record video. It also captures supported vehicle information alongside your recordings, allowing you to reconstruct what happened during a drive.
 
-## Manage your USB drive
+Supported telemetry includes:
 
-Open **USB storage** in the car app to see available space, the recording count and how many recordings are locked.
+- **Vehicle speed** — Current driving speed
+- **Speed limit detection** — Detected posted speed limit
+- **Turn signals** — Left and right blinker activation
+- **Steering angle** — Steering wheel position
+- **Braking** — Brake pedal activation
+- **Acceleration** — Accelerator pedal activation
+- **Horn** — Horn activation
+- **GPS location** — Geographic position throughout the drive
+- **Date and time** — Recording timestamps
+- **Forward vehicle detection** — Vehicles detected ahead and their estimated distance
+- **Lane detection** — Detected road lanes and lane positioning
 
-![BimmerVision USB storage page showing drive space, recording counts and erase controls](docs/images/usb-storage.png)
+Telemetry availability depends on the vehicle's hardware, configuration, and accessible data signals. Not every BMW exposes every data point.
 
-**Erase all unlocked recordings** asks for confirmation and keeps locked recordings. Removing or updating the app does not erase the recordings on your USB drive.
+### Playback & Video Export
 
-To remove your drive, pause recording and wait until the USB page says **Safe to Remove** before unplugging it.
+Review your recordings using BimmerVision's player on your phone or computer.
 
-In 0.2.36, the app writes diagnostic logs only while recording is enabled to **BimmerVision-Logs**, next to the **BimmerVision** recordings folder. App-owned logs rotate under a combined **64 MiB** cap and survive erasing recordings. When reporting a problem, include the approximate incident time and a ZIP of this logs folder. Logs capture recording health, failures and CPU load without raw location telemetry or pairing credentials.
+**Multi-camera playback**
 
-## Watch on your phone
+- View all four cameras in a synchronized grid.
+- Switch between individual camera views.
+- Navigate recordings using an interactive timeline.
+- Review footage alongside available vehicle telemetry.
+- Follow your recorded route on a GPS map.
 
-1. Open **Connect Phone** in BimmerVision on the car.
-2. Use your car’s BMW Wi-Fi / CarPlay connection.
-3. Scan the QR code **shown on your car’s screen** to open the player on your phone.
-4. Keep the **Connect Phone** page open in iDrive while reviewing or downloading footage.
+**Customizable exports**
 
-![BimmerVision Connect Phone page with its pairing QR code and single Back button](docs/images/connect-phone.png)
+Choose how much information appears in your exported video.
 
-Choose a drive, select a recording, and drag the timeline to review it. Each recording downloads completely before playback starts; loading time depends on the recording size and your connection.
+Export options include camera selection, multi-camera layouts, timestamps, driving telemetry, and supported visual overlays.
 
-Recordings that are still being captured appear in the library only after that clip finishes.
+You can create anything from a clean camera-only video to a detailed driving visualization featuring speed, steering, turn signals, GPS route information, detected lanes, and surrounding vehicles where supported.
 
-## Watch on your computer
+Your footage, your choice.
 
-Visit **[BimmerVision.App](https://BimmerVision.App)** on your computer and connect your recording USB drive to view its footage.
+---
 
-You can also use **[BimmerVision Web on GitHub Pages](https://hexphase.github.io/BimmerVision-Web/)** to open a USB folder or connect to your car by IP address or QR code. Direct hosted connections require **BimmerVision 0.2.8 or newer** and a browser with local-network access support.
+## Compatibility & Requirements
 
-For the car’s built-in player, use **Connect Phone** on the car app’s main page.
+BimmerVision requires:
 
-## Updates and rollback
+- A compatible **BMW equipped with the 360° Surround View camera system**.
+- **iDrive 7 with an MGU head unit**.
+- **MGU Store** installed on the head unit.
+- A writable USB flash drive connected to a supported vehicle USB port.
 
-Update the app and recorder together through MGU Store. Before updating, retain the previous release’s app and recorder packages and their checksums. To roll back, reinstall the previous app and recorder packages together through MGU Store. Recordings on USB are preserved; a rollback across older settings schemas may need those settings selected again.
+**A standard rear-view camera alone is not sufficient.** BimmerVision requires the multi-camera Surround View system.
 
-## Updates and available information
+**iDrive 8 and newer systems have not been tested.** These systems may handle camera access differently and should not be assumed compatible.
 
-Install updates through **MGU Store** to update BimmerVision and its recorder companion together. The web player also checks for newer GitHub Releases using the viewing device’s Internet connection.
+Compatibility and telemetry availability may vary between BMW models and configurations.
 
-GPS, speed limits and other driving information are shown only when the required data is available. A blank speed-limit sign means an explicit limit could not be retrieved; BimmerVision does not invent a number.
+### Is a BMW Drive Recorder Subscription Required?
 
-<details>
-<summary>Build from source</summary>
+BimmerVision is designed to capture the camera stream independently of BMW's official Drive Recorder recording service.
 
-Use a current Node.js version on your development computer. No third-party npm dependencies are required.
+Starting with version **0.2.10**, BimmerVision requests the camera stream directly rather than relying on the official Drive Recorder recording function.
 
-```sh
-npm run build
-npm test
-```
+Testing has confirmed recording works with the factory Drive Recorder feature disabled.
 
-The build creates the BimmerVision app package, required recorder package, Store catalog and `CAR-SHA256SUMS`. The head-unit runtime targets iDrive 7 MGU Linux x86-64 and Node 8. For normal installation, use MGU Store as described above.
+However, the test vehicle still has an active Drive Recorder entitlement. Recording on a vehicle that has never had a Drive Recorder subscription **has not yet been physically verified**.
 
-</details>
+A factory Drive Recorder subscription is therefore not currently a confirmed requirement, but subscription-free operation cannot yet be guaranteed for every compatible vehicle.
+
+---
+
+## Installation
+
+BimmerVision is installed directly through **MGU Store**.
+
+1. Open MGU Store on your BMW.
+2. Add **`Hexphase/BimmerVision`** as a source.
+3. Find **BimmerVision** and select **Install**.
+4. The required recorder companion installs automatically. No additional companion installation is necessary.
+5. If prompted to restart iDrive to finish setup, park the vehicle and use MGU Store's restart option.
+
+### Start Recording
+
+1. Connect a writable USB flash drive to your BMW.
+2. Open **BimmerVision** in iDrive.
+3. Select **Enable recording**.
+
+That's it.
+
+BimmerVision remembers your recording preference, so you won't need to launch the application and manually start recording every time you drive.
+
+Recording automatically resumes on subsequent drives when the required cameras and USB storage are available.
+
+You can pause recording at any time using the app.
+
+---
+
+## Watch Recordings on Your Phone
+
+BimmerVision includes a browser-based player accessible directly from your phone.
+
+No separate mobile application is required.
+
+It can use your BMW's existing Wi-Fi connection, including the wireless connection used by CarPlay or Android Auto where supported, without requiring you to enable a separate phone hotspot.
+
+### Connect Your Phone
+
+1. Open **Connect Phone** in BimmerVision on your vehicle's iDrive screen.
+2. Connect your phone to your BMW's Wi-Fi network.
+3. Scan the QR code displayed on the vehicle's screen.
+4. Open the BimmerVision player in your phone's browser.
+
+Keep the **Connect Phone** page open in iDrive while accessing recordings.
+
+![BimmerVision Connect Phone interface](docs/images/connect-phone.png)
+
+### Review & Manage Recordings
+
+From your phone, you can:
+
+- Browse recorded drives and individual clips.
+- Watch synchronized multi-camera footage.
+- Switch between camera perspectives.
+- Navigate recordings using the playback timeline.
+- Review GPS routes and available driving information.
+- View drive duration and average speed.
+- Lock important recordings to prevent deletion.
+- Delete recordings you no longer need.
+- Download and export footage.
+
+**Playback behavior:** Each recording downloads completely before playback begins. Loading time depends on its size and the connection speed.
+
+Clips currently being recorded appear in the library once recording of that clip has finished.
+
+### Playback During Active Recording
+
+BimmerVision prioritizes recording performance over playback and downloads.
+
+When the vehicle is actively recording, file transfers may run more slowly to reduce USB storage contention and avoid interrupting footage capture.
+
+For the best playback and download performance, **pause recording before reviewing or transferring large files**.
+
+---
+
+## Watch Recordings on Your Computer
+
+BimmerVision recordings can also be reviewed directly from the USB drive.
+
+1. Safely remove the USB drive from your BMW.
+2. Connect it to your Windows PC or Mac.
+3. Visit **[BimmerVision.App](https://BimmerVision.App)**.
+4. Open your BimmerVision recordings.
+5. Review, manage, or export your footage.
+
+The computer player supports reviewing synchronized camera footage and associated vehicle information.
+
+You can also access the [BimmerVision Web Player on GitHub Pages](https://hexphase.github.io/BimmerVision-Web/).
+
+---
+
+## USB Storage Management
+
+BimmerVision manages recordings directly on your USB flash drive.
+
+Open **USB storage** in the iDrive application to view:
+
+- Connected USB storage information
+- Used and available storage space
+- Total recording count
+- Number of protected recordings
+- Recording and storage management controls
+
+![BimmerVision USB storage management](docs/images/usb-storage.png)
+
+### Automatic Recording Cleanup
+
+When the USB drive fills up, BimmerVision automatically removes the oldest **unlocked** recordings to make room for new footage.
+
+**Locked recordings are never deleted by automatic cleanup.**
+
+This allows continuous recording without requiring you to manually clear storage after every drive, provided sufficient space remains available.
+
+### Protecting Important Recordings
+
+Recordings can be locked through the connected phone player.
+
+Locked recordings are protected from automatic storage cleanup and the app's bulk erase operation.
+
+To delete unlocked footage, select **Erase all unlocked recordings** in the USB storage menu and confirm the action.
+
+Removing or updating BimmerVision does not erase existing recordings stored on your USB drive.
+
+### Safely Removing Your USB Drive
+
+To prevent corruption or incomplete recordings:
+
+1. Pause recording.
+2. Open **USB storage**.
+3. Wait for the **Safe to Remove** status.
+4. Disconnect the USB drive.
+
+Avoid disconnecting storage while recording is active.
+
+---
+
+## Important Limitations
+
+### Camera Stream Availability
+
+BimmerVision records the camera stream made available by the vehicle.
+
+If BMW's factory reversing, parking, or camera preview functions change the active camera stream, the recording may temporarily switch away from the normal four-camera view.
+
+Other third-party applications that access or manipulate the same camera stream may also cause interruptions or unexpected recording behavior.
+
+For reliable four-camera recording, avoid running competing camera applications.
+
+### Vehicle Data Availability
+
+Vehicle telemetry depends on the signals available from each BMW model and configuration.
+
+Features such as lane detection, surrounding vehicle visualization, detected speed limits, and GPS overlays require corresponding vehicle data.
+
+Unavailable values will not be fabricated.
+
+### Recording & Playback Performance
+
+Camera capture and recording take priority over viewing, downloads, and exports.
+
+Playback and transfers may be intentionally slower while recording is active to reduce the risk of dropped frames or interrupted recording.
+
+---
+
+## Diagnostics & Troubleshooting
+
+Starting with **BimmerVision 0.2.36**, diagnostic logs are written to the connected USB drive while recording is enabled.
+
+Logs are stored in:
+
+`BimmerVision-Logs/`
+
+This folder is located alongside the main `BimmerVision` recordings directory.
+
+Diagnostic information includes recording health, failures, and CPU utilization.
+
+For privacy, diagnostic logs do not include raw location telemetry or phone-pairing credentials.
+
+BimmerVision automatically rotates app-owned logs with a combined storage limit of **64 MiB**.
+
+Diagnostic logs are preserved when recordings are erased.
+
+### Reporting an Issue
+
+If you encounter a recording problem, please include:
+
+1. Your BMW model and model year.
+2. Your iDrive and BimmerVision versions.
+3. A description of the issue and what was happening when it occurred.
+4. The approximate date and time of the incident.
+5. A ZIP archive of your `BimmerVision-Logs` folder, if available.
+
+Report problems through [GitHub Issues](https://github.com/Hexphase/BimmerVision/issues).
+
+---
+
+## Updates
+
+BimmerVision and its required recorder companion are updated together through MGU Store.
+
+For rollback, retain the previous versions of both packages and reinstall them together.
+
+Existing recordings on your USB drive are preserved through application updates and removal.
+
+---
+
+## Disclaimer
+
+BimmerVision is an independent project and is not affiliated with, endorsed by, or supported by BMW AG.
+
+This software interacts with vehicle camera systems and is intended for compatible hardware. Behavior may vary depending on vehicle configuration and software versions.
+
+Always prioritize safe driving. Do not interact with recording controls, playback, or video displays while driving.
+
+---
+
+**BimmerVision — Every camera. Every drive.**

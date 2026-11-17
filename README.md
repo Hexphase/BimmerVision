@@ -45,7 +45,7 @@ Record your drives automatically, review all four cameras simultaneously, and ex
 
 ## Current release
 
-**0.2.38** restores a visible Export control on mobile playback and fixes the Settings/options menu being clipped by the header. It includes the redesigned recordings and playback interface, metadata Driving view, detected road signs and optional driving-view export introduced in 0.2.37. The car opens directly to saved drives. See [release notes](RELEASE_NOTES.md).
+**0.2.39** makes Export easier to find: a compact blue icon on mobile and a blue icon-and-label button on desktop. It retains the Settings menu fix and the redesigned recordings player with metadata Driving view, recognized road signs and optional driving-view export. The car opens directly to saved drives. See [release notes](RELEASE_NOTES.md).
 
 ## Features
 

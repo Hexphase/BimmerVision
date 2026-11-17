@@ -1,12 +1,12 @@
-# BimmerVision 0.2.38
+# BimmerVision 0.2.39
 
-Fixes access to Export and Settings in the recordings player.
+Updates the playback Export button with the approved styling shared by BimmerVision Web and the car-hosted player.
 
-- Mobile playback now keeps Export visible beside the gear button.
-- The gear menu opens above playback instead of being clipped below the header. Settings and the menu’s recording actions are accessible in the drive library and playback.
-- The menu scrolls within short screens. Existing playback, timeline, camera selection and export behavior are preserved.
-- Updated the stylesheet cache key so browsers receive the fix after refreshing.
+- Mobile: compact blue export icon beside the gear button. The 32-pixel visual keeps a 44-pixel tap area and an accessible “Export video” label.
+- Desktop: blue Export button with the same icon, bold white label and visible keyboard focus.
+- Keeps the date, back navigation and Settings menu accessible, including on narrow and short screens.
+- Updated asset cache keys so the new styling appears after refreshing.
 
-Install app and recorder **0.2.38 together** through MGU Store. BimmerVision Web uses the same fix and matching version number. Recording behavior, native iDrive controls and recording preferences are unchanged.
+Install app and recorder **0.2.39 together** through MGU Store. Recording behavior, native iDrive controls and recording preferences are unchanged.
 
-Validation: both automated suites pass; browser checks exercise visible Export, the export dialog, Settings hit targets and dialog, Escape dismissal, scrolling and layouts at 320, 390, 768, 1024 and 1440 pixels through local USB and the production car Transfer server. Physical-car installation of this update has not been performed.
+Validation: both automated suites pass. Browser checks cover local USB and the production car Transfer server, mobile/desktop button appearance, tapping outside the mobile icon within its touch target, the export dialog, Settings, Escape, scrolling and viewport sizes from 320 to 1440 pixels. This release has not been installed on the physical test vehicle.

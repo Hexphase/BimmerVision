@@ -15,6 +15,7 @@ RecordingHealth.prototype.quality=function(metrics,now){
 RecordingHealth.prototype.update=function(status,intent,now){
  status=status||{};intent=intent||{};
  if(intent.continuous===false){this.reset();return null;}
+ if(status.recordingPausedForBackup===true&&status.backup&&status.backup.configured&&status.backup.autoUpload&&status.backup.pauseRecording&&Number.isFinite(status.heartbeatMonotonicUs)&&now*1000>=status.heartbeatMonotonicUs&&now*1000-status.heartbeatMonotonicUs<=5000000){this.enabledSince=now;this.unhealthySince=null;this.healthySince=null;this.warned=false;return null;}
  if(intent.continuous===true&&!this.enabled){this.enabled=true;this.enabledSince=now;}
  if(!this.enabled)return null;
  if(status.setupPending&&!this.hadHealthy){this.enabledSince=now;return null;}

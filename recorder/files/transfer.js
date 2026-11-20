@@ -40,6 +40,7 @@ function fingerprint(cert) {
 }
 function Transfer(o) {
   this.library = o.library;
+  this.backup = o.backup || null;
   this.lease = o.lease || null;
   this.mapTiles = new (require("./map-tiles").MapTiles)();
   this.network = o.network || null;
@@ -69,11 +70,14 @@ function Transfer(o) {
   this.httpsServer = null;
   this.sockets = new Set();
   this.streams = new Set();
+  this.lastDownload = null;
+  this.viewerUntil = 0;
   this.active = 0;
   this.generation = 0;
   this.current = null;
   this.session = null;
   this.claimed = false;
+  this.backupHandoff = null;
   this.attempts = [];
   this.addressAttempts = Object.create(null);
   this.serial = Promise.resolve();
@@ -132,7 +136,9 @@ Transfer.prototype.visit = function (id, observedAtMs) {
       self.current = id;
       self.lastBeat = at;
       self.claimed = false;
+      self.backupHandoff = null;
       self.session = null;
+      self.viewerUntil = 0;
       self.attempts = [];
       self.addressAttempts = Object.create(null);
       var generation = ++self.generation;
@@ -237,13 +243,16 @@ Transfer.prototype.heartbeat = function (id, observedAtMs) {
     this.lastBeat = at;
 };
 Transfer.prototype.stop = function (preserveVisit) {
+  if (this.backup && this.backup.phone) this.backup.phone.revoke();
   if (!preserveVisit) this.desiredVisit = null;
   if (this.stopping) return this.stopping;
   this.current = null;
   this.code = "";
+  this.viewerUntil = 0;
   this.fp = "";
   this.session = null;
   this.claimed = false;
+  this.backupHandoff = null;
   this.boundHttpPort = null;
   this.boundHttpsPort = null;
   ++this.generation;
@@ -296,6 +305,9 @@ Transfer.prototype.acceptHost = function (req) {
     host === this.host
   );
 };
+Transfer.prototype.viewerConnected = function (on) {
+  return !!this.session && this.viewerUntil > this.now() && (on === undefined ? this.alive() : on);
+};
 Transfer.prototype.info = function () {
   var on = this.alive();
   return {
@@ -306,8 +318,13 @@ Transfer.prototype.info = function () {
         ? "http://" + this.host + ":" + this.boundHttpPort + "/?code=" + this.code
         : "",
     code: on && !this.claimed ? this.code : "",
+    download: this.lastDownload ? Object.assign({}, this.lastDownload, {
+      elapsedMs: Math.max(0,(this.lastDownload.endedAtMs || this.now())-this.lastDownload.startedAtMs),
+      bytesPerSecond: this.lastDownload.sentBytes / Math.max(0.001,((this.lastDownload.endedAtMs || this.now())-this.lastDownload.startedAtMs)/1000)
+    }) : null,
     fingerprint: on ? this.fp : "",
     paired: !!this.session,
+    viewerConnected: this.viewerConnected(on),
     error: "",
   };
 };
@@ -329,13 +346,14 @@ Transfer.prototype.headers = function (res) {
     "default-src 'self' blob: data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tile.openstreetmap.org; media-src 'self' blob: data:; connect-src 'self' blob: https://api.github.com https://overpass-api.de; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
   );
 };
-Transfer.prototype.body = function (req) {
+Transfer.prototype.body = function (req, limit) {
+  limit = limit || 2048;
   return new Promise(function (resolve, reject) {
     var chunks = [],
       n = 0;
     req.on("data", function (b) {
       n += b.length;
-      if (n > 2048) {
+      if (n > limit) {
         reject(failure(413, "Request too large"));
         req.destroy();
       } else chunks.push(b);
@@ -433,6 +451,7 @@ Transfer.prototype.auth = function (req, mutation) {
 };
 Transfer.prototype.handle = async function (req, res, generation) {
   this.headers(res);
+  if (req.socket && req.socket.setTimeout) req.socket.setTimeout(10000);
   var self = this;
   function live() {
     if (!self.alive() || self.generation !== generation)
@@ -508,11 +527,18 @@ Transfer.prototype.handle = async function (req, res, generation) {
       local.push(now);
       throw failure(401, "Invalid pairing code");
     }
+    var handoff = this.backupHandoff;
+    if (handoff && (handoff.visit !== this.current || handoff.generation !== this.generation ||
+        !equal(handoff.code, body.code) || req.headers.origin !== handoff.origin))
+      throw failure(403, "Phone backup handoff expired or origin changed");
+    this.backupHandoff = null;
     if (!this.devMode) {
       this.claimed = true;
       this.code = "";
+  this.viewerUntil = 0;
     }
     this.session = { token: secret(), csrf: secret(), clientId: body.clientId };
+    this.viewerUntil = this.now() + 15000;
     if (this.hostedOrigin(req)) this.session.origin = req.headers.origin;
     if (req.headers.origin && !this.session.origin)
       res.setHeader(
@@ -522,21 +548,46 @@ Transfer.prototype.handle = async function (req, res, generation) {
           "; Path=/; HttpOnly; SameSite=Strict" +
           (req.socket && req.socket.encrypted ? "; Secure" : "")
       );
-    this.json(res, 200, {
-      token: this.session.token,
-      csrf: this.session.csrf,
-      apiVersion: 1,
-    });
+    var pairResult = { token: this.session.token, csrf: this.session.csrf, apiVersion: 1 };
+    if (handoff && handoff.clipIds) pairResult.backupClipIds = handoff.clipIds.slice();
+    this.json(res, 200, pairResult);
     return;
   }
   var mutation = req.method !== "GET";
   var session = this.auth(req, mutation);
+  this.viewerUntil = this.now() + 15000;
+  if (route === "/api/v1/viewer-heartbeat" && req.method === "GET") {
+    this.json(res, 200, {connected:true});
+    return;
+  }
+  if (route === "/api/v1/phone-backup/link") {
+    if (req.method !== "POST") throw failure(405, "Method not allowed");
+    var linkBody = await this.body(req, 60 * 1024);
+    live();
+    if (session !== this.session) throw failure(401, "Session revoked");
+    var linkIds = linkBody.clipIds;
+    if (linkIds !== undefined) {
+      if (!Array.isArray(linkIds) || !linkIds.length || linkIds.length > 1000 ||
+          linkIds.some(function (id) { return typeof id !== "string" || !UUID.test(id); }))
+        throw failure(400, "Select 1 to 1000 distinct complete recordings");
+      linkIds = linkIds.map(function (id) { return id.toLowerCase(); });
+      if (new Set(linkIds).size !== linkIds.length)
+        throw failure(400, "Select distinct complete recordings");
+    }
+    this.code = code();
+    this.claimed = false;
+    this.backupHandoff = {code:this.code,visit:this.current,generation:this.generation,
+      origin:"https://bimmervision.app",clipIds:linkIds};
+    this.json(res, 200, {code:this.code});
+    return;
+  }
   if (route === "/api/v1/capabilities" && req.method === "GET") {
-    this.json(res, 200, { apiVersion: 1, hostedViewer: true });
+    this.json(res, 200, { apiVersion: 1, hostedViewer: true, phoneBackup: !!this.backup });
     return;
   }
   if (route === "/api/v1/logout" && req.method === "POST") {
     this.session = null;
+    if (this.backup && this.backup.phone) this.backup.phone.revoke();
     if (!session.origin) res.setHeader(
       "Set-Cookie",
       "bv_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0" +
@@ -546,6 +597,40 @@ Transfer.prototype.handle = async function (req, res, generation) {
     this.streams.forEach(function (s) {
       s.destroy();
     });
+    return;
+  }
+  if (route === "/api/v1/remote-backup" || route === "/api/v1/remote-backup/queue") {
+    if (!this.backup || !this.backup.queueRequest) throw failure(503, "Update the car app to use Remote Backup controls");
+    var queueRead = route === "/api/v1/remote-backup";
+    if (req.method !== (queueRead ? "GET" : "POST")) throw failure(405, "Method not allowed");
+    var queueBody = queueRead ? null : await this.body(req, 60 * 1024);
+    if (req.socket && req.socket.setTimeout) req.socket.setTimeout(120000);
+    live();
+    if (session !== this.session) throw failure(401, "Session revoked");
+    var queueValue;
+    try { queueValue = await this.backup.queueRequest(queueBody, !queueRead); }
+    catch (e) { throw failure(409, String(e.message || "Remote Backup unavailable")); }
+    live();
+    if (session !== this.session) throw failure(401, "Session revoked");
+    this.json(res, 200, queueValue);
+    return;
+  }
+  var phoneRoute = /^\/api\/v1\/phone-backup(?:\/([a-f0-9]{32})\/(heartbeat|release|register|read)|\/(claim|enqueue))?$/.exec(route);
+  if (phoneRoute) {
+    if (!this.backup || !this.backup.phoneRequest) throw failure(503, "Phone backup unavailable");
+    var phoneAction = phoneRoute[3] || phoneRoute[2] || "status";
+    if (req.method !== (phoneAction === "status" ? "GET" : "POST")) throw failure(405, "Method not allowed");
+    var phoneBody = phoneAction === "status" ? null : await this.body(req, phoneAction === "register" ? 300 * 1024 : phoneAction === "enqueue" ? 60 * 1024 : 2048);
+    live();
+    if (session !== this.session) throw failure(401, "Session revoked");
+    if (req.socket && req.socket.setTimeout && /^(claim|enqueue|register)$/.test(phoneAction)) req.socket.setTimeout(phoneAction === "claim" ? 600000 : 120000);
+    var phoneValue;
+    try { phoneValue = await this.backup.phoneRequest(phoneAction, phoneRoute[1], phoneBody); }
+    catch (e) { throw failure(409, String(e.message || "Phone backup paused")); }
+    live();
+    if (session !== this.session) { if (this.backup.phone) this.backup.phone.revoke(); throw failure(401, "Session revoked"); }
+    if (phoneAction === "read") { res.writeHead(200, {"Content-Type":"application/octet-stream","Content-Length":phoneValue.length});res.end(phoneValue); }
+    else this.json(res, 200, phoneValue);
     return;
   }
   if (route === "/api/v1/status" && req.method === "GET") {
@@ -743,13 +828,17 @@ Transfer.prototype.handle = async function (req, res, generation) {
           : {}
       )
     );
+    var downloadSample = match[2] === "capture.bvr" ? {clipId:match[1],startedAtMs:self.now(),endedAtMs:null,totalBytes:Math.max(0,end-start+1),sentBytes:0,recordingWaitMs:0,metadataCheckMs:0,paced:false,complete:false} : null;
+    if (downloadSample) this.lastDownload = downloadSample;
     var initialStatus = await this.status();
     var idleRead = initialStatus && initialStatus.writeInProgress === false && !initialStatus.activeId;
     live();
     source = fs.createReadStream(file, {
       start: start,
       end: end,
-      highWaterMark: this.devMode || (!this.explicitBandwidth && idleRead) ? 262144 : 32768,
+      // Bound idle reads to 1 MiB so full-download playback does not repeat
+      // filesystem/manifest verification for every tiny network fragment.
+      highWaterMark: this.devMode || (!this.explicitBandwidth && idleRead) ? 1048576 : 32768,
       flags: fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW,
     });
     this.streams.add(source);
@@ -772,6 +861,7 @@ Transfer.prototype.handle = async function (req, res, generation) {
             ((status.metrics && status.metrics.queuedBytes) ||
               status.queuedBytes) > 0
           ) {
+            if (downloadSample) downloadSample.recordingWaitMs += 25;
             timer = setTimeout(priority, 25);
             return;
           }
@@ -779,8 +869,10 @@ Transfer.prototype.handle = async function (req, res, generation) {
           // while the recorder explicitly reports no write in progress.
           paced = !self.devMode && (self.explicitBandwidth || !status ||
             status.writeInProgress !== false || !!status.activeId);
+          var checkStarted = self.now();
           if ((await self.library.resolve(match[1], match[2])) !== file)
             throw failure(503, "USB recording path changed");
+          if (downloadSample) {downloadSample.metadataCheckMs += Math.max(0,self.now()-checkStarted);downloadSample.paced = downloadSample.paced || paced;}
           if (finished) return;
           source.resume();
         } catch (e) {
@@ -790,6 +882,7 @@ Transfer.prototype.handle = async function (req, res, generation) {
       function done(e) {
         if (finished) return;
         finished = true;
+        if(downloadSample){downloadSample.endedAtMs=self.now();downloadSample.complete=!e&&downloadSample.sentBytes===downloadSample.totalBytes;}
         clearTimeout(timer);
         source.destroy();
         res.removeListener("close", closed);
@@ -817,6 +910,7 @@ Transfer.prototype.handle = async function (req, res, generation) {
           done();
           return;
         }
+        if (downloadSample) downloadSample.sentBytes += chunk.length;
         var accepted = res.write(chunk),
           elapsed = false,
           drained = accepted;

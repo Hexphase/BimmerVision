@@ -8,12 +8,12 @@ async function fixture(t){
  const recording=new Recording(ram,prefs);fs.writeFileSync(recording.statusFile,JSON.stringify({state:'Stopped',drive:{mount:'/test-usb'},drives:[]}),{mode:0o600});recording.update({continuous:false});
  const app=new EventEmitter(),rhmi=new EventEmitter(),components=new Map(),errors=[];let hold=null;
  app.start=async()=>{};app.registerActive=async()=>{};app.rhmiApplication=rhmi;
- rhmi.getByName=name=>{if(!components.has(name)){const c=new EventEmitter();c.getId=()=>1;c.updateResources=async()=>{};c.setVisible=async()=>{};c.setEnabled=async()=>{};c.setValue=async()=>{if(hold&&name==='HOME_TITLE')await hold;};components.set(name,c);}return components.get(name);};rhmi.mapEntryState=async()=>{};rhmi.openState=async()=>{};rhmi.openEntryState=async()=>{};
+ rhmi.getByName=name=>{if(!components.has(name)){const c=new EventEmitter();c.getId=()=>1;c.updateResources=async()=>{};c.setVisible=async()=>{};c.setEnabled=async()=>{};c.setValue=async()=>{if(hold&&name==='PHONE_TITLE')await hold;};components.set(name,c);}return components.get(name);};rhmi.mapEntryState=async()=>{};rhmi.openState=async()=>{};rhmi.openEntryState=async()=>{};
  const runtime=await require('../idrive/src/app').start({app,recording,onboarding:{pending:()=>false},health:{update:()=>null},display:{hide(){}},nowMs:()=>Date.now(),log:e=>errors.push(e)});
  t.after(()=>{runtime.close();fs.rmSync(root,{recursive:true,force:true});});
  t.mock.timers.tick(500);await settle();assert.equal(recording.intent().transfer,undefined,'hidden startup must not create a transfer lease');
  await runtime.ui.openMenu();await runtime.ui.press('HOME_LEFT');
- return {runtime,recording,errors,tick:async()=>{t.mock.timers.tick(500);await settle();},blockPaint(){hold=new Promise(r=>{this.release=r;});runtime.ui.cache.HOME_TITLE='old';},hide(){components.get('HOME').emit('visible',{visible:false});},components};
+ return {runtime,recording,errors,tick:async()=>{t.mock.timers.tick(500);await settle();},blockPaint(){hold=new Promise(r=>{this.release=r;});runtime.ui.cache.HOME_TITLE='old';},hide(){components.get('CONNECT_PHONE').emit('visible',{visible:false});},components};
 }
 test('Connect Phone lease stays fresh through a paint held longer than three seconds and Back revokes immediately',async t=>{
  const h=await fixture(t);h.blockPaint();await h.tick();

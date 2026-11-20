@@ -11,11 +11,11 @@ test('old enabled preview preferences and controls cannot reappear in recorder o
 });
 test('home and settings offer recording storage and pairing without live-camera controls',async t=>{
  const f=fixture(t),labels={},visible={};f.app.read=()=>({state:'Stopped',drives:[],cluster:{state:'suspended',crashProtection:{tripped:true}}});
- const ui=new UI({recording:f.app,rhmi:{getByName:name=>({setValue:async(row,col,value)=>{labels[name]=value;},setVisible:async value=>{visible[name]=value;}})},display:{hide(){}}});ui.visible=true;
+ const ui=new UI({recording:f.app,rhmi:{openState:async()=>{},getByName:name=>({setValue:async(row,col,value)=>{labels[name]=value;},setVisible:async value=>{visible[name]=value;}})},display:{hide(){}}});ui.visible=true;
  await ui.render();assert.equal(visible.HOME_FRONT,false);assert.equal(labels.HOME_REAR,'USB storage');assert.equal(labels.HOME_LEFT,'Connect Phone');
  assert.doesNotMatch(Object.values(labels).join('\n'),/Cluster cameras|preview stopped|blinker cameras/i);
- await ui.press('HOME_RIGHT');assert.match(labels.HOME_STATUS,new RegExp(require('../idrive/package.json').version));
- for(const row of ['HOME_ALL','HOME_FRONT','HOME_REAR','HOME_LEFT'])assert.equal(visible[row],false,'settings only contains About and Back');
+ await ui.press('HOME_RIGHT');assert.match(labels.ABOUT_STATUS,new RegExp(require('../idrive/package.json').version));
+ assert.equal(visible.ABOUT_STATUS,true);assert.equal(visible.ABOUT_BACK,true);assert.equal(ui.nativePage,'ABOUT');
 });
 test('legacy camera settings do not start any camera capture when recording is paused',async t=>{
  const f=fixture(t),hardware=path.join(f.root,'hardware.json');fs.writeFileSync(hardware,JSON.stringify({uid:process.getuid(),hardwareTest:true,adapterVerified:true}));

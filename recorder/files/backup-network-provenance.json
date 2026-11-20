@@ -1,0 +1,19 @@
+{
+  "source": "recorder/native/backup-wifi-curl.c",
+  "sourceSha256": "9e88e1cdff6a215c4b7fd0ddc6ae2f3c50cf8607a7ee3c1f8d71387ddde9e916",
+  "sha256": "4c4504fb76dd4e47478a3bd7ab5ab65926d8cae9406389f8dc3f39fef3be4839",
+  "compiler": "Zig 0.14.1",
+  "flags": [
+    "cc",
+    "-target",
+    "x86_64-linux-musl",
+    "-Os",
+    "-static",
+    "-s",
+    "-Wall",
+    "-Wextra",
+    "-Werror"
+  ],
+  "platform": "Linux x86-64, static musl",
+  "privileges": "Root launcher; drops to dedicated backup UID with only CAP_NET_RAW; no setuid bit"
+}

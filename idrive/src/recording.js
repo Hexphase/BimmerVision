@@ -75,8 +75,10 @@ Recording.prototype.update = function (patch) {
   directory(this.directory);
   var current = preference.controls(read(this.controlFile));
   patch = preference.controls(patch);
-  if (Object.prototype.hasOwnProperty.call(patch, 'continuous'))
+  if (Object.prototype.hasOwnProperty.call(patch, 'continuous')) {
     preference.write(this.preferenceDirectory, uid(), patch.continuous);
+    patch.recordingAction = crypto.randomBytes(16).toString('hex');
+  }
   Object.keys(patch).forEach(function (k) {
     current[k] = patch[k];
   });

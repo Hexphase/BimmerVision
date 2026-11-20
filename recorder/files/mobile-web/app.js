@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const metricAvgSpeed = document.getElementById("metricAvgSpeed");
   const metricMaxSteering = document.getElementById("metricMaxSteering");
   const metricBrakeEvents = document.getElementById("metricBrakeEvents");
+  const overviewBackupBtn = document.getElementById("overviewBackupBtn");
   const driveSegmentsList = document.getElementById("driveSegmentsList");
 
   // Playback & HUD Elements
@@ -102,7 +103,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   player.setLiveMap(playbackMap);
 
   const driveIcon = name => {
-    const paths={play:'<path d="m8 5 11 7-11 7Z" fill="currentColor" stroke="none"/>',overview:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 16v-4m5 4V8m5 8v-6"/>',clips:'<rect x="5" y="3" width="16" height="14" rx="2"/><path d="M17 21H5a2 2 0 0 1-2-2V7m8 0h6m-6 4h6"/>',download:'<path d="M12 3v12m-4-4 4 4 4-4M4 16v4h16v-4"/>'};
+    const paths={play:'<path d="m8 5 11 7-11 7Z" fill="currentColor" stroke="none"/>',overview:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 16v-4m5 4V8m5 8v-6"/>',clips:'<rect x="5" y="3" width="16" height="14" rx="2"/><path d="M17 21H5a2 2 0 0 1-2-2V7m8 0h6m-6 4h6"/>',upload:'<path d="M12 15V3m-4 4 4-4 4 4M4 16v4h16v-4"/>',download:'<path d="M12 3v12m-4-4 4 4 4-4M4 16v4h16v-4"/>'};
     return '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+paths[name]+'</svg>';
   };
 
@@ -200,13 +201,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById('dockDuration').textContent=DriveTimeline.format(player.duration);
   };
   player.onCameraViewChange = view => { if(openCalibrateBtn) openCalibrateBtn.disabled=!!view?.single; };
-  player.onStateChange = ({state,message,loaded,total}) => {
+  player.onStateChange = ({state,message,loaded,total,download}) => {
     recordingNavigation.update(state==='loading');
     const status = document.getElementById('playbackStatus');
     status.textContent = message || ({playing:'Playing',paused:'Paused',loading:'Preparing video…',buffering:'Buffering…',ended:'Drive complete',idle:'Choose a recording',error:'Playback unavailable'}[state] || state);
     status.dataset.state=state;
     document.getElementById('playbackProgress').hidden=state!=='buffering';
-    if (state === 'loading') { if(message)loadingModalStatus.textContent=message;const verb=window.BVSourceManager.readOnly?'read':'received';document.getElementById('loadingProgress').textContent=total ? `${Math.min(100,Math.round(loaded/total*100))}% ${verb}` : loaded ? `${formatBytes(loaded)} ${verb}` : 'Waiting for recording data…'; }
+    if (state === 'loading') { if(message)loadingModalStatus.textContent=message;const verb=window.BVSourceManager.readOnly?'read':'received';const received=total ? `${Math.min(100,Math.round(loaded/total*100))}% ${verb}` : loaded ? `${formatBytes(loaded)} ${verb}` : 'Waiting for recording data…';const rate=download?.elapsedMs>=500&&download.bytesPerSecond>0?' · '+formatBytes(download.bytesPerSecond)+'/s':'';const timing=window.showAdvancedDetails===true&&download?' · Receive wait '+(download.receiveWaitMs/1000).toFixed(1)+'s · Video processing '+(download.processingMs/1000).toFixed(1)+'s':'';document.getElementById('loadingProgress').textContent=received+rate+timing; }
     hudElements.playBtn.disabled=!player.streamComplete||state==='loading'||state==='error';
     if(state==='error' && !videoLoadingModal.style.display.includes('flex')) document.getElementById('playbackRetryBtn').hidden=false;
   };
@@ -312,7 +313,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     librarySignature=signature;
 
     // Group recordings into continuous Drives
-    detectedDrives = DriveGrouper.group(rawClips);
+    detectedDrives = DriveGrouper.group(rawClips);updateMoreBackupCurrent();
     driveCountEl.textContent = `${detectedDrives.length} drive${detectedDrives.length === 1 ? "" : "s"}`;
     driveListEl.innerHTML = "";
 
@@ -325,6 +326,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       overviewSubtitle.textContent = "No recordings found.";
       document.getElementById('librarySummary').textContent='0 drives · 0 recordings';
       selectedDrive=null;overviewPlayBtn.disabled=true;
+      window.BVRecordingBackupAction.update(overviewBackupBtn,null,window.BVSourceManager.source?.kind);
       document.getElementById('overviewPlaceholder').hidden=false;
       return;
     }
@@ -393,7 +395,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                   body: JSON.stringify({ locked: target })
                 });
                 seg.clip.locked = target;
-              } catch (_) {}
+              } catch (error) { alert('Could not save lock: '+error.message); break; }
             }
             await loadLibrary();
           });
@@ -438,6 +440,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             </div>
             <div class="clip-row-actions" style="display:flex;align-items:center;gap:6px;">
               <a class="clip-row-raw" href="#" data-raw-recording="${seg.clip.id}" download aria-label="Download original Clip ${i+1} and metadata as ZIP" title="Download original BVR recording and metadata">${driveIcon("download")}<span>Original ZIP</span></a>
+              <button class="clip-row-raw" type="button" data-backup-recording="${seg.clip.id}" aria-label="Send to Remote Backup — Clip ${i+1}" title="Send to Remote Backup using your phone">${driveIcon("upload")}<span>Send to Remote Backup</span></button>
               <button class="btn-lock-clip" type="button" title="${seg.clip.locked ? 'Recording is locked. Tap to unlock.' : 'Lock recording to prevent deletion'}" style="display:flex;align-items:center;background:rgba(255,255,255,0.06);border:1px solid ${seg.clip.locked ? 'rgba(245,158,11,0.5)' : 'rgba(255,255,255,0.12)'};border-radius:6px;padding:4px 8px;cursor:pointer;color:${seg.clip.locked ? '#f59e0b' : 'var(--tesla-muted)'};transition:all 0.2s ease;">
                 ${getLockSvg(seg.clip.locked, 13)}
               </button>
@@ -500,7 +503,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         section.appendChild(card);
       });driveListEl.appendChild(section);
     });
-    if(selectedDrive){const refreshed=detectedDrives.find(d=>d.id===selectedDrive.id);if(refreshed)selectDrive(refreshed,[...document.querySelectorAll(".drive-card")].find(card=>card.dataset.id===refreshed.id));}
+    if(selectedDrive){const refreshed=detectedDrives.find(d=>d.id===selectedDrive.id);if(refreshed)selectDrive(refreshed,[...document.querySelectorAll(".drive-card")].find(card=>card.dataset.id===refreshed.id));else {selectedDrive=null;window.BVRecordingBackupAction.update(overviewBackupBtn,null,window.BVSourceManager.source?.kind);}}
     if(activeDrive){const refreshed=detectedDrives.find(d=>d.id===activeDrive.id);if(refreshed){activeDrive=refreshed;timeline.setDrive(refreshed);timeline.update(activeClip?.id,player.currentTime);recordingNavigation.update();}}
   } catch (err) {
     if(quiet)return;
@@ -515,7 +518,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   window.BVSourceManager.subscribe(()=>{
     loadToken++;player.cancelLoad();hideLoadingModal();
-    activeClip=null;activeDrive=null;selectedDrive=null;detectedDrives=[];librarySignature=null;
+    activeClip=null;activeDrive=null;selectedDrive=null;detectedDrives=[];librarySignature=null;updateMoreBackupCurrent();
+    window.BVRecordingBackupAction.update(overviewBackupBtn,null,window.BVSourceManager.source?.kind);
     recordingNavigation.update(false);
     document.getElementById('exportModal').classList.remove('open');document.getElementById('identifyModal').classList.remove('open');
     switchTab('recordings');loadLibrary();checkForUpdates(true);
@@ -530,6 +534,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (cardEl) cardEl.classList.add("active");
 
     selectedDrive = drive;
+    window.BVRecordingBackupAction.update(overviewBackupBtn,drive,window.BVSourceManager.source?.kind==='car'?'car':null);
     overviewPlayBtn.disabled=false;
     document.getElementById('overviewPlaceholder').hidden=true;
 
@@ -573,7 +578,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     drive.segments.forEach((seg, sIdx) => {
       const item = document.createElement("div");
       item.className = "segment-item";
-      item.style.cssText = "display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.05);gap:10px;";
+      item.style.cssText = "display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.05);gap:10px;";
       const sDur = Math.round(seg.clip.durationSeconds || 4);
 
       item.innerHTML = `
@@ -581,7 +586,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           <span style="font-weight: 600; color: #fff;">Clip ${sIdx + 1}</span>
           <span style="color: var(--tesla-muted); margin-left: 8px;">${DriveTimeline.format(seg.offset)} into drive · ${DriveTimeline.format(sDur)} · ${formatBytes(seg.clip.bytes || 0)}</span>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;">
+        <div class="clip-row-actions" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;">
+          <button class="clip-row-raw" type="button" data-backup-recording="${seg.clip.id}" aria-label="Send to Remote Backup — Clip ${sIdx+1}" title="Send to Remote Backup using your phone">${driveIcon("upload")}<span>Send to Remote Backup</span></button>
           <button class="btn-lock-clip" type="button" title="${seg.clip.locked ? 'Recording is locked. Tap to unlock.' : 'Lock recording to prevent deletion'}" style="background:rgba(255,255,255,0.06);border:1px solid ${seg.clip.locked ? 'rgba(245,158,11,0.5)' : 'rgba(255,255,255,0.12)'};border-radius:6px;padding:5px 8px;cursor:pointer;color:${seg.clip.locked ? '#f59e0b' : 'var(--tesla-muted)'};display:inline-flex;align-items:center;justify-content:center;">${getLockSvg(seg.clip.locked, 13)}</button>
           <button class="btn-delete-clip" type="button" title="Delete recording" style="background:rgba(238,36,64,0.1);border:1px solid rgba(238,36,64,0.3);border-radius:6px;padding:5px 8px;cursor:pointer;color:#EE2440;display:inline-flex;align-items:center;justify-content:center;">${getTrashSvg(13)}</button>
           <button class="unit-toggle-pill btn-play-clip" type="button" aria-label="Play recording ${sIdx+1}" title="Play recording" style="padding: 2px 8px;">${driveIcon("play")}<span>Play</span></button>
@@ -677,7 +683,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             body: JSON.stringify({ locked: target })
           });
           seg.clip.locked = target;
-        } catch (_) {}
+        } catch (error) { alert('Could not save lock: '+error.message); break; }
       }
       await loadLibrary();
     });
@@ -701,6 +707,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       }
       selectedDrive = null;
+      window.BVRecordingBackupAction.update(overviewBackupBtn,null,window.BVSourceManager.source?.kind);
       await loadLibrary();
     });
   }
@@ -710,7 +717,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   const playbackLockLabel = document.getElementById('playbackLockLabel');
   const playbackDeleteBtn = document.getElementById('playbackDeleteBtn');
 
+  function updateMoreBackupCurrent() {
+    const backupCurrent=document.getElementById('moreBackupCurrentBtn');
+    if(backupCurrent){const eligible=['car','usb'].includes(window.BVSourceManager.source?.kind)&&activeClip?.complete===true&&typeof activeClip.id==='string'&&detectedDrives.some(d=>d.segments.some(seg=>seg.clip.id===activeClip.id));backupCurrent.disabled=!eligible;if(eligible)backupCurrent.dataset.currentRecording=activeClip.id;else delete backupCurrent.dataset.currentRecording;}
+  }
   function updatePlaybackLockUI() {
+    updateMoreBackupCurrent();
     if (!playbackLockBtn || !activeClip) return;
     const isLocked = Boolean(activeClip.locked);
     if (playbackLockLabel) playbackLockLabel.textContent = isLocked ? 'Locked' : 'Lock';
@@ -764,6 +776,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           return;
         }
         activeClip = null;
+        updatePlaybackLockUI();
         switchTab('recordings');
         await loadLibrary();
       } catch (e) {
@@ -782,17 +795,21 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (headerSettingsBtn && settingsModal) {
     headerSettingsBtn.addEventListener('click', () => {
+      window.BVMoreMenuInstance?.close(false);
       settingsModal.classList.add('open');
+      closeSettingsBtn?.focus();
     });
   }
   if (closeSettingsBtn && settingsModal) {
     closeSettingsBtn.addEventListener('click', () => {
       settingsModal.classList.remove('open');
+      window.BVMoreMenuInstance?.trigger?.focus();
     });
   }
   if (dismissSettingsBtn && settingsModal) {
     dismissSettingsBtn.addEventListener('click', () => {
       settingsModal.classList.remove('open');
+      window.BVMoreMenuInstance?.trigger?.focus();
     });
   }
   if (settingsModal) {
@@ -858,11 +875,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  const appMenu=document.querySelector('.app-menu');
   document.getElementById('quickExportBtn').addEventListener('click',()=>document.getElementById('openExportBtn').click());
-  appMenu.addEventListener('click',event=>{if(event.target.closest('button'))appMenu.open=false;});
-  document.addEventListener('click',event=>{if(!appMenu.contains(event.target))appMenu.open=false;});
-  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&appMenu.open){event.preventDefault();appMenu.open=false;appMenu.querySelector('summary').focus();}});
+  document.getElementById('moreDrivesBtn').addEventListener('click',()=>{player.pause();switchTab('recordings');viewRecordings.classList.remove('detail-open');});
+  document.getElementById('moreBackupCurrentBtn').addEventListener('click',event=>{const id=event.currentTarget.dataset.currentRecording;if(!id)return;try{Promise.resolve(window.BVBackupActions.openRecording(id)).catch(error=>alert(error.message));}catch(error){alert(error.message);}});
 
   // 6. Transport Controls
   hudElements.playBtn.addEventListener("click", () => player.togglePlay());

@@ -17,11 +17,16 @@ class SourceManager {
   const source=this.source;if(!source)return json({error:'Choose a USB drive or connect to your car first.'},503);
   if(source.kind==='usb'){
    if(path==='/api/v1/capabilities')return json({nativePreview:false,readOnly:true,localFiles:true});
-   if(path==='/api/v1/version')return json({version:'0.2.39',repository:'Hexphase/BimmerVision-Web',hostedViewer:true});
+   if(path==='/api/v1/version')return json({version:'0.2.78',repository:'Hexphase/BimmerVision-Web',hostedViewer:true});
   }
-  return this.recordingCache ? this.recordingCache.fetch(source,path,options) : source.fetch(path,options);
+  const response=await (this.recordingCache ? this.recordingCache.fetch(source,path,options) : source.fetch(path,options));
+  if(String(options.method||'GET').toUpperCase()==='POST'&&/\/lock$/.test(path)){
+   if(!response.ok){const reason=await response.json().catch(()=>null);throw Error(reason?.error||'The recording lock was not saved.');}
+   this.recordingCache?.clear();
+  }
+  return response;
  }
 }
 if(typeof module!=='undefined'&&module.exports)module.exports={SourceManager};
-else{root.BVSourceManager=new SourceManager({nativeFetch:root.fetch.bind(root)});root.BV_WEB_VERSION='0.2.39';}
+else{root.BVSourceManager=new SourceManager({nativeFetch:root.fetch.bind(root)});root.BV_WEB_VERSION='0.2.78';}
 })(typeof globalThis!=='undefined'?globalThis:this);

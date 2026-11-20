@@ -92,6 +92,7 @@ async function start(options) {
   if (closed) return { app: app, close: close };
   ui = new UI({
     rhmi: app.rhmiApplication,
+    displayTimeZone: config.displayTimeZone,
     onboarding: options.onboarding || (recording.preferenceDirectory ? new (require("./first-run-notice").Notice)(recording.preferenceDirectory,process.getuid()) : null),
     report: log,
     entry: launchedEntry || config.entryUuid,

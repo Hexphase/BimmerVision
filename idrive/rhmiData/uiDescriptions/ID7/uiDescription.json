@@ -210,6 +210,46 @@
               }
             }
           ]
+        },
+        "15": {
+          "type": "button",
+          "name": "HOME_REMOTE",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Remote Backup",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "16": {
+          "name": "HOME_BACKUP_WARNING",
+          "type": "label",
+          "properties": {
+            "Visible": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "",
+                "type": "Text"
+              }
+            }
+          ]
         }
       }
     },
@@ -234,6 +274,1406 @@
               }
             }
           ]
+        }
+      }
+    },
+    "200": {
+      "type": "state",
+      "name": "REMOTE_BACKUP",
+      "components": {
+        "210": {
+          "type": "title",
+          "name": "BACKUP_TITLE",
+          "rows": [
+            {
+              "Text": {
+                "value": "Remote Backup",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "211": {
+          "type": "button",
+          "name": "BACKUP_SETUP",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Setup Remote Backup",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "212": {
+          "type": "button",
+          "name": "BACKUP_ACCOUNT",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Google Drive account",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "213": {
+          "type": "label",
+          "name": "BACKUP_STATUS",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "214": {
+          "type": "checkBox",
+          "name": "BACKUP_AUTO",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Auto Upload on Wi-Fi",
+                "type": "Text"
+              },
+              "eParam_RowSelected": {
+                "value": false,
+                "type": "Bool"
+              }
+            }
+          ]
+        },
+        "215": {
+          "type": "checkBox",
+          "name": "BACKUP_PAUSE",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Pause Recording During Remote Backup",
+                "type": "Text"
+              },
+              "eParam_RowSelected": {
+                "value": false,
+                "type": "Bool"
+              }
+            }
+          ]
+        },
+        "216": {
+          "type": "label",
+          "name": "BACKUP_AUTO_HINT",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Automatically back up queued recordings when the car is connected to Wi-Fi.",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "217": {
+          "type": "label",
+          "name": "BACKUP_QUEUE_HEADING",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Upload Queue",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "218": {
+          "type": "button",
+          "name": "BACKUP_DRIVE_0",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "219": {
+          "type": "progressBar",
+          "name": "BACKUP_PROGRESS_0",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Progress": {
+                "value": 0,
+                "type": "Float"
+              }
+            }
+          ]
+        },
+        "220": {
+          "type": "button",
+          "name": "BACKUP_DRIVE_1",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "221": {
+          "type": "progressBar",
+          "name": "BACKUP_PROGRESS_1",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Progress": {
+                "value": 0,
+                "type": "Float"
+              }
+            }
+          ]
+        },
+        "222": {
+          "type": "button",
+          "name": "BACKUP_DRIVE_2",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "223": {
+          "type": "progressBar",
+          "name": "BACKUP_PROGRESS_2",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Progress": {
+                "value": 0,
+                "type": "Float"
+              }
+            }
+          ]
+        },
+        "224": {
+          "type": "button",
+          "name": "BACKUP_DRIVE_3",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "225": {
+          "type": "progressBar",
+          "name": "BACKUP_PROGRESS_3",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Progress": {
+                "value": 0,
+                "type": "Float"
+              }
+            }
+          ]
+        },
+        "226": {
+          "type": "button",
+          "name": "BACKUP_DRIVE_4",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "227": {
+          "type": "progressBar",
+          "name": "BACKUP_PROGRESS_4",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Progress": {
+                "value": 0,
+                "type": "Float"
+              }
+            }
+          ]
+        },
+        "239": {
+          "type": "button",
+          "name": "BACKUP_PREVIOUS_DRIVES",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Previous drives",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "240": {
+          "type": "button",
+          "name": "BACKUP_NEXT_DRIVES",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "More drives",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "238": {
+          "type": "label",
+          "name": "BACKUP_SLEEP_NOTICE",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "228": {
+          "type": "dropDownMenu",
+          "name": "BACKUP_HISTORY",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "ItemText": {
+                "value": "Recent completed backups",
+                "type": "Text"
+              }
+            }
+          ],
+          "cells": {
+            "SelectedItem": {
+              "value": 0,
+              "type": "UInt"
+            },
+            "HeaderText": {
+              "value": "Recently uploaded",
+              "type": "Text"
+            }
+          }
+        },
+        "229": {
+          "type": "button",
+          "name": "BACKUP_BACK",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Back",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "237": {
+          "type": "checkBox",
+          "name": "BACKUP_LOCKED",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Only Backup Locked Drives and Horn Clips",
+                "type": "Text"
+              },
+              "eParam_RowSelected": {
+                "value": false,
+                "type": "Bool"
+              }
+            }
+          ]
+        },
+        "241": {
+          "type": "checkBox",
+          "name": "BACKUP_STATIONARY",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Do not backup while driving",
+                "type": "Text"
+              },
+              "eParam_RowSelected": {
+                "value": false,
+                "type": "Bool"
+              }
+            }
+          ]
+        },
+        "242": {
+          "type": "label",
+          "name": "BACKUP_PAUSE_HINT",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Leaving recording enabled can significantly slow uploads.\nPauses only while stationary; recording resumes when moving.",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "243": {
+          "type": "label",
+          "name": "BACKUP_STATIONARY_HINT",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "When checked, uploads wait until the car is physically stopped.\nWhen unchecked, uploads are allowed at any speed.",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "244": {
+          "type": "label",
+          "name": "BACKUP_LOCKED_HINT",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Only upload locked drives and horn-protected clips.\nLock recordings under USB storage \u2192 Recorded Drives.",
+                "type": "Text"
+              }
+            }
+          ]
+        }
+      },
+      "properties": {
+        "ParentState": {
+          "value": 1,
+          "type": "UInt"
+        }
+      }
+    },
+    "300": {
+      "type": "state",
+      "name": "REMOTE_BACKUP_SETUP",
+      "components": {
+        "230": {
+          "type": "title",
+          "name": "BACKUP_ACCOUNT_TITLE",
+          "rows": [
+            {
+              "Text": {
+                "value": "Google Drive Backup",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "231": {
+          "type": "button",
+          "name": "BACKUP_BEGIN",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Connect Google Account",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "232": {
+          "type": "button",
+          "name": "BACKUP_DISCONNECT",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Disconnect Google Account",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "233": {
+          "type": "button",
+          "name": "BACKUP_CANCEL",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Cancel sign-in",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "234": {
+          "type": "image",
+          "name": "BACKUP_QR",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Graphic": {
+                "value": "remote-backup-qr.png",
+                "type": "ResourceId"
+              }
+            }
+          ]
+        },
+        "235": {
+          "type": "label",
+          "name": "BACKUP_ACCOUNT_STATUS",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "236": {
+          "type": "button",
+          "name": "BACKUP_ACCOUNT_BACK",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Back",
+                "type": "Text"
+              }
+            }
+          ]
+        }
+      },
+      "properties": {
+        "ParentState": {
+          "value": 200,
+          "type": "UInt"
+        }
+      }
+    },
+    "400": {
+      "type": "state",
+      "name": "RECORDED_DRIVES",
+      "components": {
+        "410": {
+          "type": "title",
+          "name": "DRIVES_TITLE",
+          "rows": [
+            {
+              "Text": {
+                "value": "Recorded Drives",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "411": {
+          "type": "label",
+          "name": "DRIVES_STATUS",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Loading recorded drives\u2026",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "412": {
+          "type": "dropDownMenu",
+          "name": "DRIVES_LIST",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "ItemText": {
+                "value": "No completed drives",
+                "type": "Text"
+              }
+            }
+          ],
+          "cells": {
+            "SelectedItem": {
+              "value": 0,
+              "type": "UInt"
+            },
+            "HeaderText": {
+              "value": "Recorded drives",
+              "type": "Text"
+            }
+          }
+        },
+        "413": {
+          "type": "checkBox",
+          "name": "DRIVES_LOCK",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Lock this drive",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "414": {
+          "type": "button",
+          "name": "DRIVES_OLDER",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Older drives",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "415": {
+          "type": "button",
+          "name": "DRIVES_NEWER",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Newer drives",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "416": {
+          "type": "button",
+          "name": "DRIVES_BACK",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Back",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "417": {
+          "type": "label",
+          "name": "DRIVES_HINT",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "",
+                "type": "Text"
+              }
+            }
+          ]
+        }
+      },
+      "properties": {
+        "ParentState": {
+          "value": 700,
+          "type": "UInt"
+        }
+      }
+    },
+    "500": {
+      "type": "state",
+      "name": "CONNECT_PHONE",
+      "properties": {
+        "ParentState": {
+          "value": 1,
+          "type": "UInt"
+        }
+      },
+      "components": {
+        "503": {
+          "type": "label",
+          "name": "PHONE_STATUS",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_STATUS",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "509": {
+          "type": "image",
+          "name": "PHONE_QR",
+          "properties": {
+            "Visible": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Graphic": {
+                "value": "pairing-qr.png",
+                "type": "ResourceId"
+              }
+            }
+          ]
+        },
+        "512": {
+          "type": "title",
+          "name": "PHONE_TITLE",
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_TITLE",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "511": {
+          "type": "button",
+          "name": "PHONE_BACK",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_AUTO",
+                "type": "StringId"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "600": {
+      "type": "state",
+      "name": "ABOUT",
+      "properties": {
+        "ParentState": {
+          "value": 1,
+          "type": "UInt"
+        }
+      },
+      "components": {
+        "603": {
+          "type": "label",
+          "name": "ABOUT_STATUS",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_STATUS",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "612": {
+          "type": "title",
+          "name": "ABOUT_TITLE",
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_TITLE",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "611": {
+          "type": "button",
+          "name": "ABOUT_BACK",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_AUTO",
+                "type": "StringId"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "700": {
+      "type": "state",
+      "name": "USB_STORAGE",
+      "components": {
+        "703": {
+          "type": "label",
+          "name": "USB_STATUS",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_STATUS",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "704": {
+          "type": "button",
+          "name": "USB_ALL",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_ALL",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "705": {
+          "type": "button",
+          "name": "USB_FRONT",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_FRONT",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "706": {
+          "type": "button",
+          "name": "USB_REAR",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_REAR",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "707": {
+          "type": "button",
+          "name": "USB_LEFT",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_LEFT",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "708": {
+          "type": "button",
+          "name": "USB_RIGHT",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_RIGHT",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "711": {
+          "type": "button",
+          "name": "USB_AUTO",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_AUTO",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "709": {
+          "type": "image",
+          "name": "USB_QR",
+          "properties": {
+            "Visible": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Graphic": {
+                "value": "bimmervision2.png",
+                "type": "ResourceId"
+              }
+            }
+          ]
+        },
+        "712": {
+          "type": "title",
+          "name": "USB_TITLE",
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_TITLE",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "714": {
+          "type": "button",
+          "name": "USB_DELETE",
+          "properties": {
+            "Visible": {
+              "value": 0,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_DELETE",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "715": {
+          "type": "button",
+          "name": "USB_REMOTE",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Remote Backup",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "716": {
+          "name": "USB_BACKUP_WARNING",
+          "type": "label",
+          "properties": {
+            "Visible": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "",
+                "type": "Text"
+              }
+            }
+          ]
+        }
+      },
+      "properties": {
+        "ParentState": {
+          "value": 1,
+          "type": "UInt"
         }
       }
     }

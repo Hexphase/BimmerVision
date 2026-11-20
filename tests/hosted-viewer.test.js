@@ -92,3 +92,37 @@ test('host validation and closed connection screen still reject hosted requests'
   f.transfer.current=null;
   assert.equal((await f.pair(PAGES)).status,403);
 });
+
+test('authenticated phone handoff refreshes claimed code and binds exact selection to hosted pairing',async t=>{
+ const f=await fixture(t),origin='http://127.0.0.1:'+f.transfer.boundHttpPort,pair=await f.pair(origin);
+ const headers={Origin:origin,Authorization:'Bearer '+pair.body.token,'Content-Type':'application/json'},ids=[CLIENT,'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'];
+ assert.equal(f.transfer.info().code,'');
+ const link=await f.request('POST','/api/v1/phone-backup/link',headers,{clipIds:ids});assert.equal(link.status,200);assert.match(link.body.code,/^\d{8}$/);
+ assert.equal((await f.request('GET','/api/v1/recordings',headers)).status,200,'current paired session remains usable');
+ const claim=(origin,code=link.body.code)=>f.request('POST','/api/v1/pair',{Origin:origin,'Content-Type':'application/json'},{code,clientId:CLIENT});
+ assert.equal((await claim(PAGES)).status,403,'handoff is bound to the actual destination origin');
+ const hosted=await claim(SITE);assert.equal(hosted.status,200);assert.deepEqual(hosted.body.backupClipIds,ids);
+ assert.equal((await claim(SITE)).status,409);assert.equal(f.transfer.backupHandoff,null);
+ assert.equal((await f.request('GET','/api/v1/recordings',headers)).status,403);
+});
+test('phone handoff rejects unauthenticated, invalid and case-insensitive duplicate selections',async t=>{
+ const f=await fixture(t),paired=await f.pair(SITE),headers={Origin:SITE,Authorization:'Bearer '+paired.body.token,'Content-Type':'application/json'};
+ assert.equal((await f.request('POST','/api/v1/phone-backup/link',{Origin:SITE},{})).status,401);
+ for(const ids of [[],['bad'],[CLIENT,CLIENT.toUpperCase()],Array(1001).fill(CLIENT),'bad']){
+  assert.equal((await f.request('POST','/api/v1/phone-backup/link',headers,{clipIds:ids})).status,400);
+ }
+ assert.equal(f.transfer.claimed,true);
+ const link=await f.request('POST','/api/v1/phone-backup/link',headers,{});assert.equal(link.status,200);
+ f.transfer.current='new-visit';
+ const stale=await f.request('POST','/api/v1/pair',{Origin:SITE,'Content-Type':'application/json'},{code:link.body.code,clientId:CLIENT});assert.equal(stale.status,403);
+});
+test('phone handoff supports 1000 IDs, invalidates prior link, and clears on stop',async t=>{
+ const f=await fixture(t),pair=await f.pair(SITE),headers={Origin:SITE,Authorization:'Bearer '+pair.body.token,'Content-Type':'application/json'};
+ const ids=Array.from({length:1000},(_,i)=>i.toString(16).padStart(8,'0')+'-1234-4234-8234-123456789abc');
+ const first=await f.request('POST','/api/v1/phone-backup/link',headers,{clipIds:ids});assert.equal(first.status,200);
+ const next=await f.request('POST','/api/v1/phone-backup/link',headers,{clipIds:ids});assert.equal(next.status,200);
+ if(first.body.code!==next.body.code)assert.equal((await f.request('POST','/api/v1/pair',{Origin:SITE,'Content-Type':'application/json'},{code:first.body.code,clientId:CLIENT})).status,401);
+ const hosted=await f.request('POST','/api/v1/pair',{Origin:SITE,'Content-Type':'application/json'},{code:next.body.code,clientId:CLIENT});assert.equal(hosted.status,200);assert.deepEqual(hosted.body.backupClipIds,ids);
+ f.transfer.backupHandoff={code:'secret'};await f.transfer.stop();assert.equal(f.transfer.backupHandoff,null);
+});
+test('authenticated viewer heartbeat pauses car backup only for a bounded live connection',async()=>{const {Transfer}=require('../recorder/files/transfer');let now=1000;const t=new Transfer({library:{},nowMs:()=>now});t.alive=()=>true;t.acceptHost=()=>true;t.session={token:'a'};t.auth=()=>t.session;let value;const res={setHeader(){},writeHead(status){assert.equal(status,200);},end(body){value=JSON.parse(body);}};assert.equal(t.viewerConnected(),false);await t.handle({method:'GET',url:'/api/v1/viewer-heartbeat',headers:{}},res,0);assert.equal(value.connected,true);assert.equal(t.viewerConnected(),true);now+=15001;assert.equal(t.viewerConnected(),false);await t.handle({method:'GET',url:'/api/v1/viewer-heartbeat',headers:{}},res,0);t.session=null;assert.equal(t.viewerConnected(),false);});

@@ -7,6 +7,7 @@ var ROWS = [
   "HOME_ALL",
   "HOME_FRONT",
   "HOME_REAR",
+  "HOME_REMOTE",
   "HOME_LEFT",
   "HOME_RIGHT",
   "HOME_AUTO",
@@ -14,6 +15,7 @@ var ROWS = [
 ];
 function UI(o) {
   this.rhmi = o.rhmi;
+  this.displayTimeZone = o.displayTimeZone || null;
   this.onboarding = o.onboarding || null;
   this.noticeHandled = false;
   this.report = o.report || function(e){console.error(String(e.message||e));};
@@ -21,6 +23,7 @@ function UI(o) {
   this.display = o.display;
   this.entry = o.entry;
   this.page = "home";
+  this.nativePage = null;
   this.visible = false;
   this.closed = false;
   this.listeners = [];
@@ -31,8 +34,11 @@ function UI(o) {
   this.drivePage = 0;
   this.qrUrl = "";
   this.externalQr = false;
+  this.nativeQr = false;
   this.preferExternalQr = o.preferExternalQr === true;
   this.message = "";
+  this.backupUI = new (require("./remote-backup-ui").RemoteBackupUI)(this);
+  this.recordedDrivesUI = new(require("./recorded-drives-ui").RecordedDrivesUI)(this);
   this.nowMs = o.nowMs || Date.now;
   this.deleteNoticeId = null;
   this.deleteNoticeVolumeToken = null;
@@ -42,6 +48,13 @@ UI.prototype.clearDeleteNotice = function () {
   this.deleteNoticeVolumeToken = null;
 };
 UI.prototype.component = function (n) {
+  if ((this.page === "usb" || this.page === "delete-confirm") && /^HOME_/.test(n))
+    return this.rhmi.getByName("USB_" + n.slice(5));
+  if ((this.page === "connect" || this.page === "settings") && /^HOME_/.test(n)) {
+    var aliases = { HOME_STATUS: "STATUS", HOME_TITLE: "TITLE", HOME_AUTO: "BACK" };
+    if (this.page === "connect") aliases.HOME_QR = "QR";
+    return aliases[n] ? this.rhmi.getByName((this.page === "connect" ? "PHONE_" : "ABOUT_") + aliases[n]) : null;
+  }
   return this.rhmi.getByName(n);
 };
 UI.prototype.listen = function (em, event, fn) {
@@ -69,6 +82,7 @@ UI.prototype.revoke = function () {
   this.visit = null;
   this.qrUrl = "";
   this.externalQr = false;
+  this.nativeQr = false;
   if (this.display) this.display.hide();
 };
 UI.prototype.beat = function () {
@@ -86,17 +100,39 @@ UI.prototype.text = async function (n, value) {
 };
 UI.prototype.initialize = async function () {
   var self = this;
+  this.backupUI.initialize();
+  this.recordedDrivesUI.initialize();
+  ["PHONE_BACK", "ABOUT_BACK"].forEach(function (name) {
+    self.listen(self.component(name), "action", function () {
+      if (self.nativePage === (name === "PHONE_BACK" ? "CONNECT_PHONE" : "ABOUT") && self.visible)
+        self.back().catch(self.report);
+    });
+  });
+  ["CONNECT_PHONE", "ABOUT"].forEach(function (name) {
+    self.listen(self.component(name), "visible", function (e) {
+      if (self.nativePage !== name || !e) return;
+      if (e.visible) { self.visible = true; return; }
+      self.nativePage = null; self.visible = false; self.page = "home";
+      self.cache = {}; self.revoke();
+    });
+  });
   ROWS.forEach(function (row) {
+    self.listen(self.component("USB_" + row.slice(5)), "action", function () {
+      if (self.nativePage !== "USB_STORAGE" || self.recordedDrivesUI.active || !self.visible) return;
+      Promise.resolve(row === "HOME_AUTO" ? self.back() : self.press(row, true)).catch(self.report);
+    });
     self.listen(self.component(row), "action", function () {
       Promise.resolve(
         row === "HOME_AUTO" ? self.back() : self.press(row)
       ).catch(function (e) {
-        self.message = e.message;
+        self.report(e);
+        self.message = row === "HOME_REMOTE" ? "Remote Backup could not open" : e.message;
       });
     });
   });
   this.listen(this.component("HOME"), "visible", function (e) {
     self.visible = !!(e && e.visible);
+    if (!self.visible && (self.nativePage || self.backupUI.active || self.recordedDrivesUI.active)) { self.visible=true; return; }
     if (!self.visible) {
       self.revoke();
       self.clearDeleteNotice();
@@ -110,12 +146,50 @@ UI.prototype.initialize = async function () {
     var h = self.component("HOME"),
       id = h.getId(),
       roots = stack && Array.isArray(stack.ROOT_APP) ? stack.ROOT_APP : [];
+    var usb = self.component("USB_STORAGE");
+    if (usb && String(roots[roots.length - 1]) === String(usb.getId())) {
+      if (self.nativePage !== "USB_STORAGE" || self.recordedDrivesUI.active) self.cache = {};
+      self.recordedDrivesUI.active = false;
+      self.backupUI.active = false;
+      self.nativePage = "USB_STORAGE";
+      if (self.page !== "delete-confirm") self.page = "usb";
+      self.visible = true;
+      return;
+    }
+    if (String(roots[roots.length - 1]) === String(id)) self.visible = true;
+    // The hardware Back control pops native states without invoking our Back
+    // buttons. Release submenu ownership when the home state is on top.
+    if (String(roots[roots.length - 1]) === String(id) &&
+        (self.nativePage || self.backupUI.active || self.recordedDrivesUI.active)) {
+      self.nativePage = null;
+      self.revoke();
+      self.backupUI.active = false;
+      self.recordedDrivesUI.active = false;
+      self.page = "home";
+      self.cache = {};
+      self.visible = true;
+    }
+    if (self.nativePage && roots.some(function (x) { return String(x) === String(self.component(self.nativePage).getId()); })) { self.visible = true; return; }
+    if (self.backupUI.active) {
+      var backupPage = ["REMOTE_BACKUP", "REMOTE_BACKUP_SETUP"].filter(function (n) {
+        var c = self.component(n); return c && String(c.getId()) === String(roots[roots.length - 1]);
+      })[0];
+      if (backupPage) {
+        var nextPage = backupPage === "REMOTE_BACKUP_SETUP" ? "account" : "backup";
+        if (self.backupUI.page !== nextPage) { self.backupUI.page = nextPage; self.backupUI.cache = {}; }
+        self.visible = true;
+        return;
+      }
+    }
+    if((self.backupUI.active || self.recordedDrivesUI.active) && roots.some(function(x){return ["REMOTE_BACKUP","REMOTE_BACKUP_SETUP","RECORDED_DRIVES"].some(function(n){var c=self.component(n);return c&&String(c.getId())===String(x);});})) {self.visible=true;return;}
     if (
       !roots.some(function (x) {
         return String(x) === String(id);
       })
     ) {
       self.visible = false;
+      self.nativePage = null;
+      self.backupUI.active=false;self.recordedDrivesUI.active=false;
       self.revoke();
       self.clearDeleteNotice();
       self.page = "home";
@@ -140,8 +214,10 @@ UI.prototype.showRecordingAlert = async function (notice) {
 UI.prototype.openMenu = async function () {
   if (this.closed) return;
   this.clearDeleteNotice();
+  this.backupUI.active=false;this.recordedDrivesUI.active=false;
   this.revoke();
   this.page = "home";
+  this.nativePage = null;
   if(this.onboarding&&!this.noticeHandled){try{if(this.onboarding.pending())this.page="welcome";}catch(e){this.report(e);this.page="welcome";}}
   await this.rhmi.mapEntryState(this.entry, this.component("HOME"));
   try {
@@ -153,8 +229,8 @@ UI.prototype.openMenu = async function () {
   this.visible = true;
   await this.render();
 };
-UI.prototype.press = async function (row) {
-  if (this.closed || !this.visible) return;
+UI.prototype.press = async function (row, nativeUsb) {
+  if (this.closed || !this.visible || this.nativePage && !(this.nativePage === "USB_STORAGE" && nativeUsb) || (this.backupUI && this.backupUI.active || this.recordedDrivesUI && this.recordedDrivesUI.active)) return;
   var desk = this.desk(),
     intent = this.intent();
   if (desk.setupPending && (this.page === "home" && ["HOME_ALL", "HOME_LEFT"].indexOf(row) >= 0 || this.page === "usb" && row === "HOME_DELETE" || this.page === "delete-confirm" && row === "HOME_ALL")) {
@@ -174,22 +250,24 @@ UI.prototype.press = async function (row) {
     }
     else if (row === "HOME_REAR") {
       this.clearDeleteNotice();
-      this.page = "usb";
       this.drivePage = 0;
+      await this.openNativePage("usb", "USB_STORAGE");
     } else if (row === "HOME_LEFT") {
       if(!desk.drive){this.message="Connect a writable USB drive first.";await this.render();return;}
       this.revoke();
       this.visit = crypto.randomBytes(16).toString("hex");
-      this.page = "connect";
+      await this.openNativePage("connect", "CONNECT_PHONE");
       this.beat();
     }
-    else if (row === "HOME_RIGHT") {this.page="settings";this.message="";}
+    else if (row === "HOME_REMOTE") {this.revoke();await this.backupUI.open();return;}
+    else if (row === "HOME_RIGHT") {this.message="";await this.openNativePage("settings", "ABOUT");}
   } else if (this.page === "delete-confirm") {
     if(row === "HOME_ALL"){
       if(!desk.drive||desk.drive.mount!==this.deleteVolume){this.message="The selected USB drive changed. Nothing deleted.";this.page="usb";}
       else {this.revoke();var deleteId=crypto.randomBytes(16).toString('hex');this.deleteNoticeId=deleteId;this.deleteNoticeVolumeToken=this.deleteVolumeToken;this.update({continuous:false,deleteAll:{id:deleteId,volume:this.deleteVolume,volumeToken:this.deleteVolumeToken,confirmed:true}});this.message="";this.page="usb";}
     }else if(row === "HOME_FRONT"){this.page="usb";this.message="";}
   } else if (this.page === "usb") {
+    if(row === "HOME_REMOTE" && desk.drive){this.revoke();await this.recordedDrivesUI.open();return;}
     if(row === "HOME_DELETE" && desk.drive){this.clearDeleteNotice();this.deleteVolume=desk.drive.mount;this.deleteVolumeToken=desk.volumeToken;this.page="delete-confirm";this.message="";await this.render();return;}
     var i = ["HOME_ALL", "HOME_FRONT", "HOME_REAR", "HOME_LEFT"].indexOf(row),
       drives = desk.drives || [];
@@ -218,10 +296,26 @@ UI.prototype.press = async function (row) {
   await this.render();
 };
 UI.prototype.back = async function () {
+  if(this.closed || !this.visible || (this.backupUI && this.backupUI.active || this.recordedDrivesUI && this.recordedDrivesUI.active))return;
   this.clearDeleteNotice();
   this.revoke();
   this.page = "home";
+  if (this.nativePage) { this.nativePage = null; this.cache = {}; await this.rhmi.openState("HOME"); }
   await this.render();
+};
+UI.prototype.openNativePage = async function (page, state) {
+  this.page = page;
+  this.nativePage = state;
+  this.cache = {};
+  try {
+    var c = this.component(state);
+    if (c && c.updateResources) await c.updateResources();
+    await this.rhmi.openState(state);
+    this.visible = true;
+  } catch (e) {
+    this.nativePage = null; this.page = "home"; this.cache = {}; this.revoke();
+    throw e;
+  }
 };
 function bytes(n) {
   if (typeof n !== "number" || !isFinite(n)) return "Unknown";
@@ -250,6 +344,8 @@ UI.prototype.render = function () {
 };
 UI.prototype.renderPage = async function () {
   if (this.closed) return;
+  if(this.recordedDrivesUI.active){await this.recordedDrivesUI.render();return;}
+  if(this.backupUI.active){await this.backupUI.render();return;}
   var desk = this.desk(),
     intent = this.intent(),
     drive = desk.drive,
@@ -269,7 +365,10 @@ UI.prototype.renderPage = async function () {
     recordingState = finishing ? "Saving last video" :
       ((desk.state === "Recording" || desk.activeId) ? "Recording" : (desk.state || "Recorder unavailable"));
   if(this.visible && enabled && !finishing && desk.state==="Recording" && desk.activeId && !desk.error && !desk.deleting) labels.HOME_TITLE="BimmerVision   "+(Math.floor(this.nowMs()/500)%2?"○":"●")+" REC";
-  if(this.page === "connect" && !drive){this.revoke();this.page="home";this.message="USB disconnected. Connect Phone unavailable.";}
+  if(this.page === "connect" && !drive){
+    this.revoke();this.page="home";this.message="USB disconnected. Connect Phone unavailable.";
+    if(this.nativePage){this.nativePage=null;this.cache={};await this.rhmi.openState("HOME");}
+  }
   if(this.page==="welcome"){labels.HOME_STATUS=require("./first-run-notice").message;labels.HOME_ALL="Understood";labels.HOME_AUTO="Back";}
   else if (this.page === "home") {
     labels.HOME_STATUS =
@@ -295,8 +394,9 @@ UI.prototype.renderPage = async function () {
         : "Enable recording"
       : "Enable recording";
     labels.HOME_REAR = "USB storage";
+    labels.HOME_REMOTE = "Remote Backup";
     labels.HOME_LEFT = "Connect Phone";
-    labels.HOME_RIGHT = "Settings / About";
+    labels.HOME_RIGHT = "About";
   } else if (this.page === "delete-confirm") {
     labels.HOME_STATUS="Erase all unlocked recordings?\n"+(drive ? drive.name||drive.mount : "USB disconnected")+" · "+(desk.lockedRecordingCount==null?"Locked count unavailable":desk.lockedRecordingCount+" locked")+"\nLocked recordings are kept. This cannot be undone.";
     labels.HOME_ALL="Erase unlocked recordings";labels.HOME_FRONT="Cancel";labels.HOME_AUTO="Back";
@@ -325,6 +425,7 @@ UI.prototype.renderPage = async function () {
     if (!drives.length)
       labels.HOME_STATUS +=
         "\nNo writable USB drive detected\nConnect a USB drive";
+    if(drive) labels.HOME_REMOTE="Recorded Drives";
     if(drive) labels.HOME_DELETE="Erase all unlocked recordings…";
     if(drive) labels.HOME_STATUS+="\n"+(desk.recordingCount==null?"":desk.recordingCount+" recordings · ")+(desk.lockedRecordingCount==null?"Locked count unavailable · ":desk.lockedRecordingCount+" locked · ")+(desk.deleting?"Do not disconnect - Deleting recordings":desk.writeInProgress?writingMessage:desk.safeToRemove===false||desk.error?"USB error - Safe removal not confirmed":"Safe to Remove");
     if (drives.length > 4) labels.HOME_RIGHT = "Next drives";
@@ -339,9 +440,10 @@ UI.prototype.renderPage = async function () {
       "\n" + "BMW Wi-Fi / CarPlay · Keep this screen open";
     labels.HOME_AUTO = "Back";
   }
+  if(this.page==="home"&&desk.backup&&desk.backup.autoUpload&&desk.backup.storageFull)labels.HOME_BACKUP_WARNING="REMOTE BACKUP PAUSED -  REMOTE STORAGE FULL";
   var notice=this.message||desk.storageWarning||desk.error||deletionNotice;
   if(notice){if(this.page==="home"||this.page==="usb")labels.HOME_STATUS=notice+(this.page==="home"&&drive&&typeof desk.recordingCount==="number"?" · "+desk.recordingCount+" recordings":"")+labels.HOME_STATUS.slice(labels.HOME_STATUS.indexOf("\n"));else labels.HOME_STATUS+="\n"+notice;}
-  var all = ["HOME_STATUS", "HOME_TITLE", "HOME_QR"].concat(ROWS);
+  var all = ["HOME_STATUS", "HOME_TITLE", "HOME_QR", "HOME_BACKUP_WARNING"].concat(ROWS);
   for (var j = 0; j < all.length; j++) {
     var name = all[j],
       c = this.component(name),
@@ -354,56 +456,63 @@ UI.prototype.renderPage = async function () {
     if(name === "HOME_LEFT" && c && c.setEnabled) await c.setEnabled(this.page !== "home" || !!drive);
     if(name === "HOME_DELETE" && c && c.setEnabled) await c.setEnabled(!!drive && !desk.deleting);
     if (name === "HOME_QR" && c && c.setVisible)
-      await c.setVisible(this.page === "connect" && transfer.on === true && !!transfer.url && !this.preferExternalQr);
+      await c.setVisible(this.page === "connect" && transfer.on === true && !!transfer.url && this.nativeQr === true);
   }
 };
-UI.prototype.publishQr = async function (url) {
-  var image = this.component("HOME_QR");
+UI.prototype.publishQr = async function (url,componentName,resourceName) {
+  var image = this.component(componentName||"HOME_QR");
+  resourceName=resourceName||"pairing-qr.png";
   if (!image || !image.setRowGraphic || !image.getResourceBundle) return false;
   var bundle = image.getResourceBundle();
   if (!bundle || !bundle.resourceFolder || !bundle.createResourceHandles) return false;
-  var file = path.join(bundle.resourceFolder, "pairing-qr.png");
+  var file = path.join(bundle.resourceFolder, resourceName);
   fs.writeFileSync(file, qr.png(url));
   if (
     bundle.resourceTable &&
-    Number.isInteger(bundle.resourceTable["pairing-qr.png"]) &&
+    Number.isInteger(bundle.resourceTable[resourceName]) &&
     bundle.destroyResourceHandles
   ) {
-    await bundle.destroyResourceHandles(["pairing-qr.png"]);
-    delete bundle.resourceTable["pairing-qr.png"];
+    await bundle.destroyResourceHandles([resourceName]);
+    delete bundle.resourceTable[resourceName];
   }
-  await bundle.createResourceHandles(["pairing-qr.png"]);
-  await image.setRowGraphic(0, "pairing-qr.png");
+  await bundle.createResourceHandles([resourceName]);
+  await image.setRowGraphic(0, resourceName);
   if (image.setVisible) await image.setVisible(true);
   return true;
 };
 UI.prototype.paint = async function () {
   if (this.closed || !this.visible) return;
+  if((this.backupUI && this.backupUI.active || this.recordedDrivesUI && this.recordedDrivesUI.active)){await this.render();return;}
   if (this.page === "connect" && this.visit) {
     var transfer = this.desk().transfer || {};
-    if (transfer.url && transfer.url !== this.qrUrl && this.display) {
+    if (transfer.url && transfer.url !== this.qrUrl) {
       var shown = false;
-      try {
-        shown = !this.preferExternalQr && !!(await this.publishQr(transfer.url));
-      } catch (e) {
-        this.message = "QR unavailable — use the code above";
+      this.nativeQr = false;
+      this.externalQr = false;
+      // Dedicated Connect Phone state owns a native image. Legacy bottom-right
+      // renderer settings must not bypass that image or cache a failed draw.
+      try { shown = !!(await this.publishQr(transfer.url)); } catch (e) {}
+      if (shown) {
+        this.nativeQr = true;
+        if (this.display && this.display.hide) this.display.hide();
+      } else if (this.display && this.display.draw) {
+        try { shown = (await this.display.draw(qr.frame(transfer.url))) === true; }
+        catch (e) { shown = false; }
+        this.externalQr = shown;
       }
-      try {
+      if (shown) {
+        this.qrUrl = transfer.url;
+        if (/^QR unavailable/.test(this.message)) this.message = "";
+      } else this.message = "QR unavailable — use the code above";
+    } else if (transfer.url && this.externalQr && this.display && this.display.hold) {
+      if ((await this.display.hold()) === false) {
+        this.qrUrl = "";
         this.externalQr = false;
-        if (!shown && this.display) {
-          await this.display.draw(qr.frame(transfer.url));
-          this.externalQr = true;
-          shown = true;
-        } else if(shown && this.display) this.display.hide();
-      } catch (e) {
-        if (!shown) this.message = "QR unavailable — use the code above";
       }
-      if (shown) this.qrUrl = transfer.url;
-    } else if (transfer.url && this.externalQr && this.display && this.display.hold)
-      await this.display.hold();
-    else if (!transfer.url && this.qrUrl) {
+    } else if (!transfer.url && (this.qrUrl || this.nativeQr)) {
       this.qrUrl = "";
-  this.externalQr = false;
+      this.externalQr = false;
+      this.nativeQr = false;
       if (this.display) this.display.hide();
     }
   }

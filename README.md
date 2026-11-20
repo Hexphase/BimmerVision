@@ -45,7 +45,7 @@ Record your drives automatically, review all four cameras simultaneously, and ex
 
 ## Current release
 
-**0.2.39** makes Export easier to find: a compact blue icon on mobile and a blue icon-and-label button on desktop. It retains the Settings menu fix and the redesigned recordings player with metadata Driving view, recognized road signs and optional driving-view export. The car opens directly to saved drives. See [release notes](RELEASE_NOTES.md).
+**0.2.78** introduces Google Drive Remote Backup, automatic horn protection, recorded-drive locking in iDrive, and a shared backup manager in the phone player. View your BimmerVision Google Drive backups at [BimmerVision.app](https://bimmervision.app/). Install the app and required recorder together. See [release notes](RELEASE_NOTES.md).
 
 ## Features
 
@@ -64,6 +64,19 @@ Turn your BMW's existing cameras into a full-time, four-channel dashcam.
 A recording indicator in iDrive lets you know when recording is active.
 
 ![Blinking BimmerVision recording indicator in iDrive](docs/images/recording-indicator.gif)
+
+### Remote Backup and horn protection
+
+Connect your Google account in **Remote Backup**, then enable **Auto Upload on Wi-Fi** for automatic backups. Choose all eligible recordings or only locked drives and horn-protected clips. You can also select individual recordings or entire drives from the phone player’s **Remote Backup** manager.
+
+- Pressing the horn automatically protects the complete clips covering the 30 seconds before and after the honk, including adjacent clips when needed. Automatic backup of these protected clips requires Google Drive setup and Auto Upload to be enabled.
+- The car uploads **only over Wi-Fi**, including a phone hotspot. BimmerVision never uses the car’s cellular connection. Backups can run at any speed unless **Do not backup while driving** is checked; pausing recording is a separate option and applies only while stationary.
+- While your phone is connected to the car player, car-side cloud work pauses. Select **Back up current recording** or use **Remote Backup** to upload selected recordings with your phone browser and its own internet connection. Phone cellular use requires your confirmation. Keep the car tab connected and the upload window open; completion returns you to the car player.
+- At [BimmerVision.app](https://bimmervision.app/), connect Google Drive to view recordings created by or explicitly authorized for BimmerVision. You can also back up local recordings after confirming the device is on Wi-Fi.
+
+**Choose important clips first.** Unless your car has a strong Wi-Fi signal, large queues may take several sessions. A typical two-minute clip is about **300 MB**, depending on the recording. Vehicles commonly sleep around **5–15 minutes after locking**, with timing varying by vehicle and conditions. Unfinished car backups automatically resume when the car is awake and eligible Wi-Fi returns. Verified completed files are retained; an unfinished phone-uploaded file may restart when the car takes over.
+
+Recordings and recording metadata travel directly between your device/car and your own Google Drive. They are never uploaded to BimmerVision servers, and BimmerVision developers cannot view them. You are responsible for your Google account and Drive storage limits; a full Drive pauses backup. Original USB recordings are retained after backup; normal unlocked-recording retention still applies.
 
 ### How Camera Recording Works
 

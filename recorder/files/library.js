@@ -27,10 +27,31 @@ Library.prototype.assertNoDependencies=async function(id){
  assertUnreserved(this.root,id);
 };
 Library.prototype.list=async function(){await this.check();var names=await io.readdir(this.root),out=[];for(var i=0;i<names.length;i++){if(!UUID.test(names[i]))continue;try{var m=await this.manifest(names[i]),active=typeof this.activeId==='function'?this.activeId():this.activeId;if(m.complete===true&&active!==names[i]){try{var overview=await this.overviews.index(path.join(this.root,names[i],'capture.bvr'),m);m.route=overview.route;m.endpoints=overview.endpoints;m.routeStatus=overview.routeStatus;}catch(overviewError){m.route=[];m.endpoints=null;}out.push(m);}}catch(e){}}return out.sort(function(a,b){return String(a.sessionId||'').localeCompare(String(b.sessionId||''))||(a.sequence||0)-(b.sequence||0)||a.id.localeCompare(b.id);});};
+// Cloud scheduling needs manifests only; never build playback/GPS overviews here.
+Library.prototype.backupManifests=async function(){await this.check();var names=await io.readdir(this.root),out=[],active=typeof this.activeId==='function'?this.activeId():this.activeId;for(var i=0;i<names.length;i++){if(!UUID.test(names[i])||names[i]===active)continue;try{var m=await this.manifest(names[i]);if(m.complete===true)out.push(m);}catch(e){}}return out;};
+// Grouped drive locks use the same manifests as playback and remote backup.
+Library.prototype.driveGroups=async function(){
+ var drives=require('./backup-drives').group(await this.backupManifests());
+ return drives.map(function(d){var count=d.clips.filter(function(m){return m.locked===true;}).length;return {id:d.id,startedAt:d.startedAt,membership:crypto.createHash('sha256').update(d.clips.map(function(m){return m.id;}).join(',')).digest('hex'),totalClips:d.clips.length,lockedClips:count,locked:count===d.clips.length,mixed:count>0&&count<d.clips.length,bytes:d.bytes,durationSeconds:d.clips.reduce(function(n,m){return n+(Number(m.durationSeconds)||0);},0)};}).sort(function(a,b){return (Date.parse(b.startedAt)||0)-(Date.parse(a.startedAt)||0)||b.id.localeCompare(a.id);});
+};
+Library.prototype.setDriveLocked=function(id,membership,locked){
+ var self=this;return this.lock(async function(){
+  self.id(id);if(typeof locked!=='boolean'||typeof membership!=='string')throw error(400,'Invalid drive lock request');
+  await self.check();var groups=require('./backup-drives').group(await self.backupManifests()),drive=groups.filter(function(d){return d.id===id;})[0];
+  if(!drive||crypto.createHash('sha256').update(drive.clips.map(function(m){return m.id;}).join(',')).digest('hex')!==membership)throw error(409,'Drive changed. Refresh the drive list and try again.');
+  for(var i=0;i<drive.clips.length;i++){var cid=drive.clips[i].id,active=typeof self.activeId==='function'?self.activeId():self.activeId;if(cid===active||self.readers[cid])throw error(409,'Recording is active or transferring. Try again shortly.');assertUnreserved(self.root,cid);await self.resolve(cid,'manifest.json');}
+  self.mutating=true;
+  try{for(var j=0;j<drive.clips.length;j++){await self.check();var m=await self.manifest(drive.clips[j].id);m.locked=locked;await io.atomicJSON(path.join(self.root,m.id,'manifest.json'),m);await io.syncDir(path.join(self.root,m.id));}return {id:id,locked:locked,totalClips:drive.clips.length};}
+  finally{self.mutating=false;self.invalidateSummary();}
+ });
+};
 Library.prototype.resolve=async function(id,file){this.id(id);if(file!=='capture.bvr'&&file!=='manifest.json'&&file!=='mapping.json')throw error(400,'File is not allowlisted');await this.check();try{var m=await this.manifest(id),active=typeof this.activeId==='function'?this.activeId():this.activeId;if(m.complete!==true||active===id)throw error(404,'Recording is not finalized');return path.join(this.root,id,file);}catch(e){if(e.statusCode)throw e;throw error(404,'Recording unavailable');}};
 Library.prototype.bundle=async function(id){this.id(id);await this.check();await this.resolve(id,'manifest.json');var dir=path.join(this.root,id),out=[{name:'manifest.json',path:path.join(dir,'manifest.json')},{name:'capture.bvr',path:path.join(dir,'capture.bvr')}];try{await io.safePath(path.join(dir,'mapping.json'),'file');out.push({name:'mapping.json',path:path.join(dir,'mapping.json')});}catch(e){}for(var i=0;i<out.length;i++)await io.safePath(out[i].path,'file');return out;};
-Library.prototype.lock=function(fn){var next=this.serial.then(fn);this.serial=next.catch(function(){});return next;};
+Library.prototype.lock=function(fn){var self=this;var next=this.serial.then(async function(){if(self.hornLocks)await self.hornLocks.reconcile();return fn();});this.serial=next.catch(function(){});return next;};
 Library.prototype.acquire=function(id){var self=this;return this.lock(async function(){await self.resolve(id,'capture.bvr');self.readers[id]=(self.readers[id]||0)+1;var released=false;return function(){if(released)return;released=true;self.readers[id]--;if(!self.readers[id])delete self.readers[id];};});};
+// Hold every member of an eligible drive so per-clip web mutations cannot
+// change its lock eligibility while a chunk is being sent.
+Library.prototype.acquireRecordings=function(ids){var self=this;return this.lock(async function(){var unique=Array.from(new Set(ids));for(var i=0;i<unique.length;i++)await self.resolve(unique[i],'capture.bvr');unique.forEach(function(id){self.readers[id]=(self.readers[id]||0)+1;});var released=false;return function(){if(released)return;released=true;unique.forEach(function(id){self.readers[id]--;if(!self.readers[id])delete self.readers[id];});};});};
 var DELETE_FILES=['capture.bvr','manifest.json','manifest.json.new','mapping.json','mapping.json.new'];
 async function removable(dir){await io.safePath(dir,'directory');var files=await io.readdir(dir);for(var i=0;i<files.length;i++){if(DELETE_FILES.indexOf(files[i])<0)throw error(409,'Recording contains a file outside deletion allowlist');await io.safePath(path.join(dir,files[i]),'file');}return files;}
 async function cleanup(dir,guard){var files=await removable(dir);for(var i=0;i<files.length;i++){await guard.check();var file=path.join(dir,files[i]);await io.safePath(file,'file');await io.unlink(file);}await guard.check();await io.safePath(dir,'directory');await io.rmdir(dir);}
@@ -39,7 +60,7 @@ Library.cleanupTrash=async function(root,guard){
  for(var i=0;i<names.length;i++){if(!/^[a-f0-9-]{36}-[a-f0-9]{16}$/i.test(names[i])||!UUID.test(names[i].slice(0,36)))continue;try{await cleanup(path.join(trash,names[i]),guard);out.removed++;}catch(e){out.errors.push({name:names[i],error:e.message});}}
  await guard.check();await io.syncDir(trash);return out;
 };
-Library.prototype.remove=function(id){var self=this;return this.lock(async function(){self.id(id);await self.check();var active=typeof self.activeId==='function'?self.activeId():self.activeId;if(active===id||self.readers[id])throw error(409,'Recording is active or transferring');var m=await self.manifest(id);if(m.locked)throw error(403,'Recording is locked. Unlock it before deleting.');await self.resolve(id,'manifest.json');await self.assertNoDependencies(id);var dir=path.join(self.root,id);await removable(dir);self.mutating=true;try{var trash=path.join(self.root,'.trash');await io.ensureDir(trash);await self.check();var staged=path.join(trash,id+'-'+crypto.randomBytes(8).toString('hex'));assertUnreserved(self.root,id);await io.rename(dir,staged);await io.syncDir(self.root);await cleanup(staged,self.guard);await io.syncDir(trash);return {deleted:id};}finally{self.mutating=false;self.invalidateSummary();}});};
+Library.prototype.remove=function(id){var self=this;return this.lock(async function(){self.id(id);await self.check();var active=typeof self.activeId==='function'?self.activeId():self.activeId;if(active===id||self.readers[id])throw error(409,'Recording is active or transferring');var m=await self.manifest(id);if(m.locked)throw error(403,'Recording is locked. Unlock it before deleting.');await self.resolve(id,'manifest.json');await self.assertNoDependencies(id);var dir=path.join(self.root,id);await removable(dir);self.mutating=true;try{var trash=path.join(self.root,'.trash');await io.ensureDir(trash);await self.check();var staged=path.join(trash,id+'-'+crypto.randomBytes(8).toString('hex'));assertUnreserved(self.root,id);if(self.hornLocks&&self.hornLocks.apply(m))throw error(409,'Horn protection changed. Try again shortly.');await io.rename(dir,staged);await io.syncDir(self.root);await cleanup(staged,self.guard);await io.syncDir(trash);return {deleted:id};}finally{self.mutating=false;self.invalidateSummary();}});};
 Library.prototype.setLocked=function(id,locked){var self=this;return this.lock(async function(){self.id(id);await self.check();var active=typeof self.activeId==='function'?self.activeId():self.activeId;if(active===id||self.readers[id])throw error(409,'Recording is active or transferring');var m=await self.manifest(id);m.locked=Boolean(locked);var manifestFile=path.join(self.root,id,'manifest.json');try{await io.atomicJSON(manifestFile,m);await io.syncDir(path.join(self.root,id));return {id:id,locked:m.locked};}finally{self.invalidateSummary();}});};
 // Camera identity is supplementary metadata; originals remain byte-for-byte intact.
 Library.prototype.setMapping=function(id,mapping){var self=this;return this.lock(async function(){
@@ -49,7 +70,7 @@ Library.prototype.setMapping=function(id,mapping){var self=this;return this.lock
    mapping.phase0===mapping.phase1||typeof mapping.flipHalves!=='boolean')throw error(400,'Invalid confirmed camera mapping');
  await self.check();await self.manifest(id);
  var active=typeof self.activeId==='function'?self.activeId():self.activeId;
- if(active===id)throw error(409,'Recording is active');
+ if(active===id||self.readers[id])throw error(409,'Recording is active or transferring');
  var file=path.join(self.root,id,'mapping.json');
  try{await io.safePath(file,'file');}catch(e){if(e.code!=='ENOENT')throw e;}
  var value={schemaVersion:1,confirmed:true,phase0:mapping.phase0,phase1:mapping.phase1,flipHalves:mapping.flipHalves};
@@ -81,6 +102,7 @@ Library.prototype.removeAll=function(){var self=this;return this.lock(async func
   try{
    var mf=await readManifest(self.root,pid,isPartial);
    if(mf.locked!=null&&typeof mf.locked!=='boolean'||typeof mf.requiresPrevious!=='boolean'||mf.requiresPrevious&&mf.previousId!=null&&!UUID.test(mf.previousId))throw Error('Invalid lock/dependency metadata');
+   if(self.hornLocks)self.hornLocks.apply(mf);
    manifests.set(pid,mf);
    if(mf.locked)lockedIds.add(pid);
   }catch(e){throw error(409,'Recording lock/dependency metadata cannot be checked safely. Nothing deleted.');}
@@ -101,7 +123,7 @@ Library.prototype.removeAll=function(){var self=this;return this.lock(async func
  if(!toDelete.length)return Object.assign({deleted:0},retained);
  self.mutating=true;
  try{var trash=path.join(self.root,'.trash');await io.ensureDir(trash);
-  for(var j=0;j<toDelete.length;j++){await self.check();assertUnreserved(self.root,toDelete[j].slice(0,36));var staged=path.join(trash,toDelete[j].slice(0,36)+'-'+crypto.randomBytes(8).toString('hex'));await io.rename(path.join(self.root,toDelete[j]),staged);await io.syncDir(self.root);await cleanup(staged,self.guard);}
+  for(var j=0;j<toDelete.length;j++){await self.check();assertUnreserved(self.root,toDelete[j].slice(0,36));var staged=path.join(trash,toDelete[j].slice(0,36)+'-'+crypto.randomBytes(8).toString('hex'));if(self.hornLocks&&self.hornLocks.pending)throw error(409,'Horn protection changed. Try again shortly.');await io.rename(path.join(self.root,toDelete[j]),staged);await io.syncDir(self.root);await cleanup(staged,self.guard);}
   await io.syncDir(trash);await io.syncDir(self.root);return Object.assign({deleted:toDelete.length},retained);
  }finally{self.mutating=false;self.invalidateSummary();}
 });};

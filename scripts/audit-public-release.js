@@ -14,7 +14,7 @@ function auditBuffer(name,buffer,{depth=0,expectedDeviceIdentity=null}={}){
  function add(kind,value,at=0,severity='blocker'){const fingerprint=hash(value),line=1+buffer.subarray(0,at).toString('utf8').split('\n').length-1,key=kind+':'+line+':'+fingerprint;if(seen.has(key))return;seen.add(key);out.push({path:name,line,kind,severity,fingerprint});}
  if(approvedIdentity){add('approved-device-oauth-identity',buffer,0,'review');return out;}
  if(buffer.length>MAX_FILE){add('oversized-audit-input',name);return out;}
- if(depth>4){add('archive-recursion-limit',name);return out;}
+ if(depth>6){add('archive-recursion-limit',name);return out;}
  if(/\.(?:bvr|m4v|mp4|mov|jsonl|pcap|pcapng)$/i.test(name))add('recording-or-capture-file',name);
  if(/(?:^|\/)(?:hardware\.json|google-drive-client\.json|google-device-client\.json|state\.json|state\.bak|key\.pem|cert\.pem)$/i.test(name))add('private-runtime-file',name);
  if(buffer[0]===31&&buffer[1]===139){try{return out.concat(auditBuffer(name+'!gzip',zlib.gunzipSync(buffer,{maxOutputLength:MAX_EXPANDED}),{depth:depth+1,expectedDeviceIdentity}));}catch{add('unreadable-or-oversized-gzip',name);return out;}}
@@ -29,6 +29,7 @@ function auditBuffer(name,buffer,{depth=0,expectedDeviceIdentity=null}={}){
   }
   return out;
  }
+ if(/\.(?:tar|tgz)(?:!gzip)?$/i.test(name)){add('unrecognized-archive-format',name);return out;}
  // Also inspect ASCII payloads embedded in binaries (for example image metadata).
  // Rasterized text/QR imagery still requires visual or barcode review.
  const text=buffer.toString('utf8');let m;

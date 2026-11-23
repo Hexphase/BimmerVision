@@ -154,7 +154,7 @@ BimmerVision requires:
 - A compatible **BMW equipped with the 360° Surround View camera system**.
 - **iDrive 7 with an MGU head unit**.
 - **MGU Store** installed on the head unit.
-- A writable USB flash drive connected to a supported vehicle USB port.
+- A writable **USB 3.0 or newer** flash drive formatted as **exFAT or FAT32**, connected to a supported vehicle USB port.
 
 **A standard rear-view camera alone is not sufficient.** BimmerVision requires the multi-camera Surround View system.
 
@@ -188,7 +188,7 @@ BimmerVision is installed directly through **MGU Store**.
 
 ### Start Recording
 
-1. Connect a writable USB flash drive to your BMW.
+1. Plug your USB 3.0 or newer flash drive, formatted as exFAT or FAT32, into your BMW.
 2. Open **BimmerVision** in iDrive.
 3. Select **Enable recording**.
 

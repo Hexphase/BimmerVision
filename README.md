@@ -389,6 +389,10 @@ Existing recordings on your USB drive are preserved through application updates 
 
 ---
 
+## License
+
+Future Hexphase-owned additions distributed under the BimmerVision Personal Use License are for personal, noncommercial use. Redistribution, resale, and other commercial use of those additions require written permission from Hexphase. You may share the official download link. Version 0.2.87 and earlier retain their original terms, as do third-party components. [Full license](LICENSE)
+
 ## Disclaimer
 
 BimmerVision is an independent project and is not affiliated with, endorsed by, or supported by BMW AG.

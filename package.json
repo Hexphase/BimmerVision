@@ -5,5 +5,5 @@
   "scripts": {
     "build": "node scripts/build-release.js"
   },
-  "license": "MIT"
+  "license": "SEE LICENSE IN LICENSE"
 }

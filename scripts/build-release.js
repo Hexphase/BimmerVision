@@ -21,6 +21,11 @@ if(!fs.readFileSync(path.join(root,'idrive/src/recording-preference.js')).equals
 const recorderVersion=JSON.parse(fs.readFileSync(path.join(root,'recorder/files/version.json'))).version;
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 if(JSON.parse(fs.readFileSync(path.join(root,'idrive/rhmiData/application.json'))).application.version!==version)throw Error('Native RHMI version differs from release');
+if (recorderVersion !== version ||
+    require('../idrive/mgu-app.json').requires['bimmervision-recorder'] !== version ||
+    require('../mgu-repo.json').components.find(component => component.id === 'bimmervision').requires['bimmervision-recorder'] !== version) {
+  throw Error('The app, recorder, and Store dependency must share the release version.');
+}
 const entryArtwork=JSON.parse(fs.readFileSync(path.join(root,'idrive/rhmiData/application.json'))).application.entryPoints[0].icon;
 if(entryArtwork!=='bimmervision2.png'||sha(fs.readFileSync(path.join(root,'idrive/rhmiData/variantGroups/Common/images',entryArtwork)))!=='e2c9d147638fdc4759f7034c2bcb5a5d566463c4cbd5f6e6c5d69b1d2a42db25'||sha(fs.readFileSync(path.join(root,'store-icon.png')))!=='2699dd3db86fef702d0889c7c6bd7b231bb62490898a257dc41113a48a158836')throw Error('Keep the normal menu icon and separate large Store artwork');
 function walk(dir,prefix=''){return fs.readdirSync(dir).sort().flatMap(n=>{if(n.startsWith('.'))return [];const file=path.join(dir,n),st=fs.lstatSync(file),rel=prefix+n;if(st.isSymbolicLink())throw Error('Symlink in release input: '+rel);return st.isDirectory()?walk(file,rel+'/'):[{name:rel,data:fs.readFileSync(file),mode:st.mode&0o111?0o755:0o644}];});}

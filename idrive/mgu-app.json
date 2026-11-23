@@ -8,6 +8,6 @@
   ],
   "title": "BimmerVision",
   "requires": {
-    "bimmervision-recorder": "0.2.86"
+    "bimmervision-recorder": "0.2.87"
   }
 }

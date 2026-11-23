@@ -43,13 +43,9 @@ Record your drives automatically, review all four cameras simultaneously, and ex
 </tr>
 </table>
 
-## Car app update
+## Current release
 
-The current source pairs BimmerVision **0.2.87** with recorder **0.2.86**. It adds a shared Wi-Fi option for the phone player, USB speed testing, and recording-health feedback.
-
-## Published release
-
-**0.2.78** introduces Google Drive Remote Backup, automatic horn protection, recorded-drive locking in iDrive, and a shared backup manager in the phone player. View your BimmerVision Google Drive backups at [BimmerVision.app](https://bimmervision.app/). Install the app and required recorder together. See [release notes](RELEASE_NOTES.md).
+Install the BimmerVision app and required recorder together through MGU Store. Both components are **0.2.87**. This release adds a shared Wi-Fi option for the phone player, USB speed testing, and recording-health feedback. [Release notes](RELEASE_NOTES.md)
 
 ## Features
 

@@ -1,4 +1,14 @@
-# BimmerVision 0.2.78 — Remote Backup and horn protection
+# BimmerVision 0.2.87
+
+Install both the app and recorder service at **0.2.87** through MGU Store.
+
+- Connect the phone player through the Wi-Fi network the car has joined, including a phone hotspot.
+- Check USB write speed and see recording-health feedback in iDrive.
+- Choose a camera view when exporting recordings.
+
+See the [README](README.md) for USB recording, Android playback options, and Google Drive backups from the car or phone.
+
+## BimmerVision 0.2.78 — Remote Backup and horn protection
 
 BimmerVision now includes **Remote Backup through Google Drive**, with automatic Wi-Fi uploads from the car and selected uploads from your phone. View your saved BimmerVision Google Drive recordings at [BimmerVision.app](https://bimmervision.app/).
 

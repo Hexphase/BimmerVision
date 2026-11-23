@@ -1,7 +1,7 @@
 {
   "id": "bimmervision-recorder",
   "kind": "tool",
-  "version": "0.2.86",
+  "version": "0.2.87",
   "title": "BimmerVision Recorder",
   "description": "Required recorder service for BimmerVision. Sets up this car automatically; never includes another car’s credentials.",
   "optional": true,
@@ -698,7 +698,7 @@
     {
       "path": "version.json",
       "mode": "0644",
-      "sha256": "22cf58b4cfbcbd6cabff073a1bc02e181e4e954d4815b3c035c6c357a82716ac",
+      "sha256": "dbb41524c45fdcc1e3d5ca3980809814b53ccf250f7d69f988bb955e16c99ebe",
       "from": "files/version.json"
     }
   ],

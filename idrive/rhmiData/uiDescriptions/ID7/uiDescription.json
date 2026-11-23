@@ -907,7 +907,7 @@
           "rows": [
             {
               "Text": {
-                "value": "Only upload locked drives and horn-protected clips.\nLock recordings under USB storage \u2192 Recorded Drives.",
+                "value": "Only upload locked drives and horn-protected clips.\nLock recordings under USB storage → Recorded Drives.",
                 "type": "Text"
               }
             }
@@ -1109,7 +1109,7 @@
           "rows": [
             {
               "Text": {
-                "value": "Loading recorded drives\u2026",
+                "value": "Loading recorded drives…",
                 "type": "Text"
               }
             }
@@ -1345,6 +1345,32 @@
               "Text": {
                 "value": "SID_HOME_AUTO",
                 "type": "StringId"
+              }
+            }
+          ]
+        },
+        "514": {
+          "type": "checkBox",
+          "name": "PHONE_LOCAL_WIFI",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Use the Wi-Fi network the car is connected to",
+                "type": "Text"
+              },
+              "eParam_RowSelected": {
+                "value": false,
+                "type": "Bool"
               }
             }
           ]
@@ -1665,6 +1691,182 @@
               "Text": {
                 "value": "",
                 "type": "Text"
+              }
+            }
+          ]
+        },
+        "721": {
+          "type": "label",
+          "name": "USB_INFO1",
+          "properties": {
+            "Visible": {
+              "value": 0,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_STATUS",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "722": {
+          "type": "label",
+          "name": "USB_INFO2",
+          "properties": {
+            "Visible": {
+              "value": 0,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_STATUS",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "723": {
+          "type": "label",
+          "name": "USB_INFO3",
+          "properties": {
+            "Visible": {
+              "value": 0,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_STATUS",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "724": {
+          "type": "label",
+          "name": "USB_INFO4",
+          "properties": {
+            "Visible": {
+              "value": 0,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_STATUS",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "725": {
+          "type": "label",
+          "name": "USB_INFO5",
+          "properties": {
+            "Visible": {
+              "value": 0,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_STATUS",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "726": {
+          "type": "label",
+          "name": "USB_INFO6",
+          "properties": {
+            "Visible": {
+              "value": 0,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_STATUS",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "727": {
+          "type": "label",
+          "name": "USB_INFO7",
+          "properties": {
+            "Visible": {
+              "value": 0,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_STATUS",
+                "type": "StringId"
+              }
+            }
+          ]
+        },
+        "728": {
+          "type": "label",
+          "name": "USB_INFO8",
+          "properties": {
+            "Visible": {
+              "value": 0,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "SID_HOME_STATUS",
+                "type": "StringId"
               }
             }
           ]

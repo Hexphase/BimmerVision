@@ -1,7 +1,7 @@
 {
   "id": "bimmervision-recorder",
   "kind": "tool",
-  "version": "0.2.78",
+  "version": "0.2.86",
   "title": "BimmerVision Recorder",
   "description": "Required recorder service for BimmerVision. Sets up this car automatically; never includes another car’s credentials.",
   "optional": true,
@@ -164,7 +164,7 @@
     {
       "path": "diagnostic-session.js",
       "mode": "0644",
-      "sha256": "424a064897d1f0d4fc8094c6a5e4eb314b8eab22c0b04d535e832d99cfe36bc7",
+      "sha256": "e5d390181c230d491e18019c5a6f3ce6538968f2e1dedfbfd6bc7f89bf576f91",
       "from": "files/diagnostic-session.js"
     },
     {
@@ -178,6 +178,12 @@
       "mode": "0644",
       "sha256": "e1fc4344564d84e8deb3fc9e32a4e919b92d8924ea967f1df62448efd791adbd",
       "from": "files/google-drive.js"
+    },
+    {
+      "path": "head-unit-resources.js",
+      "mode": "0644",
+      "sha256": "b5112ca80dcb3a20c6db25865e576ba3348e9199e7285a792d346f38fbb1b345",
+      "from": "files/head-unit-resources.js"
     },
     {
       "path": "horn-lock.js",
@@ -206,7 +212,7 @@
     {
       "path": "main.js",
       "mode": "0644",
-      "sha256": "3416b08ff8b1314102d5b2e70f22d3d2d5a2be390fddcfd17d29f0fc2ba8f6fe",
+      "sha256": "638559248fad6512e7e6ff8ceaa0b2f5d5c67d219e813e8ce12a9ca4e77e073d",
       "from": "files/main.js"
     },
     {
@@ -218,7 +224,7 @@
     {
       "path": "mobile-web/app.js",
       "mode": "0644",
-      "sha256": "f44c1af568366cd24fc649580760d987f4cb1d18946ed152a3c986838badc042",
+      "sha256": "bd7acb40aef8df0786fbb0ee3d37d6c222065172212dc7fdd91cb68dda199c99",
       "from": "files/mobile-web/app.js"
     },
     {
@@ -344,13 +350,13 @@
     {
       "path": "mobile-web/exporter.js",
       "mode": "0644",
-      "sha256": "1fe4aa1f383fcedba88905b916e1c80c13692f3f6e2d75339786582b2080fd94",
+      "sha256": "94df1c64a83a43a8e0e7427393b7d45b9b5236c6a872b4a7e51aa61e5ceabee6",
       "from": "files/mobile-web/exporter.js"
     },
     {
       "path": "mobile-web/index.html",
       "mode": "0644",
-      "sha256": "2631d57dff5172a87bc8a8603d74c177a1589636152668ac97989987dc59a5bc",
+      "sha256": "9dc0e980daee0783ea2c5838d9cab8f2cc3c075d6afd443d90799d107c73a079",
       "from": "files/mobile-web/index.html"
     },
     {
@@ -590,7 +596,7 @@
     {
       "path": "phone-network.js",
       "mode": "0644",
-      "sha256": "90270089f13e47aec04a7990210131ecd299fd20ec355f038071bdfbe4873431",
+      "sha256": "dd6c140c456b26e3385ee643b7e75b7950929e52bd530fb43fa0442c30b77168",
       "from": "files/phone-network.js"
     },
     {
@@ -614,7 +620,7 @@
     {
       "path": "recorder.js",
       "mode": "0644",
-      "sha256": "a9cc882d5774c79a710bd729a1d080d22b1387af3046b1d96432c5b9866e13d6",
+      "sha256": "2fb5548d1d44e1c70f0cc5e0b55fcac6a2cb38a3f340fc0a3d11c7d5f69f936a",
       "from": "files/recorder.js"
     },
     {
@@ -626,7 +632,7 @@
     {
       "path": "recording-preference.js",
       "mode": "0644",
-      "sha256": "03b51104630728b62770097ecb72ea01dbfc4347d4a35f4dc36e44a841e70ad0",
+      "sha256": "82c0326e4145e06af23dda011758f92d629cbf8433c175726b01b13bac964564",
       "from": "files/recording-preference.js"
     },
     {
@@ -638,7 +644,7 @@
     {
       "path": "remote-backup.js",
       "mode": "0644",
-      "sha256": "32cb3d75c51c539655d377cbb3eda3a580d858cca2c79bee43c86b4876602bdd",
+      "sha256": "c85c65101b846d4dab7d2925ac5462d901eb876b91bc58780470e5656ee5cbc8",
       "from": "files/remote-backup.js"
     },
     {
@@ -660,6 +666,12 @@
       "from": "files/speed-limit.js"
     },
     {
+      "path": "support-diagnostics.js",
+      "mode": "0644",
+      "sha256": "c6c185eb79847ea34c7533a3b03469b403f59a8e72903b1822ed7bdf78d67a03",
+      "from": "files/support-diagnostics.js"
+    },
+    {
       "path": "telemetry.js",
       "mode": "0644",
       "sha256": "da37fc9d44f56d3b214d5d6099eacfcbc9ad35e7d0881959ef0dd61d6f3c9e53",
@@ -668,19 +680,25 @@
     {
       "path": "transfer.js",
       "mode": "0644",
-      "sha256": "aa1ec2553a7a51280a91a7196ad7e572197a85ff0a7c7b55b219ce141e929454",
+      "sha256": "7ecc5d063a09aec89c0467a02758eb20491cdaf55469df2ad8900a5a12971e9e",
       "from": "files/transfer.js"
+    },
+    {
+      "path": "usb-speed-test.js",
+      "mode": "0644",
+      "sha256": "a02327ebd20e1c4c04f72943fe2008605c952f97319af25cf4630ef143ae850b",
+      "from": "files/usb-speed-test.js"
     },
     {
       "path": "usb.js",
       "mode": "0644",
-      "sha256": "43daa0f88ce0646e881919ebba7fb6655c14b85b38c9a16cd1e67ed92317e8e0",
+      "sha256": "525ed0a97edeea2773ecb35fcab7ddd08bb24a3aa285dcb92199f0e0410e321b",
       "from": "files/usb.js"
     },
     {
       "path": "version.json",
       "mode": "0644",
-      "sha256": "fa0e8b86e54fe64212e54f0255a531bd50a4a081ed1229850041783f30810741",
+      "sha256": "22cf58b4cfbcbd6cabff073a1bc02e181e4e954d4815b3c035c6c357a82716ac",
       "from": "files/version.json"
     }
   ],

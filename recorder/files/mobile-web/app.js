@@ -990,12 +990,26 @@ document.addEventListener("DOMContentLoaded", async () => {
   function releaseExportDrivingPreview(){++exportPreviewEpoch;exportDrivingPreview?.dispose();exportDrivingPreview=null;}
   new MutationObserver(()=>{if(!exportModal.classList.contains('open'))releaseExportDrivingPreview();}).observe(exportModal,{attributes:true,attributeFilter:['class']});
 
+  function selectedExportView() {
+    if (exportCameraSelect.value !== 'custom') return exportCameraSelect.value;
+    const cameras = Array.from(exportCameraChoices.querySelectorAll('input:checked'), input => input.value);
+    return cameras.length === 1 ? cameras[0] : cameras.length === 4 ? 'quad' : cameras;
+  }
+
   async function updateExportPreview() {
     const previewToken=++exportPreviewEpoch,recordingEpoch=player._clipEpoch;
 
     const previewCanvas = document.getElementById("exportPreviewCanvas");
     if (!previewCanvas) return;
-    const view = document.getElementById("exportCameraSelect") ? document.getElementById("exportCameraSelect").value : "quad";
+    const view = selectedExportView();
+    exportCameraChoices.hidden = exportCameraSelect.value !== 'custom';
+    if (Array.isArray(view) && view.length === 0) {
+      startExportBtn.disabled = true;
+      document.getElementById('exportDrivingNote').textContent = 'Select at least one camera to export.';
+      const context = previewCanvas.getContext('2d');
+      context.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+      return;
+    }
     const speedUnit = document.getElementById("exportUnitSelect") ? document.getElementById("exportUnitSelect").value : (player.speedUnit || "mph");
     const overlays = getExportOverlays();
 
@@ -1072,7 +1086,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   const exportCameraSelect = document.getElementById("exportCameraSelect");
-  if (exportCameraSelect) exportCameraSelect.addEventListener("change", updateExportPreview);
+  const exportCameraChoices = document.getElementById("exportCameraChoices");
+  exportCameraSelect.addEventListener("change", updateExportPreview);
+  exportCameraChoices.addEventListener("change", updateExportPreview);
 
   const exportUnitSelect = document.getElementById("exportUnitSelect");
   if (exportUnitSelect) exportUnitSelect.addEventListener("change", updateExportPreview);
@@ -1101,6 +1117,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   openExportBtn.addEventListener("click", () => {
     player.pause();
+    exportCameraSelect.value = ["quad", "source", "front", "rear", "left", "right"].includes(player.viewMode) ? player.viewMode : "quad";
     exportModal.classList.add("open");
     const native = !!player._nativeVideo;
     const hasEncoder = (typeof VideoEncoder !== "undefined" && typeof Mp4Muxer !== "undefined") || typeof MediaRecorder !== "undefined";
@@ -1137,7 +1154,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   startExportBtn.addEventListener("click", async (e) => {
-    if(exportInProgress)return;
+    const cameraAngle = selectedExportView();
+    if(exportInProgress || (Array.isArray(cameraAngle) && cameraAngle.length === 0))return;
     exportInProgress=true;
     if (e) {
       e.preventDefault();
@@ -1148,7 +1166,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     progressBarFill.style.width = "5%";
     progressText.textContent = "Initializing hardware encoder...";
 
-    const cameraAngle = document.getElementById("exportCameraSelect").value;
     const overlays = getExportOverlays();
     const speedUnit = document.getElementById("exportUnitSelect").value;
     const durationOpt = document.getElementById("exportDurationSelect") ? document.getElementById("exportDurationSelect").value : "full";

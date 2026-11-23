@@ -254,6 +254,10 @@
         <property id="2" value="1" />
         <property id="3" value="0" />
       </component>
+      <component id="514" type="checkBox" widget="LT_CheckBox_1Row">
+        <property id="2" value="1" />
+        <property id="3" value="3" />
+      </component>
       <component id="509" type="image">
         <property id="2" value="0" />
       </component>
@@ -294,6 +298,38 @@
       <component id="703" type="label" widget="LT_Label_3Row_1TextDyn">
         <property id="2" value="1" />
         <property id="3" value="0" />
+      </component>
+      <component id="721" type="label" widget="LT_Label_3Row_1TextDyn">
+        <property id="2" value="0" />
+        <property id="3" value="3" />
+      </component>
+      <component id="722" type="label" widget="LT_Label_3Row_1TextDyn">
+        <property id="2" value="0" />
+        <property id="3" value="3" />
+      </component>
+      <component id="723" type="label" widget="LT_Label_3Row_1TextDyn">
+        <property id="2" value="0" />
+        <property id="3" value="3" />
+      </component>
+      <component id="724" type="label" widget="LT_Label_3Row_1TextDyn">
+        <property id="2" value="0" />
+        <property id="3" value="3" />
+      </component>
+      <component id="725" type="label" widget="LT_Label_3Row_1TextDyn">
+        <property id="2" value="0" />
+        <property id="3" value="3" />
+      </component>
+      <component id="726" type="label" widget="LT_Label_3Row_1TextDyn">
+        <property id="2" value="0" />
+        <property id="3" value="3" />
+      </component>
+      <component id="727" type="label" widget="LT_Label_3Row_1TextDyn">
+        <property id="2" value="0" />
+        <property id="3" value="3" />
+      </component>
+      <component id="728" type="label" widget="LT_Label_3Row_1TextDyn">
+        <property id="2" value="0" />
+        <property id="3" value="3" />
       </component>
       <component id="704" type="button" widget="LT_Button_1Row">
         <property id="2" value="1" />

@@ -22,6 +22,7 @@ function UI(o) {
   this.recording = o.recording;
   this.display = o.display;
   this.entry = o.entry;
+  this.chime=o.chime;
   this.page = "home";
   this.nativePage = null;
   this.visible = false;
@@ -30,6 +31,7 @@ function UI(o) {
   this.cache = {};
   this.rendering = null;
   this.renderAgain = false;
+  this.localWifi=false;
   this.visit = null;
   this.drivePage = 0;
   this.qrUrl = "";
@@ -48,7 +50,7 @@ UI.prototype.clearDeleteNotice = function () {
   this.deleteNoticeVolumeToken = null;
 };
 UI.prototype.component = function (n) {
-  if ((this.page === "usb" || this.page === "delete-confirm") && /^HOME_/.test(n))
+  if ((this.page === "usb" || this.page === "delete-confirm" || this.page === "usb-help" || this.page === "usb-speed") && /^HOME_/.test(n))
     return this.rhmi.getByName("USB_" + n.slice(5));
   if ((this.page === "connect" || this.page === "settings") && /^HOME_/.test(n)) {
     var aliases = { HOME_STATUS: "STATUS", HOME_TITLE: "TITLE", HOME_AUTO: "BACK" };
@@ -79,6 +81,7 @@ UI.prototype.revoke = function () {
     this.update({
       transfer: { visit: this.visit, visible: false, heartbeat: Date.now() },
     });
+  this.localWifi=false;
   this.visit = null;
   this.qrUrl = "";
   this.externalQr = false;
@@ -88,7 +91,7 @@ UI.prototype.revoke = function () {
 UI.prototype.beat = function () {
   if (this.visible && this.page === "connect" && this.visit && !this.closed)
     this.update({
-      transfer: { visit: this.visit, visible: true, heartbeat: Date.now() },
+      transfer: { visit: this.visit, visible: true, localWifi:this.localWifi===true, heartbeat: Date.now() },
     });
 };
 UI.prototype.text = async function (n, value) {
@@ -102,6 +105,11 @@ UI.prototype.initialize = async function () {
   var self = this;
   this.backupUI.initialize();
   this.recordedDrivesUI.initialize();
+  this.listen(this.component("PHONE_LOCAL_WIFI"),"change",function(e){
+    if(!self.visible || self.page!=="connect" || !self.visit || !e)return;
+    self.localWifi=e.selected===true;
+    self.beat();self.render().catch(self.report);
+  });
   ["PHONE_BACK", "ABOUT_BACK"].forEach(function (name) {
     self.listen(self.component(name), "action", function () {
       if (self.nativePage === (name === "PHONE_BACK" ? "CONNECT_PHONE" : "ABOUT") && self.visible)
@@ -152,7 +160,7 @@ UI.prototype.initialize = async function () {
       self.recordedDrivesUI.active = false;
       self.backupUI.active = false;
       self.nativePage = "USB_STORAGE";
-      if (self.page !== "delete-confirm") self.page = "usb";
+      if (self.page !== "delete-confirm" && self.page !== "usb-help" && self.page !== "usb-speed") self.page = "usb";
       self.visible = true;
       return;
     }
@@ -210,6 +218,10 @@ UI.prototype.showRecordingAlert = async function (notice) {
   if(this.closed||notice.kind!=='test'&&this.intent().continuous===false)return;
   if(Date.now()>expiresAt)throw Error('Recording notification expired');
   await this.rhmi.openState('RECORDING_ALERT');
+  if(this.chime && !this.chiming && (notice.kind==='interrupted'||notice.kind==='degraded'||notice.kind==='test')){
+    var self=this;this.chiming=true;
+    Promise.resolve().then(this.chime).then(function(){self.chiming=false;},function(e){self.chiming=false;self.report(e);});
+  }
 };
 UI.prototype.openMenu = async function () {
   if (this.closed) return;
@@ -233,7 +245,7 @@ UI.prototype.press = async function (row, nativeUsb) {
   if (this.closed || !this.visible || this.nativePage && !(this.nativePage === "USB_STORAGE" && nativeUsb) || (this.backupUI && this.backupUI.active || this.recordedDrivesUI && this.recordedDrivesUI.active)) return;
   var desk = this.desk(),
     intent = this.intent();
-  if (desk.setupPending && (this.page === "home" && ["HOME_ALL", "HOME_LEFT"].indexOf(row) >= 0 || this.page === "usb" && row === "HOME_DELETE" || this.page === "delete-confirm" && row === "HOME_ALL")) {
+  if (desk.setupPending && (this.page === "home" && (row === "HOME_LEFT" || row === "HOME_ALL" && intent.continuous !== true) || this.page === "usb" && row === "HOME_DELETE" || this.page === "delete-confirm" && row === "HOME_ALL")) {
     this.message = desk.state || "Recorder setup pending";
     await this.render();
     return;
@@ -241,7 +253,7 @@ UI.prototype.press = async function (row, nativeUsb) {
   if(this.page==="welcome"){if(row==="HOME_ALL"){try{this.onboarding.acknowledge();}catch(e){this.report(e);}this.noticeHandled=true;this.page="home";await this.render();}return;}
   if (this.page === "home") {
     if (row === "HOME_ALL") {
-      if (!desk.drive)
+      if (!desk.drive && intent.continuous !== true)
         this.message = "Connect a writable USB drive before recording.";
       else {
         this.message = "";
@@ -267,12 +279,34 @@ UI.prototype.press = async function (row, nativeUsb) {
       else {this.revoke();var deleteId=crypto.randomBytes(16).toString('hex');this.deleteNoticeId=deleteId;this.deleteNoticeVolumeToken=this.deleteVolumeToken;this.update({continuous:false,deleteAll:{id:deleteId,volume:this.deleteVolume,volumeToken:this.deleteVolumeToken,confirmed:true}});this.message="";this.page="usb";}
     }else if(row === "HOME_FRONT"){this.page="usb";this.message="";}
   } else if (this.page === "usb") {
+    if (row === "HOME_RIGHT") {
+      this.page = "usb-help";
+      this.message = "";
+      await this.render();
+      return;
+    }
+    if (row === "HOME_LEFT" && desk.drive) {
+      this.page="usb-speed";
+      this.speedVolume=desk.volumeToken;
+      this.speedId=null;
+      if (intent.continuous || !desk.safeToRemove || desk.testingSpeed || !desk.volumeToken) {
+        this.message = "Pause recording and wait for USB writes before testing.";
+      } else {
+        this.message = "";
+        this.speedId=crypto.randomBytes(16).toString("hex");
+        this.speedStarted=this.nowMs();
+        try{this.update({usbSpeedTest:{id:this.speedId,volumeToken:desk.volumeToken}});}
+        catch(e){this.speedId=null;this.message="Could not start speed test.";this.report(e);}
+      }
+      await this.render();
+      return;
+    }
     if(row === "HOME_REMOTE" && desk.drive){this.revoke();await this.recordedDrivesUI.open();return;}
     if(row === "HOME_DELETE" && desk.drive){this.clearDeleteNotice();this.deleteVolume=desk.drive.mount;this.deleteVolumeToken=desk.volumeToken;this.page="delete-confirm";this.message="";await this.render();return;}
-    var i = ["HOME_ALL", "HOME_FRONT", "HOME_REAR", "HOME_LEFT"].indexOf(row),
+    var i = ["HOME_ALL", "HOME_FRONT"].indexOf(row),
       drives = desk.drives || [];
-    if (i >= 0 && drives[this.drivePage * 4 + i]) {
-      var target = drives[this.drivePage * 4 + i].mount,
+    if (i >= 0 && drives[this.drivePage * 2 + i]) {
+      var target = drives[this.drivePage * 2 + i].mount,
         current = desk.drive && desk.drive.mount;
       if (
         current &&
@@ -286,9 +320,9 @@ UI.prototype.press = async function (row, nativeUsb) {
         this.update({ volume: target });
       }
     }
-    else if (row === "HOME_RIGHT")
+    else if (row === "HOME_REAR")
       this.drivePage =
-        (this.drivePage + 1) % Math.max(1, Math.ceil(drives.length / 4));
+        (this.drivePage + 1) % Math.max(1, Math.ceil(drives.length / 2));
   } else if (this.page === "connect" && row === "HOME_ALL") {
     this.revoke();
     this.page = "home";
@@ -297,6 +331,11 @@ UI.prototype.press = async function (row, nativeUsb) {
 };
 UI.prototype.back = async function () {
   if(this.closed || !this.visible || (this.backupUI && this.backupUI.active || this.recordedDrivesUI && this.recordedDrivesUI.active))return;
+  if (this.page === "usb-help" || this.page === "usb-speed") {
+    this.message="";this.page = "usb";
+    await this.render();
+    return;
+  }
   this.clearDeleteNotice();
   this.revoke();
   this.page = "home";
@@ -327,6 +366,27 @@ function bytes(n) {
     i++;
   } while (n >= 1024 && i < 3);
   return n.toFixed(1) + " " + units[i];
+}
+function speedVerdict(test) {
+  if(test.result==="headroom")return "Fast enough for recording in this test";
+  if(test.result==="slow")return "Too slow for recording";
+  return "Not recommended for recording";
+}
+function speedTestStatus(desk) {
+  var test = desk.usbSpeedTest;
+  if (desk.testingSpeed) return "Testing USB speed · Do not disconnect";
+  if (!test) return "";
+  if (test.error) return test.error;
+  return speedVerdict(test) + " · " + test.mbps + " MB/s\nLongest flush: " + (test.worstFlushMs/1000).toFixed(1) + " s";
+}
+function backupActivity(backup) {
+  if (!backup) return "";
+  if (backup.state === "Waiting until the car is stationary") return "Remote Backup waiting";
+  if (backup.phone && backup.phone.active) return "Remote Backup via phone";
+  if (backup.state === "Uploading" || backup.diagnosticPhase === "uploading") return "Remote Backup uploading";
+  if (backup.state === "Verifying" || backup.diagnosticPhase === "verifying") return "Remote Backup verifying";
+  if (backup.pending) return "Remote Backup queued";
+  return "";
 }
 UI.prototype.render = function () {
   if (this.closed) return Promise.resolve();
@@ -361,9 +421,9 @@ UI.prototype.renderPage = async function () {
     finishing = !desk.deleting && (desk.finalizing === true || desk.state === "Saving last video" ||
       !enabled && (desk.activeId || desk.writeInProgress === true && desk.finalizing === undefined || desk.state === "Recording")),
     videoWriting = finishing || desk.finalizing === true || desk.activeId || desk.state === "Recording" || desk.state === "Saving last video",
-    writingMessage = "Do not disconnect - " + (videoWriting ? "Saving last video" : "Writing to USB"),
+    writingMessage = "Do not disconnect - " + (desk.recovering ? "Recovering recording" : finishing ? "Saving last video" : "Writing to USB"),
     recordingState = finishing ? "Saving last video" :
-      ((desk.state === "Recording" || desk.activeId) ? "Recording" : (desk.state || "Recorder unavailable"));
+      (desk.recovering ? "Recovering recording" : (desk.state === "Recording" || desk.activeId) ? "Recording" : (desk.state || "Recorder unavailable"));
   if(this.visible && enabled && !finishing && desk.state==="Recording" && desk.activeId && !desk.error && !desk.deleting) labels.HOME_TITLE="BimmerVision   "+(Math.floor(this.nowMs()/500)%2?"○":"●")+" REC";
   if(this.page === "connect" && !drive){
     this.revoke();this.page="home";this.message="USB disconnected. Connect Phone unavailable.";
@@ -371,28 +431,16 @@ UI.prototype.renderPage = async function () {
   }
   if(this.page==="welcome"){labels.HOME_STATUS=require("./first-run-notice").message;labels.HOME_ALL="Understood";labels.HOME_AUTO="Back";}
   else if (this.page === "home") {
-    labels.HOME_STATUS =
-      recordingState + (drive && typeof desk.recordingCount === "number" ? " · " + desk.recordingCount + " recordings" : "") +
-      "\n" +
-      (drive
-        ? (drive.name || drive.mount || "USB") +
-          " · " +
-          bytes(drive.used) +
-          " used · " +
-          bytes(drive.free) +
-          " free / " +
-          bytes(drive.total) +
-          ""
-        : desk.drives && desk.drives.length
-          ? "Select a USB drive to record"
-          : "No writable USB drive detected\nConnect a USB drive") +
-      (drive ? "\n" + (desk.deleting ? "Do not disconnect - Deleting recordings" : (desk.writeInProgress===true || desk.writeInProgress===undefined && videoWriting) ? writingMessage : desk.safeToRemove===false || desk.error ? "USB error - Safe removal not confirmed" : "Safe to Remove") : "") +
-      "";
-    labels.HOME_ALL = drive
-      ? enabled
-        ? "Pause recording"
-        : "Enable recording"
-      : "Enable recording";
+    var captureLine = recordingState + (typeof desk.recordingCount === "number" && drive ? " · " + desk.recordingCount + " recordings" : "");
+    var storageLine = drive ? "USB: " + bytes(drive.free) + " free · " + bytes(drive.used) + " used" :
+      desk.drives && desk.drives.length ? "Select a USB drive" : "No writable USB connected";
+    var activityLine = !drive ? "" : desk.testingSpeed ? "Testing USB speed · Do not disconnect" :
+      desk.deleting ? "Do not disconnect - Deleting recordings" :
+      (desk.writeInProgress === true || desk.writeInProgress === undefined && videoWriting) ? writingMessage :
+      desk.safeToRemove === false || desk.error ? "USB error - Safe removal not confirmed" : "Safe to Remove";
+    var backupLine = backupActivity(desk.backup);
+    labels.HOME_STATUS = [storageLine,captureLine,activityLine,backupLine].filter(Boolean).join("\n");
+    labels.HOME_ALL = enabled ? "Pause recording" : "Enable recording";
     labels.HOME_REAR = "USB storage";
     labels.HOME_REMOTE = "Remote Backup";
     labels.HOME_LEFT = "Connect Phone";
@@ -400,6 +448,31 @@ UI.prototype.renderPage = async function () {
   } else if (this.page === "delete-confirm") {
     labels.HOME_STATUS="Erase all unlocked recordings?\n"+(drive ? drive.name||drive.mount : "USB disconnected")+" · "+(desk.lockedRecordingCount==null?"Locked count unavailable":desk.lockedRecordingCount+" locked")+"\nLocked recordings are kept. This cannot be undone.";
     labels.HOME_ALL="Erase unlocked recordings";labels.HOME_FRONT="Cancel";labels.HOME_AUTO="Back";
+  } else if (this.page === "usb-speed") {
+    var result=desk.usbSpeedTest;
+    labels.HOME_STATUS=!drive||desk.volumeToken!==this.speedVolume?"USB drive changed. Test this drive from USB storage.":
+      desk.testingSpeed?"Testing USB speed · Keep drive connected":
+      this.message || (result&&result.id===this.speedId ?
+        result.error || (speedVerdict(result)+"\n"+result.mbps+" MB/s") :
+        this.nowMs()-this.speedStarted>20000?"Waiting for recorder response":"Starting drive speed test…");
+    if(result && result.id===this.speedId && !desk.testingSpeed && drive && desk.volumeToken===this.speedVolume && !result.error)
+      {
+        labels.HOME_INFO1="Longest flush "+result.worstFlushMs+" ms · target under 2 seconds.";
+        labels.HOME_INFO2="Recommended sustained write speed: 10 MB/s or higher.";
+        labels.HOME_INFO3=result.result==="headroom"?"Short test passed. Check your next four-camera recording.":"Try another USB data port, then compare with a different drive.";
+      }
+    labels.HOME_AUTO="Back";
+  } else if (this.page === "usb-help") {
+    labels.HOME_STATUS="Recommended filesystem: exFAT";
+    labels.HOME_INFO1="Use exFAT. FAT32 is an alternative if iDrive mounts it writable.";
+    labels.HOME_INFO2="Choose USB 3.0 or 3.1 with at least 10 MB/s sustained writes. USB 2.0 can work if it passes.";
+    labels.HOME_INFO3="While parked, pause recording. In USB Storage select Test Drive Speed.";
+    labels.HOME_INFO4="Back up before formatting. Formatting erases all files, including locked recordings and logs.";
+    labels.HOME_INFO5="Drive missing? Wait for Safe to Remove, reconnect directly, or try another USB data port in your car.";
+    labels.HOME_INFO6="Dropped video? Check free space, run the speed test, then compare a known-good drive on the same port.";
+    labels.HOME_INFO7="If both drives struggle, check Home for head-unit CPU or memory warnings.";
+    labels.HOME_INFO8="If trouble continues, save the BimmerVision-Logs folder before repairing or reformatting on a computer.";
+    labels.HOME_AUTO="Back";
   } else if (this.page === "usb") {
     labels.HOME_STATUS =
       "USB storage\n" +
@@ -411,9 +484,9 @@ UI.prototype.renderPage = async function () {
           bytes(drive.total)
         : "Select a drive for recordings");
     var drives = desk.drives || [],
-      rows = ["HOME_ALL", "HOME_FRONT", "HOME_REAR", "HOME_LEFT"];
-    for (var n = 0; n < 4; n++) {
-      var d = drives[this.drivePage * 4 + n];
+      rows = ["HOME_ALL", "HOME_FRONT"];
+    for (var n = 0; n < rows.length; n++) {
+      var d = drives[this.drivePage * 2 + n];
       if (d)
         labels[rows[n]] =
           (d.mount === intent.volume ? "Selected · " : "") +
@@ -428,22 +501,38 @@ UI.prototype.renderPage = async function () {
     if(drive) labels.HOME_REMOTE="Recorded Drives";
     if(drive) labels.HOME_DELETE="Erase all unlocked recordings…";
     if(drive) labels.HOME_STATUS+="\n"+(desk.recordingCount==null?"":desk.recordingCount+" recordings · ")+(desk.lockedRecordingCount==null?"Locked count unavailable · ":desk.lockedRecordingCount+" locked · ")+(desk.deleting?"Do not disconnect - Deleting recordings":desk.writeInProgress?writingMessage:desk.safeToRemove===false||desk.error?"USB error - Safe removal not confirmed":"Safe to Remove");
-    if (drives.length > 4) labels.HOME_RIGHT = "Next drives";
+    if (drives.length > 2) labels.HOME_REAR = "Next drives";
+    if (drive) labels.HOME_LEFT = "Test Drive Speed";
+    if(drive){
+      var filesystem = drive.filesystem === "exfat" || drive.filesystem === "texfat" ? "exFAT" : drive.filesystem;
+      var link = drive.linkSpeedMbps ? drive.linkSpeedMbps + " Mb/s link" : "";
+      if(filesystem || link) labels.HOME_STATUS += "\n" + [filesystem,link].filter(Boolean).join(" · ");
+    }
+    var speedStatus = speedTestStatus(desk);
+    if (speedStatus) labels.HOME_STATUS += "\n" + speedStatus;
+    labels.HOME_RIGHT = "USB help";
     labels.HOME_AUTO = "Back";
   } else if(this.page==="settings") {
     labels.HOME_STATUS="BimmerVision "+require('../package.json').version+" · GitHub: Hexphase/BimmerVision\nComputer: Visit BimmerVision.App and connect your USB drive to view footage.\nPhone: Connect Phone on the previous page connects directly to your car.";
     labels.HOME_AUTO="Back";
   } else {
+    var address=this.localWifi?transfer.localAddress:(transfer.url||"").split("/?")[0];
+    var checkbox=this.component("PHONE_LOCAL_WIFI");
+    if(checkbox && checkbox.setRowSelected && this.cache.localChecked!==this.localWifi){
+      await checkbox.setRowSelected(0,this.localWifi===true);this.cache.localChecked=this.localWifi;
+    }
     labels.HOME_STATUS = "Connect Phone" +
       (transfer.paired ? " · Connected" : transfer.code ? " · Code " + transfer.code : "") + "\n" +
-      (transfer.paired ? "One device connected" : transfer.code ? (transfer.url||"").split("/?")[0] : transfer.error || "Starting connection…") +
-      "\n" + "BMW Wi-Fi / CarPlay · Keep this screen open";
+      (transfer.paired ? "One device connected" : address || (this.localWifi ? "Waiting for car Wi-Fi connection" : transfer.error || "Starting connection…")) +
+      "\n" + (this.localWifi ? "Join the same Wi-Fi · Keep this screen open" : "BMW Wi-Fi / CarPlay · Keep this screen open");
     labels.HOME_AUTO = "Back";
   }
   if(this.page==="home"&&desk.backup&&desk.backup.autoUpload&&desk.backup.storageFull)labels.HOME_BACKUP_WARNING="REMOTE BACKUP PAUSED -  REMOTE STORAGE FULL";
   var notice=this.message||desk.storageWarning||desk.error||deletionNotice;
-  if(notice){if(this.page==="home"||this.page==="usb")labels.HOME_STATUS=notice+(this.page==="home"&&drive&&typeof desk.recordingCount==="number"?" · "+desk.recordingCount+" recordings":"")+labels.HOME_STATUS.slice(labels.HOME_STATUS.indexOf("\n"));else labels.HOME_STATUS+="\n"+notice;}
+  if(desk.resourceWarning && this.page==="home")labels.HOME_STATUS=desk.resourceWarning+"\n"+labels.HOME_STATUS;
+  if(notice&&this.page!=="usb-help"&&this.page!=="usb-speed")labels.HOME_STATUS+="\n"+notice;
   var all = ["HOME_STATUS", "HOME_TITLE", "HOME_QR", "HOME_BACKUP_WARNING"].concat(ROWS);
+  if(this.nativePage==="USB_STORAGE")all=all.concat(["HOME_INFO1","HOME_INFO2","HOME_INFO3","HOME_INFO4","HOME_INFO5","HOME_INFO6","HOME_INFO7","HOME_INFO8"]);
   for (var j = 0; j < all.length; j++) {
     var name = all[j],
       c = this.component(name),
@@ -456,7 +545,7 @@ UI.prototype.renderPage = async function () {
     if(name === "HOME_LEFT" && c && c.setEnabled) await c.setEnabled(this.page !== "home" || !!drive);
     if(name === "HOME_DELETE" && c && c.setEnabled) await c.setEnabled(!!drive && !desk.deleting);
     if (name === "HOME_QR" && c && c.setVisible)
-      await c.setVisible(this.page === "connect" && transfer.on === true && !!transfer.url && this.nativeQr === true);
+      await c.setVisible(this.page === "connect" && transfer.on === true && !!(this.localWifi?transfer.localUrl:transfer.url) && this.nativeQr === true);
   }
 };
 UI.prototype.publishQr = async function (url,componentName,resourceName) {
@@ -485,31 +574,32 @@ UI.prototype.paint = async function () {
   if((this.backupUI && this.backupUI.active || this.recordedDrivesUI && this.recordedDrivesUI.active)){await this.render();return;}
   if (this.page === "connect" && this.visit) {
     var transfer = this.desk().transfer || {};
-    if (transfer.url && transfer.url !== this.qrUrl) {
+    var qrUrl=this.localWifi?transfer.localUrl:transfer.url;
+    if (qrUrl && qrUrl !== this.qrUrl) {
       var shown = false;
       this.nativeQr = false;
       this.externalQr = false;
       // Dedicated Connect Phone state owns a native image. Legacy bottom-right
       // renderer settings must not bypass that image or cache a failed draw.
-      try { shown = !!(await this.publishQr(transfer.url)); } catch (e) {}
+      try { shown = !!(await this.publishQr(qrUrl)); } catch (e) {}
       if (shown) {
         this.nativeQr = true;
         if (this.display && this.display.hide) this.display.hide();
       } else if (this.display && this.display.draw) {
-        try { shown = (await this.display.draw(qr.frame(transfer.url))) === true; }
+        try { shown = (await this.display.draw(qr.frame(qrUrl))) === true; }
         catch (e) { shown = false; }
         this.externalQr = shown;
       }
       if (shown) {
-        this.qrUrl = transfer.url;
+        this.qrUrl = qrUrl;
         if (/^QR unavailable/.test(this.message)) this.message = "";
       } else this.message = "QR unavailable — use the code above";
-    } else if (transfer.url && this.externalQr && this.display && this.display.hold) {
+    } else if (qrUrl && this.externalQr && this.display && this.display.hold) {
       if ((await this.display.hold()) === false) {
         this.qrUrl = "";
         this.externalQr = false;
       }
-    } else if (!transfer.url && (this.qrUrl || this.nativeQr)) {
+    } else if (!qrUrl && (this.qrUrl || this.nativeQr)) {
       this.qrUrl = "";
       this.externalQr = false;
       this.nativeQr = false;

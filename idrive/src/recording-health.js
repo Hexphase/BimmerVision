@@ -2,7 +2,7 @@
 function RecordingHealth(){this.lastWarningMs=-Infinity;this.reset();}
 RecordingHealth.prototype.reset=function(){this.retryAt=-Infinity;this.enabled=false;this.enabledSince=null;this.hadHealthy=false;this.unhealthySince=null;this.healthySince=null;this.warned=false;this.lastWrite=null;this.progressAt=-Infinity;this.lastDrops=null;this.backlogSince=null;this.qualityPending=null;this.lastQualityKind=null;this.lastQualityWarningMs=-Infinity;this.qualityRetryAt=-Infinity;};
 // Quality alerts have their own cooldown/retry: they must never delay an outage.
-RecordingHealth.prototype.quality=function(metrics,now){
+RecordingHealth.prototype.quality=function(metrics,now,resourceWarning){
  var drops=metrics.applicationDroppedPackets;
  if(Number.isFinite(drops)&&drops>=0){if(drops>(this.lastDrops===null?0:this.lastDrops))this.qualityPending='dropped';this.lastDrops=drops;}
  var slow=Number.isFinite(metrics.queueLimit)&&metrics.queueLimit>0&&Number.isFinite(metrics.queuedBytes)&&metrics.queuedBytes>=metrics.queueLimit/2;
@@ -10,7 +10,7 @@ RecordingHealth.prototype.quality=function(metrics,now){
  if(slow&&now-this.backlogSince>=2000&&!this.qualityPending)this.qualityPending='slow';
  if(!this.qualityPending||now<this.qualityRetryAt||now-this.lastQualityWarningMs<120000)return null;
  this.lastQualityKind=this.qualityPending;this.qualityPending=null;this.lastQualityWarningMs=now;
- return {kind:'degraded',message:'BimmerVision\n'+(this.lastQualityKind==='dropped'?'Recording dropped video.\nCheck the USB drive when parked.':'USB writes are falling behind.\nUse a faster USB drive.')};
+ return {kind:'degraded',message:'BimmerVision\n'+(resourceWarning?'Recording quality reduced.\n'+resourceWarning:this.lastQualityKind==='dropped'?'Recording dropped video.\nCheck the USB drive when parked.':'USB writes are falling behind.\nCheck USB storage when parked.')};
 };
 RecordingHealth.prototype.update=function(status,intent,now){
  status=status||{};intent=intent||{};
@@ -27,7 +27,7 @@ RecordingHealth.prototype.update=function(status,intent,now){
   if(this.healthySince===null)this.healthySince=now;
   if(write!==this.lastWrite){this.lastWrite=write;this.progressAt=now;}
   if(this.warned&&now>=this.retryAt&&now-this.healthySince>=3000&&now-this.progressAt<=1000){this.warned=false;return {kind:'restored',message:'BimmerVision\nRecording restored.\nVideo is being saved again.'};}
-  return this.quality(metrics,now);
+  return this.quality(metrics,now,status.resourceWarning);
  }
  this.backlogSince=null;
  this.healthySince=null;
@@ -37,6 +37,7 @@ RecordingHealth.prototype.update=function(status,intent,now){
  this.warned=true;this.lastWarningMs=now;
  var detail=status.state==='Storage full'?'Recording stopped: USB full.\nFree space when parked.':status.state==='Drive unavailable'||status.state==='Waiting for USB'||status.state==='Select a USB drive'?'Recording interrupted.\nCheck the USB drive when parked.':'Recording interrupted.\nTrying to restore camera video.';
  if(!Number.isFinite(heartbeat)||heartbeatAge>5000000)detail='Recorder not responding.\nCheck BimmerVision when parked.';
+ if(status.resourceWarning&&heartbeatAge>=0&&heartbeatAge<=5000000)detail+='\n'+status.resourceWarning;
  return {kind:'interrupted',message:'BimmerVision\n'+detail};
 };
 RecordingHealth.prototype.deliveryFailed=function(kind,now){if(kind==='degraded'){this.qualityPending=this.lastQualityKind;this.lastQualityWarningMs=-Infinity;this.qualityRetryAt=now+10000;return;}this.retryAt=now+10000;if(kind==='interrupted'){this.warned=false;this.lastWarningMs=-Infinity;}else if(kind==='restored')this.warned=true;};

@@ -6,7 +6,7 @@ Controls.prototype.check=async function(){var st=await io.safePath(this.root,'di
 Controls.prototype.withPreference=function(value){value=preference.controls(value);if(this.preferenceDirectory){var saved=preference.read(this.preferenceDirectory,this.uid);if(saved!==undefined)value.continuous=saved;else if(typeof value.continuous==='boolean')preference.write(this.preferenceDirectory,this.uid,value.continuous,true);value.continuous=preference.read(this.preferenceDirectory,this.uid);}if(typeof value.continuous!=='boolean')value.continuous=false;return value;};
 Controls.prototype.readRaw=async function(){
  await this.check();var fd=null;
- try{fd=await io.open(path.join(this.root,'recorder-control.json'),fs.constants.O_RDONLY|(fs.constants.O_NOFOLLOW||0));var st=await io.fstat(fd);if(!st.isFile()||st.uid!==this.uid||(st.mode&63)!==0||st.size>16384)throw Error('Unsafe RAM control file ownership/mode/size');var data=await io.readAt(fd,Math.min(st.size,16384),0),value=JSON.parse(data.toString('utf8'));if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Invalid RAM control');var sig=st.ino+':'+st.size+':'+st.mtime.getTime();if(sig!==this.signature){this.signature=sig;this.observedAt=this.nowMs();}var transfer=value.transfer||{};value.transfer={visit:typeof transfer.visit==='string'?transfer.visit:'',visible:transfer.visible===true&&this.nowMs()-this.observedAt<3000};return value;
+ try{fd=await io.open(path.join(this.root,'recorder-control.json'),fs.constants.O_RDONLY|(fs.constants.O_NOFOLLOW||0));var st=await io.fstat(fd);if(!st.isFile()||st.uid!==this.uid||(st.mode&63)!==0||st.size>16384)throw Error('Unsafe RAM control file ownership/mode/size');var data=await io.readAt(fd,Math.min(st.size,16384),0),value=JSON.parse(data.toString('utf8'));if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Invalid RAM control');var sig=st.ino+':'+st.size+':'+st.mtime.getTime();if(sig!==this.signature){this.signature=sig;this.observedAt=this.nowMs();}var transfer=value.transfer||{};value.transfer={localWifi:transfer.localWifi===true,visit:typeof transfer.visit==='string'?transfer.visit:'',visible:transfer.visible===true&&this.nowMs()-this.observedAt<3000};return value;
  }catch(e){if(e.code==='ENOENT')return {transfer:{visible:false}};throw e;}finally{if(fd!=null)await io.close(fd);}
 };
 Controls.prototype.read=async function(){return this.withPreference(await this.readRaw());};
@@ -24,29 +24,49 @@ async function preparePreferences(base,uid){await io.ensureDir(base,493);var st=
 // The phone joins wireless CarPlay on the bridge in front of the p2p Wi-Fi
 // ports. wlan0 is the car's own internet connection, and the phone is not on it.
 function carPlayBridge(){var net='/sys/class/net',names,i,ports,p;try{names=fs.readdirSync(net);}catch(e){return '';}for(i=0;i<names.length;i++){try{ports=fs.readdirSync(net+'/'+names[i]+'/brif');}catch(e){continue;}for(p=0;p<ports.length;p++)if(/^p2p/i.test(ports[p]))return names[i];}return '';}
-function wifiAddress(iface,interfaces){var chosen=iface||carPlayBridge(),all=interfaces||os.networkInterfaces(),names=chosen?[chosen]:Object.keys(all),best=null,score=-1;for(var i=0;i<names.length;i++){var name=names[i],list=all[name]||[];for(var j=0;j<list.length;j++){var a=list[j];if(!a||a.internal||(a.family!=='IPv4'&&a.family!==4)||!a.address||/^(127\.|169\.254\.|0\.)/.test(a.address))continue;var bridge=/bridge/i.test(name),wifi=/wlan|p2p|wifi|wi-fi|hotspot|uap/i.test(name);if(!chosen&&!bridge&&!wifi)continue;var rank=bridge&&wifi?300:bridge?120:40;if(a.address.indexOf('192.168.')===0)rank+=20;else if(a.address.indexOf('10.')===0||a.address.indexOf('172.')===0)rank+=10;if(rank>score){best=a.address;score=rank;}}}if(!best)throw Error('No car Wi-Fi IPv4'+(chosen?' on '+chosen:''));return best;}
+function wifiAddress(iface,interfaces){var chosen=iface||carPlayBridge(),all=interfaces||os.networkInterfaces(),names=chosen?[chosen]:Object.keys(all),best=null,score=-1;for(var i=0;i<names.length;i++){var name=names[i],list=all[name]||[];for(var j=0;j<list.length;j++){var a=list[j];if(!a||a.internal||(a.family!=='IPv4'&&a.family!==4)||!a.address||/^(127\.|169\.254\.|0\.)/.test(a.address))continue;var bridge=/bridge/i.test(name),wifi=/wlan|p2p|wifi|wi-fi|hotspot|uap/i.test(name);if(!chosen&&(name==='wlan0'||!bridge&&!wifi))continue;var rank=bridge&&wifi?300:bridge?120:40;if(a.address.indexOf('192.168.')===0)rank+=20;else if(a.address.indexOf('10.')===0||a.address.indexOf('172.')===0)rank+=10;if(rank>score){best=a.address;score=rank;}}}if(!best)throw Error('No car Wi-Fi IPv4'+(chosen?' on '+chosen:''));return best;}
 async function start(options){
  var o=options||{},root=o.root||__dirname,original=o.originalRoot||process.env.BV_ORIGINAL_HELPER||'/var/opt/bimmervision-service/current';
  var configFile=o.configFile||path.join(root,'hardware.json');try{await io.safePath(configFile,'file');}catch(e){if(o.configFile)throw e;configFile=path.join(original,'hardware.json');await io.safePath(configFile,'file');}
  var config=JSON.parse(await io.readFile(configFile,'utf8')),uid=enrollment(config);if(!uid)uid=require(path.join(original,'uid.js')).appUid('/var/opt/public/oap');if(!uid)throw Error('Waiting for enrolled app uid');
  var receiver=path.join(root,'receiver');try{await io.safePath(receiver,'file');}catch(e){receiver=path.join(original,'receiver');await io.safePath(receiver,'file');}
  var perceptionReceiver=o.perceptionBinary||path.join(root,'perception-receiver');try{await io.safePath(perceptionReceiver,'file');}catch(e){perceptionReceiver=path.join(original,'perception-receiver');try{await io.safePath(perceptionReceiver,'file');}catch(e2){perceptionReceiver=path.resolve(__dirname,'../assets/perception-receiver-linux-x86_64');}}
- var ram=o.ramRoot||'/tmp/bimmervision-'+uid;await prepareControls(ram,uid);var preferenceDirectory=await preparePreferences(o.preferencesRoot||'/var/opt/bimmervision-recorder/preferences',uid);await prepareQrResource(uid,o.oapRoot);var controls=o.controls||new Controls(ram,uid,null,preferenceDirectory),recorder=null,guard=null,library=null,volume=null,drives=[],transfer=null,transferError='',closed=false,child=null,restartAt=0,lastPacket=0,state='Waiting for USB',error=null,lastDiscovery=0,lastTelemetry=0,lastClock=0,watchdog=null,poll=null,busy=null,closingTransfer=Promise.resolve(),lastControl={continuous:false,transfer:{visible:false}};
+ var ram=o.ramRoot||'/tmp/bimmervision-'+uid;await prepareControls(ram,uid);var preferenceDirectory=await preparePreferences(o.preferencesRoot||'/var/opt/bimmervision-recorder/preferences',uid);await prepareQrResource(uid,o.oapRoot);var controls=o.controls||new Controls(ram,uid,null,preferenceDirectory),recorder=null,guard=null,library=null,volume=null,drives=[],transfer=null,transferError='',closed=false,child=null,restartAt=0,lastPacket=0,state='Waiting for USB',error=null,usbError=null,lastDiscovery=0,lastTelemetry=0,lastClock=0,watchdog=null,poll=null,busy=null,closingTransfer=Promise.resolve(),lastControl={continuous:false,transfer:{visible:false}};
  var phoneControls=new Controls(ram,uid),phoneLease=new(require('./phone-lease').Lease)({read:function(){return phoneControls.readLease();},onRevoke:function(){return closeTransfer();}});
  var diagnostics=new (require('./diagnostic-session').DiagnosticSession)({nowMs:function(){return recording.nowUs()/1000;}});
+ var support=new(require('./support-diagnostics').SupportDiagnostics)({
+  monotonicMs:function(){return recording.nowUs()/1000;},
+  export:function(name,data){return diagnostics.support(name,data);}
+ });
+ function usbEvent(outcome,e){
+  support.change('usb-attachment',{outcome:outcome,code:e&&/^[A-Z0-9_]{1,48}$/.test(e.code)?e.code:null});
+ }
+ function observeSupport(current){
+  var b=current.backup,t=current.transfer;
+  support.change('backup-state',{
+   configured:!!b.configured,phase:b.diagnosticPhase||'unavailable',wifiEligible:!!(b.wifi&&b.wifi.eligible),
+   stationaryPermitted:!!b.stationaryPermitted,phoneActive:!!(b.phone&&b.phone.active),
+   pending:!!b.pending,storageFull:!!b.storageFull,
+   remainingDrives:Number.isSafeInteger(b.remainingDrives)?b.remainingDrives:null,
+   errorCode:b.diagnosticErrorCode||null
+  });
+  support.change('phone-connection',{phase:t.error?'failed':t.viewerConnected?'connected':t.paired?'paired':t.on?'listening':'idle'});
+  support.flush();
+ }
+
  var controlTimer=null,controlBusy=null,stopPromise=null,finishingRecorder=null;
  var backup=null,backupError='',backupCommandId=null,pauseDecision={temporaryPause:false},pausePolicy=new(require('./backup-recording-policy').RecordingPolicy)();
  function captureEnabled(){var previous=pauseDecision.temporaryPause;pauseDecision=pausePolicy.evaluate({intent:lastControl,backup:backup?backup.status():{}});if(previous&&!pauseDecision.temporaryPause&&backup)backup.cancel();return pauseDecision.effectiveContinuous;}
  var hornLocks=null,hornBusy=null,hornLastError='';
  function flushHornLocks(){if(hornBusy)return hornBusy;var h=hornLocks;if(!h||!h.pending&&!h.dirty)return Promise.resolve();var mutate=function(){return h.library.lock(async function(){});};hornBusy=(backup&&backup.withLibraryMutation?backup.withLibraryMutation(mutate):mutate()).then(function(){if(hornLastError&&error===hornLastError)error=null;hornLastError='';},function(e){hornLastError='Horn protection could not be saved: '+String(e.message||e);error=hornLastError;}).then(function(){hornBusy=null;});return hornBusy;}
  function observeHorn(e,t){if(!hornLocks)return;hornLocks.observe(e,t);if(hornLocks.dirty)flushHornLocks();}
- var storageBusy=false,finalizing=false,volumeToken=null,recordingCount=null,lockedRecordingCount=null,lastCount=0,actions=new DriveActions();
+ var storageBusy=false,recovering=false,testingSpeed=false,lastSpeedCommand,usbSpeedTest=null,finalizing=false,volumeToken=null,recordingCount=null,lockedRecordingCount=null,lastCount=0,actions=new DriveActions();
  var recordedDrives=new(require("./recorded-drives").RecordedDrives)({context:function(){return {library:library,volumeToken:volumeToken};},mutate:function(fn){return backup&&backup.withLibraryMutation?backup.withLibraryMutation(fn):fn();},afterChange:refreshCounts});
  var telemetry=new Telemetry({onEvent:function(e,t){observeHorn(e,t);if(recorder&&recorder.status().metrics.packets)recorder.event(e,t);}});
  var perception=new Perception({binary:perceptionReceiver,spawn:o.spawnPerception,nowUs:recording.nowUs,nowMs:o.nowMs,onEvent:function(e,t){if(recorder&&recorder.status().metrics.packets)recorder.event(e,t);}});
  var mirror=new Perception({mirrorOnly:true,binary:perceptionReceiver,spawn:o.spawnMirror,nowUs:recording.nowUs,nowMs:o.nowMs,onEvent:function(e,t){observeHorn(e,t);if(e.type==='horn'||e.type==='horn-status')telemetry.take({kind:'horn',name:'BDC.HUPE_TASTER',sourceName:'BMW diagnostic: BDC.HUPE_TASTER (22D297)'},e.type==='horn'&&e.valid===true?{horn:e.pressed}:null,t);if(recorder&&recorder.status().metrics.packets)recorder.event(e,t);}});
  var camera=new Perception({cameraOnly:true,binary:perceptionReceiver,spawn:o.spawnCamera,nowUs:recording.nowUs,nowMs:o.nowMs,onEvent:function(e,t){if(recorder&&recorder.status().metrics.packets)recorder.event(e,t);}});
- var status=function(){var rs=(recorder||finishingRecorder)?(recorder||finishingRecorder).status():{};var warn=rs.storageWarning||'';if(!warn&&error)warn='';var dl=diagnostics.info();var writing=!!(dl.writing||dl.queuedBytes>0||dl.pendingDurability||dl.closing||hornBusy||hornLocks&&(hornLocks.dirty||hornLocks.pending)||storageBusy||finalizing||actions.deleting||library&&library.mutating||rs.activeId||rs.queuedBytes>0);return {apiVersion:1,recordedDrives:recordedDrives.status(volumeToken),backup:backup?Object.assign({},backup.status(),{pauseReason:pauseDecision.reason||''}):{configured:false,state:backupError||'Remote backup starting',wifi:{eligible:false}},recordingPausedForBackup:pauseDecision.temporaryPause===true,finalizing:finalizing,diagnosticLog:dl,heartbeatMonotonicUs:recording.nowUs(),recordingEnabled:lastControl.continuous===true,writeInProgress:writing,safeToRemove:!!volume&&!writing&&!error&&!rs.error,recordingCount:recordingCount,lockedRecordingCount:lockedRecordingCount,volumeToken:volumeToken,deleting:actions.phase==='deleting'||!!(library&&library.mutating),deleteResult:actions.result,state:rs.error?rs.state:state,drive:drives.filter(function(d){return d.mount===volume;})[0]||null,drives:drives,activeId:rs.activeId||null,error:rs.error||error,storageWarning:warn,clock:recording.clock(),metrics:rs.metrics||{queuedBytes:0,nativeReceiverDrops:null},telemetry:telemetry.snapshot(recording.nowUs()),transfer:transfer?Object.assign({},transfer.info(),{error:transferError}):{on:false,url:'',code:'',fingerprint:'',paired:false,error:transferError}};};
+ var status=function(){var rs=(recorder||finishingRecorder)?(recorder||finishingRecorder).status():{};var warn=rs.storageWarning||'';if(!warn&&error)warn='';var dl=diagnostics.info();var writing=!!(dl.writing||dl.queuedBytes>0||dl.pendingDurability||dl.closing||hornBusy||hornLocks&&(hornLocks.dirty||hornLocks.pending)||storageBusy||testingSpeed||finalizing||actions.deleting||library&&library.mutating||rs.activeId||rs.queuedBytes>0);return {apiVersion:1,recordedDrives:recordedDrives.status(volumeToken),backup:backup?Object.assign({},backup.status(),{pauseReason:pauseDecision.reason||''}):{configured:false,state:backupError||'Remote backup starting',wifi:{eligible:false}},recordingPausedForBackup:pauseDecision.temporaryPause===true,finalizing:finalizing,recovering:recovering,testingSpeed:testingSpeed,usbSpeedTest:usbSpeedTest,diagnosticLog:dl,heartbeatMonotonicUs:recording.nowUs(),recordingEnabled:lastControl.continuous===true,writeInProgress:writing,safeToRemove:!!volume&&!writing&&!error&&!rs.error,recordingCount:recordingCount,lockedRecordingCount:lockedRecordingCount,volumeToken:volumeToken,deleting:actions.phase==='deleting'||!!(library&&library.mutating),deleteResult:actions.result,state:rs.error?rs.state:state,drive:drives.filter(function(d){return d.mount===volume;})[0]||null,drives:drives,activeId:rs.activeId||null,error:rs.error||error,storageWarning:warn,resourceWarning:diagnostics.resourceWarning||'',clock:recording.clock(),metrics:rs.metrics||{queuedBytes:0,nativeReceiverDrops:null},telemetry:telemetry.snapshot(recording.nowUs()),transfer:transfer?Object.assign({},transfer.info(),{error:transferError}):{on:false,url:'',code:'',fingerprint:'',paired:false,error:transferError}};};
  async function refreshCounts(){if(!library)return;var totals=await library.summary();recordingCount=totals.recordingCount;lockedRecordingCount=totals.lockedRecordingCount;}
  function closeRecording(reason){
   if(stopPromise)return stopPromise;if(!recorder)return Promise.resolve();
@@ -57,8 +77,21 @@ async function start(options){
   stopPromise=(async function(){try{var outcomes=await Promise.all([controls.write(status()),saving,perceptionStopping,mirrorStopping].map(function(p){return p.then(function(){return null;},function(e){return e;});}));for(var i=0;i<outcomes.length;i++)if(outcomes[i]){error=String(outcomes[i].message||outcomes[i]);throw outcomes[i];}if(r.status().error){error=r.status().error;state=r.status().state;}diagnostics.event('recording-stopped',{reason:reason,durationMs:(recording.nowUs()-stopStarted)/1000,error:r.status().error});diagnostics.observe(status());diagnostics.flush();}finally{finishingRecorder=null;finalizing=false;stopPromise=null;if(!r.status().error&&lastControl.continuous===false)state='Stopped';}})();return stopPromise;
  }
  function readControls(){if(controlBusy)return controlBusy;controlBusy=(async function(){try{lastControl=await controls.read();}catch(e){lastControl={continuous:false,transfer:{visible:false}};error=e.message;}if(backup&&lastControl.backupCommand&&lastControl.backupCommand.id!==backupCommandId){backupCommandId=lastControl.backupCommand.id;backup.command(lastControl.backupCommand).catch(function(){backupError='Remote backup command failed';});}recordedDrives.command(lastControl.driveCommand).catch(function(){});captureEnabled();diagnostics.setEnabled(lastControl.continuous===true&&!pauseDecision.temporaryPause);})().then(function(){controlBusy=null;});return controlBusy;}
- async function controlLoop(){if(closed)return;try{await readControls();if(closed)return;if(!captureEnabled())closeRecording(pauseDecision.temporaryPause?'remote-backup':'user').catch(function(e){error=e.message;});diagnostics.observe(status());await controls.write(status());}catch(e){error=String(e.message||e);}if(!closed)controlTimer=setTimeout(controlLoop,250);}
+ async function controlLoop(){if(closed)return;try{await readControls();if(closed)return;if(!captureEnabled())closeRecording(pauseDecision.temporaryPause?'remote-backup':'user').catch(function(e){error=e.message;});var current=status();diagnostics.observe(current);observeSupport(current);await controls.write(current);}catch(e){error=String(e.message||e);}if(!closed)controlTimer=setTimeout(controlLoop,250);}
 
+ var localGate=new (require('./phone-network').NetworkGate)({interface:'wlan0',local:true});
+ var localRetry=0,localFailure='';
+ async function updateLocalWifi(t,visit){
+  var request=lastControl.transfer||{},address=null;
+  if(request.visit===visit.visit && request.localWifi===true){
+   try{address=wifiAddress('wlan0');}catch(ignore){}
+  }
+  if(address===t.host)address=null;
+  if((t.local?t.local.host:null)===address)return;
+  if(address && localFailure===address && Date.now()<localRetry)return;
+  try{await t.setLocalHost(address,localGate);localFailure='';}
+  catch(e){localFailure=address;localRetry=Date.now()+5000;support.change('phone-local-wifi',{phase:'unavailable'});}
+ }
  async function closeTransfer(){if(transfer){var t=transfer;transfer=null;closingTransfer=t.stop();}var pendingClose=closingTransfer;try{await pendingClose;}finally{if(closingTransfer===pendingClose)closingTransfer=Promise.resolve();}}
  function stopReceiver(){if(!child)return;var old=child;child=null;old.kill('SIGTERM');var kill=setTimeout(function(){if(old.exitCode===null&&old.signalCode===null)old.kill('SIGKILL');},2000);if(kill.unref)kill.unref();}
  function spawnReceiver(){
@@ -69,16 +102,44 @@ async function start(options){
   var ended=false;function endedReceiver(e,code,signal){if(ended)return;ended=true;diagnostics.event('receiver-exit',{error:e?String(e.message||e):null,exitCode:code,signal:signal});if(child===c)child=null;restartAt=recording.nowUs()+1000000;if(recorder&&recorder.status().metrics.packets)recorder.event({type:'discontinuity',reason:'receiver-exit',message:e?String(e.message||e):null},recording.nowUs());if(e)error=String(e.message||e);}
   c.on('error',endedReceiver);c.on('exit',function(code,signal){endedReceiver(null,code,signal);});
  }
+ async function runSpeedTest(){
+  var command=lastControl.usbSpeedTest,id=command&&command.id;
+  if(lastSpeedCommand===undefined){lastSpeedCommand=id||null;return;}
+  if(!id||id===lastSpeedCommand||!/^[a-f0-9]{32}$/.test(id))return;
+  lastSpeedCommand=id;
+  if(!guard||!command.volumeToken||command.volumeToken!==volumeToken)return;
+  function ensurePaused(){
+   if(closed||lastControl.continuous===true||lastControl.transfer&&lastControl.transfer.visible)throw Error('Pause recording and close Connect Phone before testing.');
+  }
+  try{
+   ensurePaused();
+   if(transfer||finalizing||recorder||!status().safeToRemove)throw Error('Wait for USB activity to finish before testing.');
+   testingSpeed=true;
+   await controls.write(status());
+   var measure=function(){return require('./usb-speed-test').measure(guard,usb.space,recording.nowUs,ensurePaused);};
+   usbSpeedTest=backup&&backup.withLibraryMutation?await backup.withLibraryMutation(measure):await measure();
+   usbSpeedTest.id=id;support.record('usb-speed-test',usbSpeedTest);
+  }catch(e){usbSpeedTest={id:id,error:e.message};support.record('usb-speed-test',{result:'failed'});}
+  finally{testingSpeed=false;}
+ }
  async function tick(){
   if(closed)return;var now=recording.nowUs();
   await readControls();
-  if(now-lastDiscovery>=5000000||!lastDiscovery){lastDiscovery=now;drives=await usb.discover(o.usbAdapters);drives.forEach(function(d){d.id=path.basename(d.mount);});}
+  if(now-lastDiscovery>=5000000||!lastDiscovery){
+   lastDiscovery=now;
+   var probes=[],adapter=Object.assign({},o.usbAdapters,{report:function(row){if(probes.length<16)probes.push(row);}});
+   try{drives=await usb.discover(adapter);if(!guard&&error===usbError){error=null;usbError=null;}}
+   catch(e){drives=[];state='Drive unavailable';error=usbError='USB mount table could not be read';}
+   support.change('usb-discovery',{candidates:probes,ready:drives.length,usbBlocks:usb.usbBlockInventory(),selectionRequested:!!lastControl.volume});
+   drives.forEach(function(d){d.id=path.basename(d.mount);});
+  }
   var chosen=drives.filter(function(d){return d.mount===lastControl.volume;})[0];if(!chosen&&!lastControl.volume&&drives.length===1)chosen=drives[0];
+  support.change('usb-selection',{outcome:chosen?'selected':lastControl.volume?'selected-mount-unavailable':drives.length>1?'selection-needed':'no-drive'});
   var next=chosen?chosen.mount:null,saving=recorder&&recorder.status().activeId;
   if(next!==volume&&saving&&volume)error='Cannot disconnect the drive while a recording is saving.';
-  else if(next!==volume){if(backup)backup.cancel();await closeTransfer();await closeRecording('volume-change');await flushHornLocks();await diagnostics.detach('volume-change');hornLocks=null;guard=null;if(library&&library.overviews)library.overviews.cancel();library=null;volume=next;if(error==='Cannot disconnect the drive while a recording is saving.')error=null;if(volume){try{guard=usb.verify(volume,o.usbAdapters);var bundle=path.join(volume,'BimmerVision');await guard.check();diagnostics.attach(volume,guard);await io.ensureDir(bundle);await guard.check();storageBusy=true;try{await controls.write(status());await recording.Recorder.recover(bundle,guard);}finally{storageBusy=false;}library=new Library(bundle,{guard:guard,cacheDir:o.cacheDir,activeId:function(){return recorder&&recorder.status().activeId;}});hornLocks=new(require('./horn-lock').HornLocks)({library:library,nowUs:recording.nowUs});await hornLocks.init();volumeToken=require('crypto').randomBytes(16).toString('hex');await refreshCounts();lastCount=now;error=null;}catch(e){error=e.message;hornLocks=null;library=null;volume=null;guard=null;state='Drive unavailable';}}}
+  else if(next!==volume){if(backup)backup.cancel();await closeTransfer();await closeRecording('volume-change');await flushHornLocks();await diagnostics.detach('volume-change');hornLocks=null;guard=null;if(library&&library.overviews)library.overviews.cancel();library=null;volume=next;usbSpeedTest=null;if(error==='Cannot disconnect the drive while a recording is saving.')error=null;if(volume){try{guard=usb.verify(volume,o.usbAdapters);var bundle=path.join(volume,'BimmerVision');await guard.check();await io.ensureDir(bundle);await guard.check();storageBusy=true;var recoveryStart=recording.nowUs();support.change('usb-recovery',{outcome:'scanning'});try{await controls.write(status());var recovered=await recording.Recorder.recover(bundle,guard,function(){recovering=true;});support.change('usb-recovery',{outcome:'finished',recovered:recovered.length,durationMs:(recording.nowUs()-recoveryStart)/1000});}catch(e){support.change('usb-recovery',{outcome:'failed'});throw e;}finally{storageBusy=false;recovering=false;}library=new Library(bundle,{guard:guard,cacheDir:o.cacheDir,activeId:function(){return recorder&&recorder.status().activeId;}});hornLocks=new(require('./horn-lock').HornLocks)({library:library,nowUs:recording.nowUs});await hornLocks.init();volumeToken=require('crypto').randomBytes(16).toString('hex');await refreshCounts();await guard.check();lastCount=now;error=null;usbError=null;diagnostics.attach(volume,guard);usbEvent('attached');support.flush();}catch(e){usbEvent('attach-failed',e);error=usbError=e.code==='ENOENT'?'USB path disappeared during attach':e.message;hornLocks=null;if(library&&library.overviews)library.overviews.cancel();library=null;volume=null;guard=null;state='Drive unavailable';drives=[];}}}
   else if(error==='Cannot disconnect the drive while a recording is saving.')error=null;
-  if(guard){try{await guard.check();}catch(e){if(backup)backup.cancel();error=recorder&&recorder.status().activeId?'The USB drive disconnected while a recording was saving.':e.message;await closeTransfer();await closeRecording('usb-unavailable');await flushHornLocks();await diagnostics.detach('usb-unavailable');hornLocks=null;guard=null;if(library&&library.overviews)library.overviews.cancel();library=null;volume=null;state='Drive unavailable';lastDiscovery=0;}}
+  if(guard){try{await guard.check();}catch(e){usbEvent('mount-lost',e);if(backup)backup.cancel();error=usbError=recorder&&recorder.status().activeId?'The USB drive disconnected while a recording was saving.':e.message;await closeTransfer();try{await closeRecording('usb-unavailable');}catch(ignore){}await flushHornLocks();await diagnostics.detach('usb-unavailable');hornLocks=null;guard=null;if(library&&library.overviews)library.overviews.cancel();library=null;volume=null;usbSpeedTest=null;state='Drive unavailable';lastDiscovery=0;}}
   await flushHornLocks();
   if(library&&(!lastCount||now-lastCount>=5000000)){await refreshCounts();lastCount=now;}
   if(!volume){recordingCount=null;lockedRecordingCount=null;volumeToken=null;}
@@ -87,7 +148,8 @@ async function start(options){
   else if(guard){if(recorder&&recorder.status().error){error=recorder.status().error;state=recorder.status().state;await closeRecording('fault');restartAt=now+5000000;}
    if(!recorder&&!finalizing&&captureEnabled()&&now>=restartAt){var drive=drives.filter(function(d){return d.mount===volume;})[0];if(drive&&drive.free<16*1024*1024){state='Storage full';error='Less than 16 MiB available';}else{var rec={root:path.join(volume,'BimmerVision'),guard:guard,hornLocks:hornLocks,initialEvents:function(atUs){return [schemaEvent(),camera.camera.snapshot(atUs)];}};if(config.recording&&typeof config.recording==='object'){if(Number.isInteger(config.recording.queueLimitBytes)&&config.recording.queueLimitBytes>=38&&config.recording.queueLimitBytes<=96*1024*1024)rec.queueLimit=config.recording.queueLimitBytes;if(Number.isInteger(config.recording.reorderWindow)&&config.recording.reorderWindow>=8)rec.reorderWindow=config.recording.reorderWindow;}recorder=new recording.Recorder(rec);error=null;state='Waiting for stream';}}
    if(recorder&&now>=restartAt){perception.start().catch(function(e){error=e.message;});mirror.start().catch(function(e){mirror.health('unavailable',e.message);});}if(recorder)state=recorder.status().state;
-  }else{await closeRecording('usb-unavailable');if(!error)state=drives.length>1?'Select a USB drive':'Waiting for USB';}
+  }else{await closeRecording('usb-unavailable');state=usbError?'Drive unavailable':drives.length>1?'Select a USB drive':'Waiting for USB';}
+  await runSpeedTest();
   var captureWanted=!!recorder;if(captureWanted&&now>=restartAt){camera.start().catch(function(e){camera.health('unavailable',e.message);});spawnReceiver();}else if(!captureWanted){stopReceiver();await camera.stop();}
   var idleUs=(config.recording&&Number.isInteger(config.recording.cameraIdleUs)&&config.recording.cameraIdleUs>=1000000)?config.recording.cameraIdleUs:3000000;
   if(recorder&&recorder.status().activeId&&child&&lastPacket&&now-lastPacket>idleUs&&now-lastPacket<15000000){stopReceiver();restartAt=now;await closeRecording('camera-unavailable');if(lastControl.continuous!==false)state='Camera unavailable';}
@@ -95,7 +157,11 @@ async function start(options){
   if(now-lastTelemetry>30000000||!lastTelemetry){lastTelemetry=now;telemetry.connect(original).catch(function(e){error=e.message;});}
   if(recorder&&recorder.status().metrics.packets&&now-lastClock>=1000000){lastClock=now;recorder.event(Object.assign({type:'clock'},recording.clock()),now);}
   var visit=phoneLease.get();
-  if(library&&visit&&visit.visit){try{if(!transfer){await closingTransfer;visit=phoneLease.get();if(!visit){await controls.write(status());return;}var keyFile=o.tlsKey||process.env.BV_TLS_KEY||path.join(root,'tls','key.pem'),certFile=o.tlsCert||process.env.BV_TLS_CERT||path.join(root,'tls','cert.pem');await io.safePath(keyFile,'file');await io.safePath(certFile,'file');var tls={key:await io.readFile(keyFile),cert:await io.readFile(certFile)};var address=wifiAddress(process.env.BV_WIFI_INTERFACE),interfaces=os.networkInterfaces(),wifiInterface=Object.keys(interfaces).filter(function(name){return (interfaces[name]||[]).some(function(a){return a.address===address;});})[0];transfer=new (require('./transfer').Transfer)({library:library,backup:backup,status:status,lease:function(){return phoneLease.get();},tls:tls,host:address,network:new (require('./phone-network').NetworkGate)({interface:wifiInterface})});}var currentTransfer=transfer;if(currentTransfer.desiredVisit!==visit.visit||!currentTransfer.current)await currentTransfer.visit(visit.visit,visit.atMs);if(transfer===currentTransfer){currentTransfer.heartbeat(visit.visit,visit.atMs);transferError='';}}catch(e){transferError=e.message;await closeTransfer();}}
+  var localRequested=!!(visit && lastControl.transfer && lastControl.transfer.visit===visit.visit && lastControl.transfer.localWifi);
+  var homeAddress=null;
+  if(localRequested){try{homeAddress=wifiAddress('wlan0');}catch(ignore){}}
+  if(transfer && transfer.primaryLocal && transfer.host!==homeAddress)await closeTransfer();
+  if(library&&visit&&visit.visit){try{if(!transfer){await closingTransfer;visit=phoneLease.get();if(!visit){await controls.write(status());return;}var keyFile=o.tlsKey||process.env.BV_TLS_KEY||path.join(root,'tls','key.pem'),certFile=o.tlsCert||process.env.BV_TLS_CERT||path.join(root,'tls','cert.pem');await io.safePath(keyFile,'file');await io.safePath(certFile,'file');var tls={key:await io.readFile(keyFile),cert:await io.readFile(certFile)};var address,primaryLocal=false;try{address=wifiAddress(process.env.BV_WIFI_INTERFACE);}catch(e){if(!homeAddress)throw e;address=homeAddress;primaryLocal=true;}var interfaces=os.networkInterfaces(),wifiInterface=Object.keys(interfaces).filter(function(name){return (interfaces[name]||[]).some(function(a){return a.address===address;});})[0];transfer=new (require('./transfer').Transfer)({library:library,backup:backup,status:status,lease:function(){return phoneLease.get();},onPair:function(code){support.record('phone-pair',{status:code});},tls:tls,host:address,network:primaryLocal?localGate:new (require('./phone-network').NetworkGate)({interface:wifiInterface})});transfer.primaryLocal=primaryLocal;}var currentTransfer=transfer;if(currentTransfer.desiredVisit!==visit.visit||!currentTransfer.current)await currentTransfer.visit(visit.visit,visit.atMs);if(transfer===currentTransfer){currentTransfer.heartbeat(visit.visit,visit.atMs);await updateLocalWifi(currentTransfer,visit);transferError='';}}catch(e){transferError=e.message;await closeTransfer();}}
   else await closeTransfer();
   await controls.write(status());
  }

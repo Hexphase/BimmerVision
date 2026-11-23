@@ -77,7 +77,7 @@ test("Pause immediately stops claiming live capture while the old segment finish
   await s.ui.press("HOME_ALL");
   assert.equal(s.intent.continuous, false);
   assert.equal(s.labels.HOME_ALL, "Enable recording");
-  assert.match(s.labels.HOME_STATUS, /^Saving last video · 4 recordings\n/);
+  assert.match(s.labels.HOME_STATUS, /\nSaving last video · 4 recordings\n/);
   assert.doesNotMatch(s.labels.HOME_TITLE, /REC/);
   assert.match(s.labels.HOME_STATUS, /Do not disconnect - Saving last video/);
   desk.state = "Stopped";
@@ -85,7 +85,7 @@ test("Pause immediately stops claiming live capture while the old segment finish
   desk.writeInProgress = false;
   desk.safeToRemove = true;
   await s.ui.render();
-  assert.match(s.labels.HOME_STATUS, /^Stopped · 4 recordings\n/);
+  assert.match(s.labels.HOME_STATUS, /\nStopped · 4 recordings\n/);
   assert.match(s.labels.HOME_STATUS, /Safe to Remove/);
 });
 test("re-enabling during finalization keeps saving visible until capture actually resumes", async () => {
@@ -98,16 +98,16 @@ test("re-enabling during finalization keeps saving visible until capture actuall
   };
   const s = screen(desk, true);
   await s.ui.render();
-  assert.match(s.labels.HOME_STATUS, /^Saving last video\n/);
+  assert.match(s.labels.HOME_STATUS, /\nSaving last video\n/);
   assert.doesNotMatch(s.labels.HOME_TITLE, /REC/);
   desk.finalizing = false;
   desk.state = "Saving last video";
   await s.ui.render();
-  assert.match(s.labels.HOME_STATUS, /^Saving last video\n/);
+  assert.match(s.labels.HOME_STATUS, /\nSaving last video\n/);
   assert.doesNotMatch(s.labels.HOME_TITLE, /REC/);
   desk.state = "Recording";
   await s.ui.render();
-  assert.match(s.labels.HOME_STATUS, /^Recording\n/);
+  assert.match(s.labels.HOME_STATUS, /\nRecording\n/);
   assert.match(s.labels.HOME_TITLE, /REC/);
 });
 test("Pause reports an outstanding write without an active segment and keeps USB faults visible", async () => {
@@ -119,10 +119,10 @@ test("Pause reports an outstanding write without an active segment and keeps USB
   };
   const s = screen(desk, false);
   await s.ui.render();
-  assert.match(s.labels.HOME_STATUS, /^Saving last video\n/);
+  assert.match(s.labels.HOME_STATUS, /\nSaving last video\n/);
   desk.error = "USB write failed";
   await s.ui.render();
-  assert.match(s.labels.HOME_STATUS, /^USB write failed\n/);
+  assert.match(s.labels.HOME_STATUS, /\nUSB write failed$/);
   assert.doesNotMatch(s.labels.HOME_TITLE, /REC/);
 });
 test("diagnostic USB writes keep stopped recording status and describe USB activity truthfully", async () => {
@@ -136,7 +136,7 @@ test("diagnostic USB writes keep stopped recording status and describe USB activ
   };
   const s = screen(desk, false);
   await s.ui.render();
-  assert.match(s.labels.HOME_STATUS, /^Stopped\n/);
+  assert.match(s.labels.HOME_STATUS, /\nStopped\n/);
   assert.match(s.labels.HOME_STATUS, /Do not disconnect - Writing to USB/);
   assert.doesNotMatch(s.labels.HOME_STATUS, /Saving last video/);
   s.ui.page = "usb";
@@ -285,4 +285,72 @@ test("physical Back from Google setup repaints the connected account on Remote B
  assert.equal(s.ui.backupUI.page,"backup");assert.equal(s.ui.backupUI.active,true);
  assert.match(s.labels.BACKUP_ACCOUNT,/driver@example.invalid/);assert.equal(s.labels.BACKUP_STATUS,"Google Drive connected");
  assert.equal(s.ui.page,"home","native backup parent does not require reopening main menu");
+});
+
+test("Pause remains available while an attached USB recording is being recovered", async () => {
+  const s = screen({setupPending:true,recovering:true,writeInProgress:true,drive}, true);
+  await s.ui.render();
+  assert.match(s.labels.HOME_STATUS,/Recovering recording/);
+  assert.equal(s.labels.HOME_ALL,"Pause recording");
+  await s.ui.press("HOME_ALL");
+  assert.equal(s.intent.continuous,false);
+});
+
+test("home separates capacity, capture, USB writes and active backup",async()=>{
+ const s=screen({drive,recordingCount:57,state:"Recording",activeId:"x",writeInProgress:true,backup:{state:"Uploading"}},true);
+ await s.ui.render();
+ assert.match(s.labels.HOME_STATUS,/57 recordings/);
+ assert.match(s.labels.HOME_STATUS,/\nRecording/);
+ assert.match(s.labels.HOME_STATUS,/Do not disconnect - Writing to USB/);
+ assert.match(s.labels.HOME_STATUS,/Remote Backup uploading/);
+});
+test("USB help can be opened without a drive and returns to USB storage",async()=>{
+ const s=screen({drives:[]},false);
+ s.ui.page="usb";s.ui.nativePage="USB_STORAGE";
+ await s.ui.press("HOME_RIGHT",true);
+ assert.match(s.labels.USB_STATUS,/exFAT/);
+ assert.match(s.labels.USB_INFO4,/locked recordings and logs/);
+ assert.equal(s.labels.USB_ALL,undefined);
+ assert.equal(s.labels.USB_AUTO,"Back");
+ await s.ui.back();
+ assert.equal(s.ui.page,"usb");
+});
+
+test("USB speed test is available only after Pause and bound to the selected drive",async()=>{
+ const desk={drive,drives:[drive],volumeToken:"volume",safeToRemove:true};
+ const s=screen(desk,true);
+ s.ui.page="usb";s.ui.nativePage="USB_STORAGE";
+ await s.ui.press("HOME_LEFT",true);
+ assert.equal(s.intent.usbSpeedTest,undefined);
+ await s.ui.back();
+ s.intent.continuous=false;
+ await s.ui.press("HOME_LEFT",true);
+ assert.match(s.labels.USB_STATUS,/Starting/);
+ assert.equal(s.intent.usbSpeedTest.volumeToken,"volume");
+});
+
+test("speed action immediately opens feedback and shows only the matching result",async()=>{
+ const desk={drive,drives:[drive],safeToRemove:true,volumeToken:"one",usbSpeedTest:{id:"old",mbps:1}};
+ const s=screen(desk,false);s.ui.page="usb";s.ui.nativePage="USB_STORAGE";
+ await s.ui.press("HOME_LEFT",true);
+ assert.match(s.labels.USB_STATUS,/Starting/);
+ desk.usbSpeedTest={id:s.intent.usbSpeedTest.id,result:"headroom",mbps:22.8,worstFlushMs:158};
+ await s.ui.render();assert.match(s.labels.USB_STATUS,/22.8 MB\/s/);
+ await s.ui.back();assert.equal(s.ui.page,"usb");
+});
+
+test("all USB help rows exist in the iDrive layout and include port troubleshooting",async()=>{
+ const s=screen({drives:[]},false);s.ui.page="usb";s.ui.nativePage="USB_STORAGE";await s.ui.press("HOME_RIGHT",true);
+ const xml=require("fs").readFileSync(require.resolve("../idrive/rhmiData/uiDescriptions/ID7/application.xml"),"utf8").split('id="700" type="state"')[1];
+ const components=require("../idrive/rhmiData/uiDescriptions/ID7/uiDescription.json").containers["700"].components;
+ for(const [id,row] of Object.entries(components).filter(([,r])=>/^USB_INFO/.test(r.name))){
+   assert.ok(xml.includes('component id="'+id+'"'));assert.ok(s.labels[row.name]);
+ }
+ assert.match(Object.values(s.labels).join(" "),/another USB data port/i);
+});
+test("the borderline PNY result gives a recording decision",async()=>{
+ const desk={drive,volumeToken:"one",safeToRemove:true};const s=screen(desk,false);
+ s.ui.page="usb";s.ui.nativePage="USB_STORAGE";await s.ui.press("HOME_LEFT",true);
+ desk.usbSpeedTest={id:s.intent.usbSpeedTest.id,result:"limited",mbps:4.2,worstFlushMs:2173};await s.ui.render();
+ assert.match(s.labels.USB_STATUS,/not recommended for recording/i);
 });

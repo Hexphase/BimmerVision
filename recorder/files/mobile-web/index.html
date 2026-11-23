@@ -353,8 +353,17 @@
               <option value="left">Left Camera</option>
               <option value="right">Right Camera</option>
               <option value="source">Source (Raw Uncropped)</option>
+              <option value="custom">Choose Cameras…</option>
             </select>
           </div>
+
+          <fieldset id="exportCameraChoices" hidden>
+            <legend>Cameras to export</legend>
+            <label><input type="checkbox" value="front" checked> Front</label>
+            <label><input type="checkbox" value="rear" checked> Rear</label>
+            <label><input type="checkbox" value="left"> Left</label>
+            <label><input type="checkbox" value="right"> Right</label>
+          </fieldset>
 
           <!-- Metadata Overlays Toggles (Blinker Bar) -->
           <div class="export-section">
@@ -629,7 +638,7 @@
   <script src="drive-timeline.js?v=web-020"></script>
   <script src="speed-limit-client.js?v=web-020"></script>
   <script src="player.js?v=remote-backup-77"></script>
-  <script src="exporter.js?v=export-2"></script>
+  <script src="exporter.js?v=camera-selection-1"></script>
   <script src="camera-store.js?v=web-020"></script>
   <script src="release-checker.js?v=web-020"></script>
   <script src="catalog-refresh.js?v=web-020"></script>
@@ -638,7 +647,7 @@
   <script src="recording-navigation.js?v=workspace-1"></script>
   <script src="recording-backup-action.js?v=remote-backup-77"></script>
   <script src="more-menu.js?v=77"></script>
-  <script src="app.js?v=remote-backup-77"></script>
+  <script src="app.js?v=camera-selection-1"></script>
   <script src="car-backup-bridge.js?v=phone-popup-77"></script>
   <script src="phone-backup-launch.js?v=remote-backup-77"></script>
   <script src="remote-backup-page.js?v=remote-backup-77"></script>

@@ -109,6 +109,19 @@
         "RegisterShutdownClient",
         "UnRegisterShutdownClient"
       ]
+    },
+    "org.genivi.am.commandinterface.CommandControl": {
+      "instances": "1",
+      "methods": [
+        "connect",
+        "disconnect"
+      ]
+    },
+    "de.bmw.infotainment.entertainment.mediaplayer.MediaPlayer": {
+      "instances": "OapGenericOverlay",
+      "methods": [
+        "playFile"
+      ]
     }
   },
   "services": {

@@ -92,6 +92,7 @@ async function start(options) {
   if (closed) return { app: app, close: close };
   ui = new UI({
     rhmi: app.rhmiApplication,
+    chime: options.chime || (!options.app && function(){return require("./alert-chime").notify(app);}),
     displayTimeZone: config.displayTimeZone,
     onboarding: options.onboarding || (recording.preferenceDirectory ? new (require("./first-run-notice").Notice)(recording.preferenceDirectory,process.getuid()) : null),
     report: log,

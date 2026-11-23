@@ -43,7 +43,11 @@ Record your drives automatically, review all four cameras simultaneously, and ex
 </tr>
 </table>
 
-## Current release
+## Car app update
+
+The current source pairs BimmerVision **0.2.87** with recorder **0.2.86**. It adds a shared Wi-Fi option for the phone player, USB speed testing, and recording-health feedback.
+
+## Published release
 
 **0.2.78** introduces Google Drive Remote Backup, automatic horn protection, recorded-drive locking in iDrive, and a shared backup manager in the phone player. View your BimmerVision Google Drive backups at [BimmerVision.app](https://bimmervision.app/). Install the app and required recorder together. See [release notes](RELEASE_NOTES.md).
 
@@ -65,9 +69,17 @@ A recording indicator in iDrive lets you know when recording is active.
 
 ![Blinking BimmerVision recording indicator in iDrive](docs/images/recording-indicator.gif)
 
+### Recording storage
+
+BimmerVision records directly to a USB drive. Recording to the iDrive head unit’s internal flash is unsupported because continuous video writes would rapidly wear that storage and could eventually leave the head unit unusable. USB recording keeps that write load on a replaceable drive.
+
 ### Remote Backup and horn protection
 
-Connect your Google account in **Remote Backup**, then enable **Auto Upload on Wi-Fi** for automatic backups. Choose all eligible recordings or only locked drives and horn-protected clips. You can also select individual recordings or entire drives from the phone player’s **Remote Backup** manager.
+Remote Backup can upload footage from the car or from your phone. Connect your Google account in **Remote Backup** to get started.
+
+**From the car.** Open **MGU Store** in iDrive and connect the car to Wi-Fi. The car will often rejoin that network when you start it or reopen MGU Store. In BimmerVision, enable **Auto Upload on Wi-Fi**. Car uploads can be slow, so we recommend using automatic uploads for horn-protected clips. Choose the locked-only option, which also includes drives you manually lock.
+
+**From your phone.** Open the phone player’s **Remote Backup** manager and select the clips or drives you want to upload using your phone’s internet connection.
 
 - Pressing the horn automatically protects the complete clips covering the 30 seconds before and after the honk, including adjacent clips when needed. Automatic backup of these protected clips requires Google Drive setup and Auto Upload to be enabled.
 - The car uploads **only over Wi-Fi**, including a phone hotspot. BimmerVision never uses the car’s cellular connection. Backups can run at any speed unless **Do not backup while driving** is checked; pausing recording is a separate option and applies only while stationary.
@@ -200,7 +212,7 @@ BimmerVision includes a browser-based player accessible directly from your phone
 
 No separate mobile application is required.
 
-It can use your BMW's existing Wi-Fi connection, including the wireless connection used by CarPlay or Android Auto where supported, without requiring you to enable a separate phone hotspot.
+On supported vehicles, the player can use the existing wireless CarPlay connection. For Android, use one of the four options below.
 
 ### Connect Your Phone
 
@@ -212,6 +224,15 @@ It can use your BMW's existing Wi-Fi connection, including the wireless connecti
 Keep the **Connect Phone** page open in iDrive while accessing recordings.
 
 ![BimmerVision Connect Phone interface](docs/images/connect-phone.png)
+
+### Android Auto and local network access
+
+BMW’s Android Auto connection blocks local network access to the car-hosted player. Until a workaround is available, use one of these four methods. For the wireless methods, open **Connect Phone** in iDrive and keep that screen open while using the player.
+
+1. **USB playback.** Stop recording, remove the USB drive from the car, and connect it directly to your phone or computer. Open the web player and select the recordings on the drive. [BimmerVision.app](https://bimmervision.app/)
+2. **Car hotspot.** Enable the car’s Wi-Fi hotspot, join it from your Android phone, and scan the QR code in **Connect Phone**. Local playback works even without an active hotspot data plan.
+3. **Phone hotspot (fastest wireless option).** Turn on your phone’s mobile hotspot. Open **MGU Store** and change the car’s Wi-Fi network to your phone’s hotspot. In **Connect Phone**, enable **Use the Wi-Fi network the car is connected to** and scan the displayed QR code with the same phone.
+4. **Shared Wi-Fi (slowest wireless option).** Connect the car through **MGU Store** to your home Wi-Fi or another network your phone has also joined. Enable **Use the Wi-Fi network the car is connected to** in **Connect Phone**, then scan the QR code with your phone.
 
 ### Review & Manage Recordings
 

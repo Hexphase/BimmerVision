@@ -11,10 +11,15 @@ function Recorder(options){
  this.hornLocks=o.hornLocks||null;this.timelineId=this.hornLocks?this.hornLocks.timelineId:require('./horn-lock').timelineId();
  this.initialEvents=typeof o.initialEvents==='function'?o.initialEvents:(Array.isArray(o.initialEvents)?function(){return o.initialEvents;}:null);
  if(this.queueLimit<38||!Number.isSafeInteger(this.queueLimit))throw Error('Queue limit too small');if(this.queueLimit>MAX_QUEUE_LIMIT)this.queueLimit=MAX_QUEUE_LIMIT;this.predecessorLease=require('./library').reservePredecessor(this.root);
+ this.ioMetrics={writeBytes:0,writeCalls:0,writeUs:0,maxWriteUs:0,syncCalls:0,syncUs:0,maxSyncUs:0};
  this.queue=[];this.queuedBytes=0;this.pendingDrops=0;this.pendingEvents=0;this.dropped=0;this.accepted=0;this.writtenVideoPackets=0;this.lastVideoWriteUs=null;this.sequence=0;this.sessionId=uuid();this.previousId=null;this.current=null;this.running=null;this.stopping=false;this.stopped=false;this.state='Waiting for stream';this.error=null;this.streamBoundary={};this.captureGroups={};this.pendingSequenceGaps=0;this.lastDropUs=0;this.latestAt=0;this.observedGaps=0;this.syncRequested=false;
  var reorder=o.reorderWindow==null?128:o.reorderWindow;var self=this;this.units=new rtp.AccessUnits(function(){},function(e){if(e.reason==='rtp-sequence-gap'){self.observedGaps+=e.packets||0;}self.event(e,e.atUs);},{window:reorder,metadataOnly:true});this.syncTimer=setInterval(function(){if(!self.stopping&&!self.error&&self.current){self.syncRequested=true;self.kick();}},1000);if(this.syncTimer.unref)this.syncTimer.unref();
 }
-Recorder.prototype.status=function(){var warn='';if(this.queuedBytes>=(this.queueLimit>>1))warn='USB write is falling behind. Use a drive with faster sustained writes.';if(this.dropped>0)warn='Recording dropped frames. Use a drive with faster sustained writes.';return {state:this.state,activeId:this.current?this.current.id:null,error:this.error,queuedBytes:this.queuedBytes,storageWarning:warn,metrics:{lastVideoWriteMonotonicUs:this.lastVideoWriteUs,writtenVideoPackets:this.writtenVideoPackets,queuedBytes:this.queuedBytes,queueLimit:this.queueLimit,packets:this.accepted,applicationDroppedPackets:this.dropped,observedSequenceGaps:this.observedGaps,nativeReceiverDrops:null}};};
+Recorder.prototype.status=function(){var warn='';if(this.queuedBytes>=(this.queueLimit>>1))warn='Recording writes are falling behind.';if(this.dropped>0){
+  warn=this.ioMetrics.maxSyncUs>=1000000&&this.ioMetrics.syncUs>this.ioMetrics.writeUs
+   ?'Frames dropped · slow USB flushes'
+   :this.ioMetrics.maxWriteUs>=1000000?'Frames dropped · slow USB writes':'Frames dropped · recording backlog';
+ }return {state:this.state,activeId:this.current?this.current.id:null,error:this.error,queuedBytes:this.queuedBytes,storageWarning:warn,metrics:Object.assign({},this.ioMetrics,{lastVideoWriteMonotonicUs:this.lastVideoWriteUs,writtenVideoPackets:this.writtenVideoPackets,queuedBytes:this.queuedBytes,queueLimit:this.queueLimit,packets:this.accepted,applicationDroppedPackets:this.dropped,observedSequenceGaps:this.observedGaps,nativeReceiverDrops:null})};};
 Recorder.prototype.packet=function(packet,atUs){
  if(this.stopping||this.stopped||this.error)return false;atUs=atUs==null?this.nowUs():atUs;
  var data;try{data=archive.record(1,atUs,packet);}catch(e){this.event({type:'discontinuity',reason:'invalid-packet',message:e.message},Number.isSafeInteger(atUs)&&atUs>=0?atUs:this.nowUs());return false;}
@@ -51,7 +56,11 @@ Recorder.prototype.openSegment=async function(atUs){
  if(this.initialEvents){var initEvents=this.initialEvents(atUs);if(Array.isArray(initEvents)){for(var k=0;k<initEvents.length;k++)await this.writeEvent(initEvents[k],atUs);}}
  this.state='Recording';
 };
-Recorder.prototype.write=async function(b){var c=this.current;await this.guard.check(c.fd);await io.safePath(c.dir,'directory');await io.writeAll(c.fd,b);c.bytes+=b.length;};
+Recorder.prototype.write=async function(b){var c=this.current;await this.guard.check(c.fd);await io.safePath(c.dir,'directory');var started=this.nowUs();await io.writeAll(c.fd,b);var elapsed=this.nowUs()-started;this.ioMetrics.writeBytes+=b.length;this.ioMetrics.writeCalls++;this.ioMetrics.writeUs+=elapsed;this.ioMetrics.maxWriteUs=Math.max(this.ioMetrics.maxWriteUs,elapsed);c.bytes+=b.length;};
+Recorder.prototype.sync=async function(fd){
+ var started=this.nowUs();await io.fsync(fd);var elapsed=this.nowUs()-started;
+ this.ioMetrics.syncCalls++;this.ioMetrics.syncUs+=elapsed;this.ioMetrics.maxSyncUs=Math.max(this.ioMetrics.maxSyncUs,elapsed);
+};
 Recorder.prototype.writeEvent=async function(event,atUs){await this.write(archive.record(2,atUs,Buffer.from(JSON.stringify(event))));if(event.reason==='rtp-sequence-gap')this.current.manifest.observedSequenceGaps+=event.packets||0;};
 Recorder.prototype.flushLoss=async function(){
  if(this.pendingDrops){var count=this.pendingDrops;this.pendingDrops=0;await this.writeEvent({type:'discontinuity',reason:'queue-overflow',packets:count},this.lastDropUs);this.current.manifest.applicationDroppedPackets+=count;}
@@ -60,7 +69,7 @@ Recorder.prototype.flushLoss=async function(){
 };
 Recorder.prototype.shouldRotate=function(item,c,priorPackets,priorBytes){var g=item.group;if(item.type!==1||!g||g.first!==item||!g.boundary||!(c.manifest.packets+(priorPackets||0)))return false;var elapsed=item.atUs-c.manifest.startMonotonicUs;return (elapsed>=this.segmentUs&&(g.keyframe||elapsed>=this.segmentUs+this.overrunUs))||c.bytes+(priorBytes||0)+item.data.length>=this.maxSegmentBytes;};
 Recorder.prototype.drain=async function(){
- while(this.canDrain()&&!this.error){if(this.syncRequested&&this.current){this.syncRequested=false;await this.guard.check(this.current.fd);await io.fsync(this.current.fd);this.current.lastSyncUs=this.nowUs();}if(!this.hasReady())return;var item=this.queue[0];if(!this.current)await this.openSegment(item.atUs);var c=this.current;
+ while(this.canDrain()&&!this.error){if(this.syncRequested&&this.current){this.syncRequested=false;await this.guard.check(this.current.fd);await this.sync(this.current.fd);this.current.lastSyncUs=this.nowUs();}if(!this.hasReady())return;var item=this.queue[0];if(!this.current)await this.openSegment(item.atUs);var c=this.current;
   if(this.shouldRotate(item,c)){await this.flushLoss();await this.finish('segment',item.atUs);await this.openSegment(item.atUs);c=this.current;}
   var batch=[],bytes=0,priorPackets=0;
   for(var i=0;i<this.queue.length&&i<BATCH_RECORDS;i++){var next=this.queue[i];if(next.group&&next.group.first===next&&!next.group.complete&&!this.stopping)break;if(i&&this.shouldRotate(next,c,priorPackets,bytes))break;if(bytes&&bytes+next.data.length>BATCH_BYTES)break;if(c.bytes+bytes+next.data.length>=this.maxSegmentBytes){var cap=Error('Access unit exceeds segment storage limit');cap.code='EFBIG';throw cap;}batch.push(next);bytes+=next.data.length;if(next.type===1)priorPackets++;}
@@ -70,11 +79,11 @@ Recorder.prototype.drain=async function(){
   for(var j=0;j<batch.length;j++){var written=batch[j];c.manifest.endMonotonicUs=Math.max(c.manifest.endMonotonicUs,written.atUs);if(written.type===1){c.manifest.packets++;var parsed=written.parsed;if(parsed){var stream=parsed.ssrc;if(!Object.prototype.hasOwnProperty.call(c.sources,stream)){if(Object.keys(c.sources).length>=8)c.sourceOverflow=true;else c.sources[stream]=false;}}else c.sourceOverflow=true;// A later recovery IDR cannot make an already retained dependent prefix standalone.
     if(parsed&&Object.prototype.hasOwnProperty.call(c.sources,parsed.ssrc)&&!c.sources[parsed.ssrc]&&rtp.opensPredicted(parsed.payload))c.prefixNeeded[parsed.ssrc]=true;
     c.decoder.push(parsed||written.data.slice(24),written.atUs);c.manifest.requiresPrevious=Object.keys(c.prefixNeeded).length>0||c.sourceOverflow||!Object.keys(c.sources).length||Object.keys(c.sources).some(function(k){return !c.sources[k];});}else if(written.event&&written.event.reason==='rtp-sequence-gap')c.manifest.observedSequenceGaps+=written.event.packets||0;}
-  this.queue.splice(0,batch.length);this.queuedBytes-=bytes;await this.flushLoss();var last=batch[batch.length-1].atUs,syncLimit=this.queuedBytes>(this.queueLimit>>2)?SYNC_BUSY_US:SYNC_IDLE_US;if(last-c.lastSyncUs>=syncLimit){await this.guard.check(c.fd);await io.fsync(c.fd);c.lastSyncUs=last;}
+  this.queue.splice(0,batch.length);this.queuedBytes-=bytes;await this.flushLoss();var last=batch[batch.length-1].atUs,syncLimit=this.queuedBytes>(this.queueLimit>>2)?SYNC_BUSY_US:SYNC_IDLE_US;if(last-c.lastSyncUs>=syncLimit){await this.guard.check(c.fd);await this.sync(c.fd);c.lastSyncUs=last;}
  }
 };
 Recorder.prototype.finish=async function(reason,atUs){
- if(!this.current)return;var c=this.current,m=c.manifest;if(reason==='segment')this.predecessorLease.protect(c.id);await this.guard.check(c.fd);await this.writeEvent({type:'end',reason:reason},atUs);await io.fsync(c.fd);await io.close(c.fd);c.fd=null;
+ if(!this.current)return;var c=this.current,m=c.manifest;if(reason==='segment')this.predecessorLease.protect(c.id);await this.guard.check(c.fd);await this.writeEvent({type:'end',reason:reason},atUs);await this.sync(c.fd);await io.close(c.fd);c.fd=null;
  m.endMonotonicUs=Math.max(m.endMonotonicUs,atUs);m.durationSeconds=Math.max(0,(m.endMonotonicUs-m.startMonotonicUs)/1000000);m.bytes=c.bytes;m.stopReason=reason;m.complete=true;
  var self=this;async function publish(){if(self.hornLocks)self.hornLocks.apply(m);await self.guard.check();await io.atomicJSON(path.join(c.dir,'manifest.json'),m);await io.syncDir(c.dir);await self.guard.check();await io.rename(c.dir,path.join(self.root,c.id));await io.syncDir(self.root);self.previousId=c.id;self.current=null;if(self.hornLocks&&m.locked===true&&m.hornLockRevision>0)self.hornLocks.pending=true;}
  if(this.hornLocks)await this.hornLocks.library.lock(publish);else await publish();
@@ -85,11 +94,24 @@ Recorder.prototype.stop=async function(reason){
  this.stopPromise=(async function(){while(self.running)await self.running;if(!self.error&&self.current){try{await self.flushLoss();await self.finish(reason||'stopped',Math.max(self.latestAt,self.nowUs()));}catch(e){await self.fault(e);}}self.predecessorLease.release();self.stopped=true;if(!self.error)self.state='Stopped';})();return this.stopPromise;
 };
 // Recovery reads one bounded record at a time, never loads a full archive into RAM.
-Recorder.recover=async function(root,guard){
+Recorder.recover=async function(root,guard,onPartial){
  await guard.check();await io.safePath(root,'directory');await require('./library').Library.cleanupTrash(root,guard);var hornWindows=await require('./horn-lock').load(root),names=await io.readdir(root),recovered=[];
- for(var i=0;i<names.length;i++){var name=names[i];if(!name.endsWith('.partial')||!UUID.test(name.slice(0,-8)))continue;var id=name.slice(0,-8),dir=path.join(root,name),fd=null;
+ for(var i=0;i<names.length;i++){var name=names[i];if(!name.endsWith('.partial')||!UUID.test(name.slice(0,-8)))continue;var id=name.slice(0,-8),dir=path.join(root,name),fd=null;if(onPartial)onPartial();
   try{await guard.check();await io.safePath(dir,'directory');var file=path.join(dir,'capture.bvr');await io.safePath(file,'file');fd=await io.open(file,fs.constants.O_RDWR|(fs.constants.O_NOFOLLOW||0));await guard.check(fd);var head=await io.readAt(fd,16,0);if(archive.checkHeader(head))throw Error('Invalid partial header');var off=16,first=null,last=0,packets=0,err=null;
-   for(;;){await guard.check(fd);var h=await io.readAt(fd,24,off);if(!h.length)break;if(h.length<24)break;var r;try{r=archive.recordHeader(h);}catch(e){err=e.message;break;}var payload=await io.readAt(fd,r.payloadBytes,off+24);if(payload.length!==r.payloadBytes)break;if(archive.crc32(payload)!==r.crc){err='CRC mismatch';break;}if(first===null)first=r.atUs;last=Math.max(last,r.atUs);if(r.type===1)packets++;off+=24+r.payloadBytes;}
+   var chunkBytes=1024*1024;
+   for(;;){
+    await guard.check(fd);
+    var chunk=await io.readAt(fd,chunkBytes,off),cursor=0;
+    while(chunk.length-cursor>=24){
+     var r;try{r=archive.recordHeader(chunk.slice(cursor,cursor+24));}catch(e){err=e.message;break;}
+     var end=cursor+24+r.payloadBytes;if(end>chunk.length)break;
+     if(archive.crc32(chunk.slice(cursor+24,end))!==r.crc){err='CRC mismatch';break;}
+     if(first===null)first=r.atUs;
+     last=Math.max(last,r.atUs);if(r.type===1)packets++;cursor=end;
+    }
+    off+=cursor;
+    if(err||chunk.length<chunkBytes)break;
+   }
    await guard.check(fd);await io.ftruncate(fd,off);await io.fsync(fd);await io.close(fd);fd=null;
    var m={};try{var st=await io.safePath(path.join(dir,'manifest.json'),'file');if(st.size<=1048576)m=JSON.parse(await io.readFile(path.join(dir,'manifest.json'),'utf8'));}catch(ignore){}
    m.schemaVersion=1;m.format='bvr1';m.id=id;m.sessionId=m.sessionId||uuid();m.sequence=m.sequence||0;m.startedAt=m.startedAt||null;m.clock=m.clock||{source:'head-unit-system',verified:false,utcOffsetMinutes:null};if(!m.clock.iso)m.clock.verified=false;m.startMonotonicUs=first===null?0:first;m.endMonotonicUs=last;m.durationSeconds=Math.max(0,(last-m.startMonotonicUs)/1000000);m.bytes=off;m.packets=packets;m.observedSequenceGaps=m.observedSequenceGaps||0;m.applicationDroppedPackets=m.applicationDroppedPackets||0;m.stopReason='recovered-tail';m.cameraMapping='unverified';m.requiresPrevious=m.requiresPrevious!==false;m.previousId=m.previousId||null;m.complete=false;if(err)m.recoveryError=err;

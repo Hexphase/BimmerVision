@@ -164,6 +164,32 @@ RemoteBackup.prototype.command = async function (command, network) {
     this.quotaAt = 0;
   }
 };
+var BACKUP_PHASES = {
+  "Setup Remote Backup": "setup",
+  "Enter the Google sign-in code": "sign-in",
+  "Waiting for Google sign-in": "sign-in",
+  "Google Drive connected": "connected",
+  "Remote backup off": "off",
+  "Waiting for USB": "waiting-for-usb",
+  "Phone upload active": "phone-upload",
+  "Phone connected; car backup paused": "phone-connected",
+  "Preparing": "preparing",
+  "Queued": "queued",
+  "Uploading": "uploading",
+  "Verifying": "verifying",
+  "Paused": "paused",
+  "Up to date": "up-to-date",
+  "Waiting for drive to finish": "waiting-for-recording",
+  "Missing recording dependency": "missing-dependency",
+  "Reconnect Google Drive": "auth-required"
+};
+function backupPhase(state) {
+  return Object.prototype.hasOwnProperty.call(BACKUP_PHASES, state) ? BACKUP_PHASES[state] : "other";
+}
+function backupErrorCode(code) {
+  return ["storage-full", "auth-required", "rate-limit", "cancelled", "ETIMEDOUT",
+    "ECONNRESET", "ENETUNREACH", "ENOENT", "EIO"].indexOf(code) !== -1 ? code : "retry";
+}
 RemoteBackup.prototype.status = function () {
   var s = (this.data && this.data.settings) || {},
     a = this.data && this.data.account;
@@ -180,6 +206,10 @@ RemoteBackup.prototype.status = function () {
           .slice(-5),
       )
       .slice(0, 50),
+    diagnosticPhase: backupPhase(this.view.state),
+    diagnosticErrorCode: this.now() < this.retryAt
+      ? backupErrorCode(this.lastErrorCode)
+      : null,
     configured: !!a,
     account: a ? a.label || "Google Drive" : null,
     autoUpload: !!s.autoUpload,

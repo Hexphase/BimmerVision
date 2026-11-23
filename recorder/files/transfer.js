@@ -49,6 +49,7 @@ function Transfer(o) {
     function () {
       return {};
     };
+  this.onPair = o.onPair;
   this.tls = o.tls;
   this.host = o.host;
   this.bindHost = o.bindHost !== undefined ? o.bindHost : o.host;
@@ -69,6 +70,8 @@ function Transfer(o) {
   this.httpServer = null;
   this.httpsServer = null;
   this.sockets = new Set();
+  this.localQueue = Promise.resolve();
+  this.local = null;
   this.streams = new Set();
   this.lastDownload = null;
   this.viewerUntil = 0;
@@ -150,6 +153,8 @@ Transfer.prototype.visit = function (id, observedAtMs) {
       });
       function onRequest(req, res) {
         self.handle(req, res, generation).catch(function (e) {
+          if (req.method === "POST" && (req.url || "").split("?")[0] === "/api/v1/pair" && self.onPair)
+            self.onPair(e.statusCode || 500);
           if (!res.headersSent)
             self.json(res, e.statusCode || 500, {
               error: e.statusCode ? e.message : "Transfer unavailable",
@@ -157,7 +162,7 @@ Transfer.prototype.visit = function (id, observedAtMs) {
           else res.destroy();
         });
       }
-      function bind(httpMod, options, port) {
+      function bind(httpMod, options, port, local) {
         return new Promise(function (resolve, reject) {
           var server = options ? httpMod.createServer(options, onRequest) : httpMod.createServer(onRequest);
           server.maxHeadersCount = 32;
@@ -168,17 +173,19 @@ Transfer.prototype.visit = function (id, observedAtMs) {
             socket.setTimeout(10000, function () {
               socket.destroy();
             });
-            if (!self.current || self.sockets.size >= 16) {
+            if (!self.current || (local && self.local !== local) || self.sockets.size >= 16) {
               socket.destroy();
               return;
             }
             self.sockets.add(socket);
+            if(local)local.sockets.add(socket);
             socket.on("close", function () {
               self.sockets.delete(socket);
+              if(local)local.sockets.delete(socket);
             });
           });
           server.once("error", reject);
-          server.listen(port, self.bindHost || self.host, function () {
+          server.listen(port, local ? local.host : self.bindHost || self.host, function () {
             server.removeListener("error", reject);
             if (self.generation !== generation || self.desiredVisit !== id || self.current !== id) {
               // This listener may have finished binding after stop captured
@@ -189,7 +196,8 @@ Transfer.prototype.visit = function (id, observedAtMs) {
             }
             // Register ownership before resolving: stop may run in the very
             // next microtask, before an await/then continuation resumes.
-            if (options) { self.httpsServer=server; self.boundHttpsPort=server.address().port; }
+            if(local)local.servers.push(server);
+            else if (options) { self.httpsServer=server; self.boundHttpsPort=server.address().port; }
             else { self.httpServer=server; self.boundHttpPort=server.address().port; }
             resolve(server);
           });
@@ -220,6 +228,11 @@ Transfer.prototype.visit = function (id, observedAtMs) {
       var onError = function () {
         self.stop();
       };
+      self.bindLocal = async function(local){
+        await bind(http, undefined, self.boundHttpPort, local);
+        await bind(https, tlsOptions, self.boundHttpsPort, local);
+        local.servers.forEach(function(server){server.on("error",onError);});
+      };
       self.httpServer.on("error", onError);
       self.httpsServer.on("error", onError);
       self.timer = setInterval(function () {
@@ -241,6 +254,37 @@ Transfer.prototype.heartbeat = function (id, observedAtMs) {
     this.now() - at < 3000
   )
     this.lastBeat = at;
+};
+// Serialize address changes with teardown so a late bind cannot outlive its screen.
+Transfer.prototype.setLocalHost = function(host,gate){
+  var self=this,generation=this.generation;
+  async function remove(local){
+    self.local=null;
+    local.sockets.forEach(function(socket){socket.destroy();});
+    await Promise.all(local.servers.map(function(server){
+      return new Promise(function(resolve){server.close(resolve);});
+    }));
+    await local.gate.close();
+  }
+  async function change(){
+    if(self.local && self.local.host===host && self.current)return;
+    if(self.local)await remove(self.local);
+    if(!host || generation!==self.generation || !self.current)return;
+    var local={host:host,gate:gate,servers:[],sockets:new Set()};
+    try{
+      await self.bindLocal(local);
+      await gate.open(host,[self.boundHttpPort,self.boundHttpsPort]);
+      if(generation===self.generation && self.current){self.local=local;return;}
+    }catch(e){await remove(local);throw e;}
+    await remove(local);
+  }
+  this.localQueue=this.localQueue.catch(function(){}).then(change);
+  return this.localQueue;
+};
+Transfer.prototype.requestHost = function(req){
+  if(this.local && req.socket && req.socket.localAddress===this.local.host)
+    return this.local.host.indexOf(':')>=0?'['+this.local.host+']':this.local.host;
+  return this.host;
 };
 Transfer.prototype.stop = function (preserveVisit) {
   if (this.backup && this.backup.phone) this.backup.phone.revoke();
@@ -265,6 +309,7 @@ Transfer.prototype.stop = function (preserveVisit) {
     s.destroy();
   });
   this.sockets.clear();
+  var localClosed=this.setLocalHost(null);
   var httpServer = this.httpServer;
   var httpsServer = this.httpsServer;
   this.httpServer = null;
@@ -293,16 +338,17 @@ Transfer.prototype.stop = function (preserveVisit) {
     }
     if (!left) resolve();
   }).then(function(){if(this.network)return this.network.close();}.bind(this));
-  var self=this;this.stopping=this.stopping.then(function(){self.stopping=null;},function(e){self.stopping=null;throw e;});
+  var self=this;this.stopping=Promise.all([this.stopping,localClosed]).then(function(){self.stopping=null;},function(e){self.stopping=null;throw e;});
   return this.stopping;
 };
 Transfer.prototype.acceptHost = function (req) {
   var host = req.headers.host || "";
   if (this.devMode || /^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(host)) return true;
+  var address=this.requestHost(req);
   return (
-    host === this.host + ":" + this.boundHttpPort ||
-    host === this.host + ":" + this.boundHttpsPort ||
-    host === this.host
+    host === address + ":" + this.boundHttpPort ||
+    host === address + ":" + this.boundHttpsPort ||
+    host === address
   );
 };
 Transfer.prototype.viewerConnected = function (on) {
@@ -317,6 +363,8 @@ Transfer.prototype.info = function () {
       on && !this.claimed
         ? "http://" + this.host + ":" + this.boundHttpPort + "/?code=" + this.code
         : "",
+    localAddress: on && (this.local||this.primaryLocal) ? "http://"+(this.local?this.local.host:this.host)+":"+this.boundHttpPort : "",
+    localUrl: on && (this.local||this.primaryLocal) && !this.claimed ? "http://"+(this.local?this.local.host:this.host)+":"+this.boundHttpPort+"/?code="+this.code : "",
     code: on && !this.claimed ? this.code : "",
     download: this.lastDownload ? Object.assign({}, this.lastDownload, {
       elapsedMs: Math.max(0,(this.lastDownload.endedAtMs || this.now())-this.lastDownload.startedAtMs),
@@ -376,7 +424,7 @@ Transfer.prototype.origin = function (req) {
     req.socket && req.socket.encrypted
       ? this.boundHttpsPort
       : this.boundHttpPort;
-  return scheme + "://" + this.host + ":" + port;
+  return scheme + "://" + this.requestHost(req) + ":" + port;
 };
 Transfer.prototype.sameOrigin = function (req) {
   if (this.devMode) return true;
@@ -550,6 +598,7 @@ Transfer.prototype.handle = async function (req, res, generation) {
       );
     var pairResult = { token: this.session.token, csrf: this.session.csrf, apiVersion: 1 };
     if (handoff && handoff.clipIds) pairResult.backupClipIds = handoff.clipIds.slice();
+    if (this.onPair) this.onPair(200);
     this.json(res, 200, pairResult);
     return;
   }

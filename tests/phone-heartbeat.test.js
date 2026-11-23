@@ -29,3 +29,12 @@ test('a heartbeat write failure is handled and later timer ticks can renew the v
  const h=await fixture(t);h.blockPaint();await h.tick();fs.chmodSync(h.recording.directory,0o755);try{await h.tick();assert.ok(h.errors.some(e=>/Unsafe recorder RAM directory/.test(e.message)));}finally{fs.chmodSync(h.recording.directory,0o700);}
  await h.tick();assert.equal(h.recording.intent().transfer.heartbeat,Date.now());h.release();await settle();
 });
+
+test('local Wi-Fi sharing requires a checkbox selection for each Connect Phone visit',async t=>{
+ const h=await fixture(t);
+ assert.equal(h.recording.intent().transfer.localWifi,false);
+ h.components.get('PHONE_LOCAL_WIFI').emit('change',{selected:true});
+ await settle();assert.equal(h.recording.intent().transfer.localWifi,true);
+ await h.runtime.ui.back();assert.equal(h.recording.intent().transfer.visible,false);
+ await h.runtime.ui.press('HOME_LEFT');assert.equal(h.recording.intent().transfer.localWifi,false);
+});

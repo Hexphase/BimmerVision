@@ -34,6 +34,7 @@ Record your drives automatically, review all four cameras simultaneously, and ex
 <li><strong>Review the route:</strong> recorded GPS positions connect the video to its location on the map. Available details depend on the metadata captured by the car.</li>
 </ul>
 <p><strong>Powered by your BMW’s KAFAS camera data:</strong> Driving View is generated from the built-in KAFAS camera perception data captured in the metadata alongside your recordings, combined with recorded vehicle telemetry and GPS.</p>
+<p>BimmerVision’s perception transport, <code>perception-receiver</code>, is a renamed copy of <a href="https://github.com/IterioDev/car-apps/blob/main/tools/iteriodev-comfort/hmictl"><code>hmictl</code></a>, a tool built by IterioDev. It collects the BMW’s KAFAS driver-assistance data, including lane markings, detected traffic, distance to the vehicle ahead, and recognized road signs. BimmerVision saves these detections alongside the video for Basic Driving View playback and part of the Enhanced Driving View.</p>
 <p>The same playback design is available in the car-hosted player and BimmerVision Web. Local USB recordings and metadata are processed in your browser; they are not uploaded to BimmerVision.</p>
 <h3>Export the footage and its context</h3>
 <p>The example below is a frame from an exported video: all four camera views, the GPS map, Driving view and synchronized instrument overlays, including speed, speed limit, blinkers, steering and pedal activity. Choose the cameras and overlays you want when exporting.</p>

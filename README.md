@@ -35,7 +35,7 @@ Record your drives automatically, review all four cameras simultaneously, and ex
 </ul>
 <p><strong>Powered by your BMW’s KAFAS camera data:</strong> Driving View is generated from the built-in KAFAS camera perception data captured in the metadata alongside your recordings, combined with recorded vehicle telemetry and GPS.</p>
 <p>BimmerVision’s perception transport, <code>perception-receiver</code>, is a renamed copy of <a href="https://github.com/IterioDev/car-apps/blob/main/tools/iteriodev-comfort/hmictl"><code>hmictl</code></a>, a tool built by <a href="https://github.com/IterioDev">IterioDev</a>. It collects the BMW’s KAFAS driver-assistance data, including lane markings, detected traffic, distance to the vehicle ahead, and recognized road signs. BimmerVision saves these detections alongside the video for Basic Driving View playback and part of the Enhanced Driving View.</p>
-<p>The same playback design is available in the car-hosted player and BimmerVision Web. Local USB recordings and metadata are processed in your browser; they are not uploaded to BimmerVision.</p>
+<p>The playback design shown above is available in a browser through Connect Phone or BimmerVision Web. Local USB recordings and metadata are processed in your browser; they are not uploaded to BimmerVision.</p>
 <h3>Export the footage and its context</h3>
 <p>The example below is a frame from an exported video: all four camera views, the GPS map, Driving view and synchronized instrument overlays, including speed, speed limit, blinkers, steering and pedal activity. Choose the cameras and overlays you want when exporting.</p>
 <a href="docs/images/exported-video-metadata.png"><img src="docs/images/exported-video-metadata.png" alt="Exported BimmerVision video showing four camera views, GPS map, 3D driving visualization, lead distance, speed limit and instrument overlays" width="640"></a>
@@ -124,7 +124,15 @@ Supported telemetry includes:
 
 Telemetry availability depends on the vehicle's hardware, configuration, and accessible data signals. Not every BMW exposes every data point.
 
-### Playback & Video Export
+### Watch recordings in iDrive
+
+1. Put the car in **Park** and **disable recording** in BimmerVision. Both are required for iDrive playback.
+2. Open **Recordings** in BimmerVision and select a clip. Press the iDrive knob to play or pause. Turn it to seek in five-second steps.
+3. In the four-camera grid, tap a camera to watch that view full screen. Tap again to return to all four cameras.
+
+The iDrive player shows video only. To see recorded metadata such as speed, braking, turn signals, and GPS location, use **Connect Phone** in BimmerVision to open the car’s web player on your phone, or open your recording at [BimmerVision.app](https://bimmervision.app/).
+
+### Web Playback & Video Export
 
 Review your recordings using BimmerVision's player on your phone or computer.
 
@@ -249,7 +257,7 @@ From your phone, you can:
 
 Clips currently being recorded appear in the library once recording of that clip has finished.
 
-### Playback During Active Recording
+### Web Playback During Active Recording
 
 BimmerVision prioritizes recording performance over playback and downloads.
 

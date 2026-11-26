@@ -1,4 +1,13 @@
-# BimmerVision 0.2.87
+# BimmerVision 0.2.91
+
+Install the app and recorder service together through MGU Store. Both are version **0.2.91**.
+
+- The in-car web player opens your car recordings automatically. You can also choose Google Drive or a USB folder.
+- The player loads the recording list faster and exports higher-quality video. Recordings made with this release use the head unit’s display time for timestamps.
+- Camera startup and recorder write handling have been updated.
+- The About screen credits IterioDev for hmictl, bundled as the renamed perception-receiver metadata tool.
+
+## BimmerVision 0.2.87
 
 Install both the app and recorder service at **0.2.87** through MGU Store.
 

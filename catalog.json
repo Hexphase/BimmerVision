@@ -5,28 +5,28 @@
       "id": "bimmervision",
       "kind": "app",
       "title": "BimmerVision",
-      "version": "0.2.87",
+      "version": "0.2.91",
       "description": "Continuous four-camera USB recording for iDrive 7 MGU with Surround View. Includes Google Drive Remote Backup over Wi-Fi, horn-triggered clip protection, and phone/computer playback with recorded telemetry. Back up selected recordings using your phone’s internet and view your saved BimmerVision backups at bimmervision.app. Direct capture performs no BMW Drive Recorder subscription check; a car without an entitlement has not yet been physically tested.",
       "mguHmi": [
         "ID7"
       ],
       "requires": {
-        "bimmervision-recorder": "0.2.87"
+        "bimmervision-recorder": "0.2.91"
       },
       "artifact": {
-        "name": "bimmervision@0.2.87.tgz",
-        "size": 81088,
-        "sha256": "be755bde506c2864456f1a1a5d67374e5750ceff9a874b2dd996edf107318085",
-        "url": "https://github.com/Hexphase/BimmerVision/releases/download/v0.2.87/bimmervision@0.2.87.tgz"
+        "name": "bimmervision@0.2.91.tgz",
+        "size": 81942,
+        "sha256": "c2280ad4714bd90a1b059d983bd027915fbb290272f5c9c79be87434e553e6f2",
+        "url": "https://github.com/Hexphase/BimmerVision/releases/download/v0.2.91/bimmervision@0.2.91.tgz"
       },
-      "icon": "https://github.com/Hexphase/BimmerVision/releases/download/v0.2.87/store-icon.png",
+      "icon": "https://github.com/Hexphase/BimmerVision/releases/download/v0.2.91/store-icon.png",
       "iconSha256": "2699dd3db86fef702d0889c7c6bd7b231bb62490898a257dc41113a48a158836"
     },
     {
       "id": "bimmervision-recorder",
       "kind": "tool",
       "title": "BimmerVision Recorder",
-      "version": "0.2.87",
+      "version": "0.2.91",
       "description": "Required recorder service for BimmerVision. Sets up this car automatically; never includes another car’s credentials.",
       "mguHmi": [
         "ID7"
@@ -39,10 +39,10 @@
       "optional": true,
       "uninstallable": true,
       "artifact": {
-        "name": "bimmervision-recorder@0.2.87.tgz",
-        "size": 3410082,
-        "sha256": "f891d893b6c4b1b8a65d550190938a421129aa0339bb52c4a6bf1d3d05045cbf",
-        "url": "https://github.com/Hexphase/BimmerVision/releases/download/v0.2.87/bimmervision-recorder@0.2.87.tgz"
+        "name": "bimmervision-recorder@0.2.91.tgz",
+        "size": 6240978,
+        "sha256": "bed8d997faa2070ae9f970252f22848972bd6da9b45d58c2f74d7b2d6f3b76d3",
+        "url": "https://github.com/Hexphase/BimmerVision/releases/download/v0.2.91/bimmervision-recorder@0.2.91.tgz"
       }
     }
   ]

@@ -46,7 +46,7 @@ Record your drives automatically, review all four cameras simultaneously, and ex
 
 ## Current release
 
-Install the BimmerVision app and required recorder together through MGU Store. Both components are **0.2.87**. This release adds a shared Wi-Fi option for the phone player, USB speed testing, and recording-health feedback. [Release notes](RELEASE_NOTES.md)
+Install the BimmerVision app and recorder service together through MGU Store. Both are **0.2.91**. This release updates the in-car web player, video exports, and recording timestamps. [Release notes](RELEASE_NOTES.md)
 
 ## Features
 

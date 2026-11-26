@@ -1,4 +1,13 @@
-# BimmerVision 0.2.91
+# BimmerVision 0.2.97
+
+Install the BimmerVision app and recorder service together through MGU Store. Both are version **0.2.97**.
+
+- With the car in Park and recording disabled, open **Recordings** in iDrive. Browse up to ten clips per page and select one to play. The list uses dashboard time.
+- Press the iDrive knob to play or pause. Turn it to scrub in five-second steps. The highlighted marker shows the seek position while you turn.
+- During four-camera playback, tap a camera to enlarge it. Tap again to return to all four.
+- Press **Options** on a highlighted or playing recording to lock, unlock, or delete it. Unlock a protected recording before deleting it.
+
+## BimmerVision 0.2.91
 
 Install the app and recorder service together through MGU Store. Both are version **0.2.91**.
 

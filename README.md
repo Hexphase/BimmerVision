@@ -46,7 +46,7 @@ Record your drives automatically, review all four cameras simultaneously, and ex
 
 ## Current release
 
-Install the BimmerVision app and recorder service together through MGU Store. Both are **0.2.91**. This release updates the in-car web player, video exports, and recording timestamps. [Release notes](RELEASE_NOTES.md)
+Install the BimmerVision app and recorder service together through MGU Store. Both are **0.2.97**. Open **Recordings** in iDrive while parked with recording disabled to play saved clips. Press the knob to play or pause and turn it to seek. [Release notes](RELEASE_NOTES.md)
 
 ## Features
 
@@ -299,7 +299,7 @@ This allows continuous recording without requiring you to manually clear storage
 
 ### Protecting Important Recordings
 
-Recordings can be locked through the connected phone player.
+Press **Options** on a highlighted or playing clip in the iDrive **Recordings** menu to lock it. You can also lock recordings through the connected phone player.
 
 Locked recordings are protected from automatic storage cleanup and the app's bulk erase operation.
 

@@ -62,6 +62,23 @@ RecordedDrives.prototype.command = function (command) {
   var next = this.pending.then(async function () {
     if (self.closed) return;
     var context = self.options.context();
+    if(command.action==="lockClip"||command.action==="deleteClip"){
+      try{
+        const library=context.library,volume=command.volumeToken;
+        if(!library||!volume||volume!==context.volumeToken)throw Error("USB drive changed.");
+        const clipId=library.id(command.clipId);
+        if(command.action==="lockClip"&&typeof command.locked!=="boolean")throw Error("Invalid lock setting.");
+        await self.options.prepareClip();
+        await self.options.mutate(async function(){
+          if(self.options.context().volumeToken!==volume||!self.options.canEditClip())throw Error("Recording unavailable.");
+          if(command.action==="deleteClip")await library.remove(clipId);
+          else await library.setLocked(clipId,command.locked);
+        });
+        self.clipResult={id:id,ok:true};
+        if(self.options.afterChange)await self.options.afterChange().catch(()=>{});
+      }catch(e){self.clipResult={id:id,ok:false,message:String(e.message||e)}}
+      return;
+    }
     self.busy = true;
     self.view.commandId = id;
     try {

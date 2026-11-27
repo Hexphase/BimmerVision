@@ -1,9 +1,9 @@
 {
   "id": "bimmervision-recorder",
   "kind": "tool",
-  "version": "0.2.87",
+  "version": "0.2.97",
   "title": "BimmerVision Recorder",
-  "description": "Required recorder service for BimmerVision. Sets up this car automatically; never includes another car’s credentials.",
+  "description": "Required recorder service for BimmerVision. Sets up this car automatically; never includes another car\u2019s credentials.",
   "optional": true,
   "uninstallable": true,
   "mguHmi": [
@@ -17,6 +17,12 @@
   "internet": true,
   "uids": "data/backup-network-uid",
   "files": [
+    {
+      "path": "LICENSE",
+      "mode": "0644",
+      "sha256": "cac6e1d4339c48930ce9627e12c3f6b45be33b1e3f0eb41d1bfe821c7550fda4",
+      "from": "files/LICENSE"
+    },
     {
       "path": "RECEIVER-PROVENANCE.json",
       "mode": "0644",
@@ -32,7 +38,7 @@
     {
       "path": "archive.js",
       "mode": "0644",
-      "sha256": "8045064d35dc33c1d01fd125a5f33d59af15e85548d0820ab43c76ad699e9f5d",
+      "sha256": "87c7c1b7dc9198dfd71d3145d97fd2585915cc27ac31ab0044dcb09dee1872a5",
       "from": "files/archive.js"
     },
     {
@@ -140,13 +146,13 @@
     {
       "path": "browser.js",
       "mode": "0644",
-      "sha256": "cf8cf7b2baad8b76da37ee3a39c9d5e4d1730804302cadb516d2a0ef109ecb53",
+      "sha256": "3ec5f39d75c0b31b9df4f8b670ddbe0959a4fb0c48347ec49ce5e1b2a3d90539",
       "from": "files/browser.js"
     },
     {
       "path": "camera-control.js",
       "mode": "0644",
-      "sha256": "4d1c8584c71b8dfa40c4cfe33118b1712aacb66105cef0558b5d2b13c01c8edd",
+      "sha256": "1674ff0e543beeb8248125e550bd48d1016e33b914b4c82769fa255186b5dd17",
       "from": "files/camera-control.js"
     },
     {
@@ -212,7 +218,7 @@
     {
       "path": "main.js",
       "mode": "0644",
-      "sha256": "638559248fad6512e7e6ff8ceaa0b2f5d5c67d219e813e8ce12a9ca4e77e073d",
+      "sha256": "c731ff29a56aa895b7a07907a60fbc9a61d1eb0d365713080b1ae8582dc5e5c3",
       "from": "files/main.js"
     },
     {
@@ -224,7 +230,7 @@
     {
       "path": "mobile-web/app.js",
       "mode": "0644",
-      "sha256": "bd7acb40aef8df0786fbb0ee3d37d6c222065172212dc7fdd91cb68dda199c99",
+      "sha256": "4eb4979ce142b4d0ee89b2e9ba8d65172950be4edae3db03d3a5852a385c1b72",
       "from": "files/mobile-web/app.js"
     },
     {
@@ -246,6 +252,24 @@
       "from": "files/mobile-web/assets/bimmervision.ico"
     },
     {
+      "path": "mobile-web/assets/chevron.svg",
+      "mode": "0644",
+      "sha256": "436b64029e3e9d59378854c75b025c711dd14dab20a690ea6d4d9ea4e3e071c0",
+      "from": "files/mobile-web/assets/chevron.svg"
+    },
+    {
+      "path": "mobile-web/assets/dashcam-demo.jpg",
+      "mode": "0644",
+      "sha256": "c722b800d8dfa2572d02e2d83f284e9b0304f6671b361256b427220c791ea570",
+      "from": "files/mobile-web/assets/dashcam-demo.jpg"
+    },
+    {
+      "path": "mobile-web/assets/dashcam-demo.mp4",
+      "mode": "0644",
+      "sha256": "432e5f0242661b003f4c022ffe16802e236a9b2baf38b933d33733bb028968e7",
+      "from": "files/mobile-web/assets/dashcam-demo.mp4"
+    },
+    {
       "path": "mobile-web/assets/sedan-topdown.png",
       "mode": "0644",
       "sha256": "0674b72f1e8d0a8122162c4f737a24b4fca5d1ea9f4b3001171ce6931b7263e8",
@@ -254,8 +278,26 @@
     {
       "path": "mobile-web/assets/vehicles/PROVENANCE.md",
       "mode": "0644",
-      "sha256": "200993c7c19ca1aa38d08d0101ef97e27e2d834da75f96fae89d1f24c93c7d71",
+      "sha256": "2d35d509bdc1e44e9303a7fe411a3acaa506bb9038b4aefa7ecf75ffca907c84",
       "from": "files/mobile-web/assets/vehicles/PROVENANCE.md"
+    },
+    {
+      "path": "mobile-web/assets/vehicles/dashboard-sedan.webp",
+      "mode": "0644",
+      "sha256": "e23849adc21f56051be907ea33dcf984ec1f066b6902065055a543bb6aa5080c",
+      "from": "files/mobile-web/assets/vehicles/dashboard-sedan.webp"
+    },
+    {
+      "path": "mobile-web/assets/vehicles/home-driving.webp",
+      "mode": "0644",
+      "sha256": "90c298c0dc337e8975522e5864b36c9e27002c054f670c48cf09be4f5801b7b7",
+      "from": "files/mobile-web/assets/vehicles/home-driving.webp"
+    },
+    {
+      "path": "mobile-web/assets/vehicles/sedan-replay.bin.gz",
+      "mode": "0644",
+      "sha256": "408c8fe5e371b0b21a21eae3db2fe9bf7e7f412bb53e2f4b506959c1a412588b",
+      "from": "files/mobile-web/assets/vehicles/sedan-replay.bin.gz"
     },
     {
       "path": "mobile-web/assets/vehicles/sedan.bin.gz",
@@ -278,7 +320,7 @@
     {
       "path": "mobile-web/bvr-parser.js",
       "mode": "0644",
-      "sha256": "448f66a41bf90aabd75a896ae6c6eb556e189d6a99ddc2f72eca062678732515",
+      "sha256": "b44977392db536ca7a2e65cba70e017a1220cd177630742067b8cca4036128bd",
       "from": "files/mobile-web/bvr-parser.js"
     },
     {
@@ -302,7 +344,7 @@
     {
       "path": "mobile-web/car-source.js",
       "mode": "0644",
-      "sha256": "31092e315d432352c6f9f4f628985d7c94562fd9669ed11079e2cc010995b0d5",
+      "sha256": "dfd7ed6e3cc0b6ff4330829fc8f956aa25a6bc4eebd7bcde6d71b461082a786e",
       "from": "files/mobile-web/car-source.js"
     },
     {
@@ -314,50 +356,86 @@
     {
       "path": "mobile-web/dark-osm-map.js",
       "mode": "0644",
-      "sha256": "55fa0ff90680ed97a61ca0bf75556d929942b8d3d61b15dca6152e6f7aa90e09",
+      "sha256": "1001cdb3ae78eedbc02593916a7f90816af47ab53c652278a9d72fe34a09e715",
       "from": "files/mobile-web/dark-osm-map.js"
+    },
+    {
+      "path": "mobile-web/dashboard.css",
+      "mode": "0644",
+      "sha256": "610f87cca8665406c078160eba64e1300ce1cec82f8cde3f1654eb5299ba4801",
+      "from": "files/mobile-web/dashboard.css"
     },
     {
       "path": "mobile-web/drive-grouper.js",
       "mode": "0644",
-      "sha256": "e7063694889fa0cfefe82a7635e90595be8f1f80ce805f689500f0e0498b7090",
+      "sha256": "66b572cb9aec429ac7aedc41c9f948139d5f00d113d5622b50c610644e563db0",
       "from": "files/mobile-web/drive-grouper.js"
     },
     {
       "path": "mobile-web/drive-timeline.js",
       "mode": "0644",
-      "sha256": "119fcdecc6215b7741dafd81990969a88e466f95473588097cbe43a8cfe1e06e",
+      "sha256": "963b1d23338203ee107e649b1629f7f9d57dfe84353ea2ad6ebe75c9d0f9cb3a",
       "from": "files/mobile-web/drive-timeline.js"
+    },
+    {
+      "path": "mobile-web/driving-history.mjs",
+      "mode": "0644",
+      "sha256": "5f6a5e74d38dbca6255f1450da9fae360762172fd0cf21e976a7f9365890239b",
+      "from": "files/mobile-web/driving-history.mjs"
     },
     {
       "path": "mobile-web/driving-scene.js",
       "mode": "0644",
-      "sha256": "f35d7ccc5864d6e2ff4fdf474dc329d7718d4e745733ee94cec07c983f7471a8",
+      "sha256": "75941ec28d3286fbf68b74d6250e502d5ad00d60fa20148b4ada169909ec0196",
       "from": "files/mobile-web/driving-scene.js"
     },
     {
       "path": "mobile-web/driving-view.css",
       "mode": "0644",
-      "sha256": "eee9d65636cfe79c83f4cab1e248f33a53b36d4fb6e5494180aa99f06a04c72b",
+      "sha256": "101d51d87e9e38817df23a8113cd0ed80d78e66e149f38c3da311b8a42946f44",
       "from": "files/mobile-web/driving-view.css"
     },
     {
       "path": "mobile-web/driving-view.js",
       "mode": "0644",
-      "sha256": "ac64176dea94ac1a03f1815f06d791700a3d8962739c833ed8280579de6d63c5",
+      "sha256": "92926d72ef822ac9e26f4cd063b98993d54717561b22a8e473bcf21de0736cf1",
       "from": "files/mobile-web/driving-view.js"
     },
     {
       "path": "mobile-web/exporter.js",
       "mode": "0644",
-      "sha256": "94df1c64a83a43a8e0e7427393b7d45b9b5236c6a872b4a7e51aa61e5ceabee6",
+      "sha256": "c52fef22b18e0f62ee0767a63c5722d540eecfc3d461233a68798e83fb15cd3f",
       "from": "files/mobile-web/exporter.js"
+    },
+    {
+      "path": "mobile-web/google-drive-backup.js",
+      "mode": "0644",
+      "sha256": "ba41dad4b850d7f7f449814021be91e21eaff68ccac9bc832582cd1a2384a423",
+      "from": "files/mobile-web/google-drive-backup.js"
+    },
+    {
+      "path": "mobile-web/homepage.css",
+      "mode": "0644",
+      "sha256": "15ae3782e5428e327e13843605400be43f82e10d54a6e507170fcdc4987c5911",
+      "from": "files/mobile-web/homepage.css"
+    },
+    {
+      "path": "mobile-web/hosted.css",
+      "mode": "0644",
+      "sha256": "828d6908f378d639262498c907052ac37013c0a7f759409208861905a398acd0",
+      "from": "files/mobile-web/hosted.css"
     },
     {
       "path": "mobile-web/index.html",
       "mode": "0644",
-      "sha256": "9dc0e980daee0783ea2c5838d9cab8f2cc3c075d6afd443d90799d107c73a079",
+      "sha256": "766c96bfb8f775bbc31a50e68b33285e97d1684bb7cc4f619fe943a3201c2a78",
       "from": "files/mobile-web/index.html"
+    },
+    {
+      "path": "mobile-web/local-source.js",
+      "mode": "0644",
+      "sha256": "69bebd7431e6344de6d2408bccdc0955ad7e2a17fe12f77ca7b0ea9cd232009f",
+      "from": "files/mobile-web/local-source.js"
     },
     {
       "path": "mobile-web/mobile.css",
@@ -368,13 +446,13 @@
     {
       "path": "mobile-web/more-menu.css",
       "mode": "0644",
-      "sha256": "d7319f75fb5f828cbdecc7f75623002a270402012315cfdcd0e847c2a7276c5f",
+      "sha256": "f0d40938ae6d33e83313afddc35b7faa2a62cf750d3430289dc9db2cc5510985",
       "from": "files/mobile-web/more-menu.css"
     },
     {
       "path": "mobile-web/more-menu.js",
       "mode": "0644",
-      "sha256": "f162029533be41c48f40c114d06cd7c25d00e79258c68659dec38c52491d3e75",
+      "sha256": "08746a9f079cb207eb8861a0564385d381a2a3edadf9aeda5cbf5f8a9d568d72",
       "from": "files/mobile-web/more-menu.js"
     },
     {
@@ -386,7 +464,7 @@
     {
       "path": "mobile-web/perception-data.js",
       "mode": "0644",
-      "sha256": "d2aaf7cbaf49931c3d96b5c5fd5c9e6a06ac57b74acfa3b8319220f9c98398d5",
+      "sha256": "a678d8351439c1e33f4fc1edde054d193a81f22b6f84f121e00ec888639b3c78",
       "from": "files/mobile-web/perception-data.js"
     },
     {
@@ -398,26 +476,38 @@
     {
       "path": "mobile-web/playback-layout.css",
       "mode": "0644",
-      "sha256": "00afa1e589620c58ecd4c349af2d51fe456bf3402186e62c2ff569a3fd3e1ee1",
+      "sha256": "7b929638b7a948fc444fee459b6ca8828c39ac81a19d437daa832e7e13bfb656",
       "from": "files/mobile-web/playback-layout.css"
     },
     {
       "path": "mobile-web/playback-layout.js",
       "mode": "0644",
-      "sha256": "ff72318c33f49fe7a1018418f5783451152583a08595367c8a724a5067931612",
+      "sha256": "fe558da282f1a8cc185400037ef42c0fbc06bc10063146f12f7c6b52364c983b",
       "from": "files/mobile-web/playback-layout.js"
     },
     {
       "path": "mobile-web/player.js",
       "mode": "0644",
-      "sha256": "46807a775707e3244295585b9de671250d99f518387a8d8fbab01625087cde67",
+      "sha256": "3b04020633d6a6fba76ef50870005a15736dd56766cda3549b0fc9fefd78563d",
       "from": "files/mobile-web/player.js"
+    },
+    {
+      "path": "mobile-web/privacy.html",
+      "mode": "0644",
+      "sha256": "c5d7a7a36ffc05662dee9269c95603d130e072dccf6493a1bdc8d703b697873f",
+      "from": "files/mobile-web/privacy.html"
     },
     {
       "path": "mobile-web/raw-download.js",
       "mode": "0644",
       "sha256": "abcee57655e64d3bf7ea4ef117b0a9e8180c6b295adf99a53659fd4fa7e583b9",
       "from": "files/mobile-web/raw-download.js"
+    },
+    {
+      "path": "mobile-web/raw-zip.js",
+      "mode": "0644",
+      "sha256": "9dc5a942a2116557b796c7dcef87386f48c88da972fd4e2a4666ea71826da7f8",
+      "from": "files/mobile-web/raw-zip.js"
     },
     {
       "path": "mobile-web/recording-backup-action.js",
@@ -430,6 +520,12 @@
       "mode": "0644",
       "sha256": "3b96908b9d35bcb24454459875fac9491e7bbd8d6c83207aca364b822a739c3a",
       "from": "files/mobile-web/recording-cache.js"
+    },
+    {
+      "path": "mobile-web/recording-metadata.js",
+      "mode": "0644",
+      "sha256": "3eece939a8b875a75d6d2aa89999253cc637a7d8cd612fac17e66d13ccba252e",
+      "from": "files/mobile-web/recording-metadata.js"
     },
     {
       "path": "mobile-web/recording-navigation.js",
@@ -446,7 +542,7 @@
     {
       "path": "mobile-web/recordings-layout.css",
       "mode": "0644",
-      "sha256": "e5df87c2bb706ef88d63599245bd6ac2e84161ec90525e22568384ea685830fc",
+      "sha256": "b227af2f079d7a17a4316ea94c2943e8094d295e22fc2f5321e9bfb5e8c41978",
       "from": "files/mobile-web/recordings-layout.css"
     },
     {
@@ -458,37 +554,43 @@
     {
       "path": "mobile-web/remote-backup-page.css",
       "mode": "0644",
-      "sha256": "36eda8a55c7a5b2915f020083ce3e26f6c843c13921d8456440e8649dfb47db3",
+      "sha256": "b09fc371a09e5396bed3877106bf0836a7ee7ca8edba4d27c408ba02dcfdb7ca",
       "from": "files/mobile-web/remote-backup-page.css"
     },
     {
       "path": "mobile-web/remote-backup-page.js",
       "mode": "0644",
-      "sha256": "19f4a8b46d5c3b0ed1d737d065837a7ae9091f7c89bc47fa7fbc6f1c5aea659e",
+      "sha256": "ab59d6e128850579c37e33779c59c2230d02673f0bb4ef684ce83fb4c08a99ad",
       "from": "files/mobile-web/remote-backup-page.js"
     },
     {
       "path": "mobile-web/road-estimation.js",
       "mode": "0644",
-      "sha256": "75258fc791805f568f02046492aa52a967cf5e3007869387c5b9affef36ab605",
+      "sha256": "98213195b7f4da7edf1846893e437f0b7eebe0dc8178f612f3c41c7ca2c5f32a",
       "from": "files/mobile-web/road-estimation.js"
     },
     {
       "path": "mobile-web/rtp-h264.js",
       "mode": "0644",
-      "sha256": "3b7fa25e04f0e10d898a30304a1ff2d9a1ab34dc141795b7273e5a8988400cd0",
+      "sha256": "9d4b7f1da23e2230700127f36778955f70fcaf8a1e048e215548f87518bef5d4",
       "from": "files/mobile-web/rtp-h264.js"
     },
     {
       "path": "mobile-web/sedan-selector.js",
       "mode": "0644",
-      "sha256": "277815b75a3b5b50fbf97baf617e8a54f36d8832f7ad9bd1878400c0d32af3e6",
+      "sha256": "c71d46693f58a53aa12bda4b7af366b9bc7852e6fb2e7d7b771fa968219d5aae",
       "from": "files/mobile-web/sedan-selector.js"
+    },
+    {
+      "path": "mobile-web/source-controller.js",
+      "mode": "0644",
+      "sha256": "113e03c67b589c2b827454d61693108a2c87df936c6de85513159c35a7ecf380",
+      "from": "files/mobile-web/source-controller.js"
     },
     {
       "path": "mobile-web/source-manager.js",
       "mode": "0644",
-      "sha256": "5331f852b4ca320c13f16605f0672c843ae3d48aebdce79daafc4093f272d787",
+      "sha256": "e98e43484ae76106e2c8daf5328002a656c0fad5e64ff1a04d527dd7be6029a2",
       "from": "files/mobile-web/source-manager.js"
     },
     {
@@ -506,8 +608,14 @@
     {
       "path": "mobile-web/style.css",
       "mode": "0644",
-      "sha256": "348014ad1c4522ae7350d1e14a1f6ba2f738f1ca03dfde2d01073bc6862b6fa5",
+      "sha256": "5c221143d1ee5da88bae9f4eef7d00dd8330e7d3a10dc1a569ba8acfc82c0880",
       "from": "files/mobile-web/style.css"
+    },
+    {
+      "path": "mobile-web/terms.html",
+      "mode": "0644",
+      "sha256": "b3318a5882cb6fc407082fc503b3230d8338057fcdae17349caea69a372f25dc",
+      "from": "files/mobile-web/terms.html"
     },
     {
       "path": "mobile-web/traffic-signs.js",
@@ -518,7 +626,7 @@
     {
       "path": "mobile-web/vehicle-motion.js",
       "mode": "0644",
-      "sha256": "28bbf81ce403741eab99aca7ae64cf19097e8d9bee85a3244b8fe0ffe9e39510",
+      "sha256": "4aa96072d2c6228ef29e5e1106cec6a3f99a2d664c195391e8a283a9d441c343",
       "from": "files/mobile-web/vehicle-motion.js"
     },
     {
@@ -546,9 +654,21 @@
       "from": "files/mobile-web/viewer-connection.js"
     },
     {
+      "path": "mobile-web/welcome.css",
+      "mode": "0644",
+      "sha256": "1359bc8fd9d0ae0c9696c38437c94c0f6da97fbe5e595209b3403ca97859035c",
+      "from": "files/mobile-web/welcome.css"
+    },
+    {
+      "path": "mobile-web/welcome.js",
+      "mode": "0644",
+      "sha256": "3e7452544b23fb81d1425462d0309de2466822608297f0cf7de927aa34362b6a",
+      "from": "files/mobile-web/welcome.js"
+    },
+    {
       "path": "oem-signals.js",
       "mode": "0644",
-      "sha256": "2fb2a7fe7e380e1c75690d0ef87f0b4c7704accb84b6f78087c9b3690f9d640b",
+      "sha256": "55d76d043a9a1f0dfea499258b0326c1a1e54d6914e51ddd6275f6cc7f54c8b9",
       "from": "files/oem-signals.js"
     },
     {
@@ -556,6 +676,24 @@
       "mode": "0644",
       "sha256": "7010976c9a3ddbbb1a7eb61df2e8ccd872f1ce5e3e945e578c82ead1a52c386b",
       "from": "files/pack.js"
+    },
+    {
+      "path": "parked-decoder",
+      "mode": "0755",
+      "sha256": "1c10d3a18616dea2f5cb4accee0ddda8f0d0bc49f973178855965c794b91663b",
+      "from": "files/parked-decoder"
+    },
+    {
+      "path": "parked-feed.js",
+      "mode": "0644",
+      "sha256": "2bdbbd4fc9c94eaa200229f5c95c90c983fc6a648fc252f6fe23be85e24a397d",
+      "from": "files/parked-feed.js"
+    },
+    {
+      "path": "parked-playback.js",
+      "mode": "0644",
+      "sha256": "e6f3db8975dce8381278f9c0e4ae1a67fec821ff8144babec3a8e958a6b84647",
+      "from": "files/parked-playback.js"
     },
     {
       "path": "perception-receiver",
@@ -572,13 +710,13 @@
     {
       "path": "perception-transport.json",
       "mode": "0644",
-      "sha256": "ac4555bd9119ae2f5d714564a1835cd9452122d64c3869736e37b4a949c90b5b",
+      "sha256": "9cfaa9ce6b911570bfe31794b43b33ef1871d671f6846b47a4993e86bbb25340",
       "from": "files/perception-transport.json"
     },
     {
       "path": "perception.js",
       "mode": "0644",
-      "sha256": "827456a86cd9c1034652472a22b448c79dedb4726770a39e3785075c613dc026",
+      "sha256": "3b2e86d419edfbf4dc9f4025d557f77bf57b8f77a6cfc9bb3cd3029a5d143735",
       "from": "files/perception.js"
     },
     {
@@ -614,13 +752,13 @@
     {
       "path": "recorded-drives.js",
       "mode": "0644",
-      "sha256": "22dd835296077d35182b1389a55a1c700d55cac1aa70a8124eec80ad2d1da4ac",
+      "sha256": "616374af1e9a3bde1df1e99ce346ddeb2a643ab89c5639f19c04c1c585f4a655",
       "from": "files/recorded-drives.js"
     },
     {
       "path": "recorder.js",
       "mode": "0644",
-      "sha256": "2fb5548d1d44e1c70f0cc5e0b55fcac6a2cb38a3f340fc0a3d11c7d5f69f936a",
+      "sha256": "e3b8d388a8a370b3b6388610be986b6b8e70c79329cdcb5388d6d05c7454f4dd",
       "from": "files/recorder.js"
     },
     {
@@ -632,7 +770,7 @@
     {
       "path": "recording-preference.js",
       "mode": "0644",
-      "sha256": "82c0326e4145e06af23dda011758f92d629cbf8433c175726b01b13bac964564",
+      "sha256": "75da7e035856c0954138519c2babd57742a5a0d2ddedbc2992d68573ff984c04",
       "from": "files/recording-preference.js"
     },
     {
@@ -674,13 +812,13 @@
     {
       "path": "telemetry.js",
       "mode": "0644",
-      "sha256": "da37fc9d44f56d3b214d5d6099eacfcbc9ad35e7d0881959ef0dd61d6f3c9e53",
+      "sha256": "19b8bc362f03a1bea4405e0a4c3e1844baa2a823b5944e33d240b73093bb25a0",
       "from": "files/telemetry.js"
     },
     {
       "path": "transfer.js",
       "mode": "0644",
-      "sha256": "7ecc5d063a09aec89c0467a02758eb20491cdaf55469df2ad8900a5a12971e9e",
+      "sha256": "232bdf518653a70df9053453cfa3156217b48e7db57eb51bfdba62b8bb3a070b",
       "from": "files/transfer.js"
     },
     {
@@ -698,7 +836,7 @@
     {
       "path": "version.json",
       "mode": "0644",
-      "sha256": "dbb41524c45fdcc1e3d5ca3980809814b53ccf250f7d69f988bb955e16c99ebe",
+      "sha256": "7d30749cc2845725c8c98a26f5869bb0d53497de2244e4e24c745fd9deaecd35",
       "from": "files/version.json"
     }
   ],

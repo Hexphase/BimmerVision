@@ -12,7 +12,7 @@ class DarkOsmMap {
     this.track = options.track || []; // [{ at, latitude, longitude }]
     this.currentTime = 0;
 
-    this.tileCache = new Map(); // key -> HTMLCanvasElement (pre-darkened)
+    this.tileCache = new Map(); // key -> decoded raster tile
     this.pendingTiles = new Set();
     this.failedTiles = new Map();
     this.defaultZoom = 16;
@@ -378,7 +378,8 @@ class DarkOsmMap {
     const endTileY = Math.floor((h - originY) / tileSize);
 
     const maxTile = 1 << zoom;
-    let visibleFailure=false;
+    const localFile = globalThis.location?.protocol === 'file:';
+    let visibleFailure = localFile;
 
     // Draw dark vector grid lines first (ensures crisp display on vehicle Wi-Fi)
     ctx.save();
@@ -417,13 +418,24 @@ class DarkOsmMap {
           ctx.restore();
         } else {
           if(this.failedTiles.has(tileKey))visibleFailure=true;
-          if (!this.pendingTiles.has(tileKey) && Date.now()-(this.failedTiles.get(tileKey)||0)>30000) {
+          if (!localFile && !this.pendingTiles.has(tileKey) && Date.now()-(this.failedTiles.get(tileKey)||0)>30000) {
             this._loadTile(tileKey,zoom,normalizedTx,ty);
           }
         }
       }
     }
-    if(visibleFailure){ctx.fillStyle='#10141c';ctx.fillRect(6,6,230,22);ctx.fillStyle='#c6cdd8';ctx.font='10px system-ui';ctx.fillText('Street map unavailable • Internet needed',14,21);}
+    if (visibleFailure) {
+      ctx.save();
+      ctx.font = '10px system-ui';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      const label = localFile ? 'Street map requires a web address' : 'Street map unavailable';
+      ctx.fillStyle = '#10141c';
+      ctx.fillRect(6, h - 31, ctx.measureText(label).width + 12, 15);
+      ctx.fillStyle = '#c6cdd8';
+      ctx.fillText(label, 12, h - 18);
+      ctx.restore();
+    }
   }
 
   _drawRoute(ctx, w, h, zoom, centerWorld, vehicleFix) {

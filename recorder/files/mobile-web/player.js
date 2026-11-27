@@ -5,7 +5,7 @@
  */
 function bvFetch(url, options) {
   options = options || {};
-  if (typeof window !== 'undefined' && window.BVSourceManager) return window.BVSourceManager.fetch(url,options);
+  if (typeof window !== "undefined" && window.BVSourceManager) return window.BVSourceManager.fetch(url,options);
   var headers = Object.assign({}, options.headers || {});
   var bearer = sessionStorage.getItem("bimmervision_bearer");
   if (bearer && !headers.Authorization) headers.Authorization = "Bearer " + bearer;
@@ -182,7 +182,7 @@ class BimmerVisionPlayer {
     this.decoder = null;
     if (this._nativeVideo) { this._nativeVideo.pause(); this._nativeVideo.removeAttribute('src'); this._nativeVideo.load(); this._nativeVideo.remove(); this._nativeVideo = null; }
     this._clearFrameCache(); this.lastFrFrame = null; this.lastLrFrame = null;
-    if (this._nativeMediaUrl) { URL.revokeObjectURL(this._nativeMediaUrl); this._nativeMediaUrl=null; }
+    if (this._nativeMediaUrl) { URL.revokeObjectURL(this._nativeMediaUrl); this._nativeMediaUrl=null;this._nativeBlob=null; }
     this.streamPromise=null; this.streamComplete=false;
     this.manifest = null; this.parser = null; this.nativeInfo = null;
     this._updateRecordedView(null);
@@ -290,7 +290,7 @@ class BimmerVisionPlayer {
     this.cameraMapping = this._loadCameraMapping(this.activeClipId);
     this._updateScrubber();
     if (this.nativeAvailable) return this._loadNative(manifest, epoch, signal);
-    if (typeof VideoDecoder === 'undefined') throw new Error('Video playback needs HTTPS on this browser. Open the HTTPS address, or use the computer LAN test server for native playback.');
+    if (typeof VideoDecoder === 'undefined') throw new Error('This browser does not support the video decoder needed for these recordings. Open this page in a current Chrome, Edge or Safari browser with WebCodecs support.');
     this.assembler = new RtpH264Assembler({startMonotonicUs: manifest.startMonotonicUs, recoveryInfo: manifest.recoveryInfo});
     const assembler = this.assembler;
     let released=0;
@@ -337,7 +337,8 @@ class BimmerVisionPlayer {
     this.streamPromise=this._downloadRecording(info.mediaUrl,signal,chunk=>parts.push(chunk));
     await this.streamPromise;
     if(signal.aborted || epoch!==this._clipEpoch) throw new DOMException('Cancelled','AbortError');
-    this._nativeMediaUrl=URL.createObjectURL(new Blob(parts,{type:'video/mp4'}));
+    this._nativeBlob=new Blob(parts,{type:'video/mp4'});
+    this._nativeMediaUrl=URL.createObjectURL(this._nativeBlob);
     this._setState('loading','Preparing camera frames…');
     this.parser = new StreamingBvrParser({}); this.parser.telemetryRecords = info.telemetry || [];
     this.assembler = null; this.accessUnits = [];
@@ -491,7 +492,11 @@ class BimmerVisionPlayer {
   setSedanSelector(selector) {this.sedanSelector=selector;}
   setLiveMap(map) {this.liveMap=map;}
 
-  setDrivingView(view) {this.drivingView=view;}
+  setDrivingView(view) {
+    this.drivingView=view;
+    view.speedUnit=()=>this.speedUnit;
+  }
+
   _tick() {
     if(!this.isPlaying) return;
     const now=performance.now(),dt=Math.min(0.15,Math.max(0,(now-this.lastFrameWallTime)/1000)); this.lastFrameWallTime=now;
@@ -649,7 +654,7 @@ class BimmerVisionPlayer {
   /**
    * Helper for Camera Identity dialog: returns current raw source frame
    */
-  getCurrentRawFrame(phase = 0) {
+  getCurrentRawFrame(phase = 0,time=this.currentTime) {
     if (this._nativeVideo) {
       const idx = phase === 1 ? 1 : 0;
       const bitmap = (this._nativePairs && this._nativePairs[idx]) || this.lastFrFrame || this.lastLrFrame;
@@ -663,8 +668,8 @@ class BimmerVisionPlayer {
       };
     }
     if (!this.accessUnits || this.accessUnits.length === 0) return null;
-    const targetPhase=phase===1?1:0,index=this._indexAt(this.currentTime);
-    const view=this.parser?.getCameraViewAtTime(this.currentTime,this.manifest?.startMonotonicUs);
+    const targetPhase=phase===1?1:0,index=this._indexAt(time);
+    const view=this.parser?.getCameraViewAtTime(time,this.manifest?.startMonotonicUs);
     let au=null,bitmap=null;
     for(let i=index;i>=Math.max(0,index-12);i--){
       const candidate=this.accessUnits[i];

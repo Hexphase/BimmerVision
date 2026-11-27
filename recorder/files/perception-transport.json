@@ -1,5 +1,7 @@
 {
   "schemaVersion": 1,
+  "_comment": "The perception-receiver executable is IterioDev’s hmictl from iteriodev-comfort 0.5.1, distributed here under a different filename.",
+  "upstream": "https://github.com/IterioDev/car-apps",
   "file": "perception-receiver",
   "sha256": "908369103f3a1f1997686f0d8a1bbc0e4a81113f5e1965d1a34f1c6ad9d86ef5",
   "source": "Vehicle-Software-Audit-2026-11-12: iteriodev-comfort/versions/0.5.1/hmictl",

@@ -10,7 +10,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Drive Overview Elements
   const driveListEl = document.getElementById("driveList");
-  const driveCountEl = document.getElementById("driveCount");
+  const librarySummary = document.getElementById('librarySummary');
+  const librarySourceName = document.getElementById('librarySourceName');
+  document.getElementById('libraryChangeSourceBtn').addEventListener('click', () => {
+    document.getElementById('changeSourceBtn').click();
+  });
+  const librarySettingsButton = document.getElementById('librarySettingsBtn');
+
   const overviewTitle = document.getElementById("overviewTitle");
   const overviewSubtitle = document.getElementById("overviewSubtitle");
   const overviewPlayBtn = document.getElementById("overviewPlayBtn");
@@ -30,7 +36,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Playback & HUD Elements
   const canvas = document.getElementById("videoCanvas");
   const sedanContainer = document.getElementById("sedanSelectorContainer");
-  const openCalibrateBtn = document.getElementById("openCalibrateBtn");
   const advancedDetailsToggle = document.getElementById("advancedDetailsToggle");
   const debugBanner = document.getElementById("debugOutput");
   const videoLoadingModal = document.getElementById("videoLoadingModal");
@@ -103,7 +108,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   player.setLiveMap(playbackMap);
 
   const driveIcon = name => {
-    const paths={play:'<path d="m8 5 11 7-11 7Z" fill="currentColor" stroke="none"/>',overview:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 16v-4m5 4V8m5 8v-6"/>',clips:'<rect x="5" y="3" width="16" height="14" rx="2"/><path d="M17 21H5a2 2 0 0 1-2-2V7m8 0h6m-6 4h6"/>',upload:'<path d="M12 15V3m-4 4 4-4 4 4M4 16v4h16v-4"/>',download:'<path d="M12 3v12m-4-4 4 4 4-4M4 16v4h16v-4"/>'};
+    const paths={backup:'<path d="M7 18H6a4.5 4.5 0 0 1-.4-9 6.5 6.5 0 0 1 12.4-1 5 5 0 0 1 0 10h-1m-5 2V11m-3 3 3-3 3 3"/>',play:'<path d="m8 5 11 7-11 7Z" fill="currentColor" stroke="none"/>',clips:'<rect x="5" y="3" width="16" height="14" rx="2"/><path d="M17 21H5a2 2 0 0 1-2-2V7m8 0h6m-6 4h6"/>',download:'<path d="M12 3v12m-4-4 4 4 4-4M4 16v4h16v-4"/>'};
     return '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+paths[name]+'</svg>';
   };
 
@@ -127,7 +132,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   function switchTab(tabName) {
     if(tabName==='recordings')window.BVRecordingCache?.clear();
     document.body.dataset.screen=tabName==='recordings'?'library':'playback';
-    document.querySelector('.app-menu').open=false;
     window.scrollTo({top:0,behavior:"instant"});
     if (tabName === "recordings") {
       viewRecordings.classList.add("active");
@@ -183,24 +187,62 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
   function paintLoading(){return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));}
-  const formatBytes = bytes => bytes >= 1024**3 ? `${(bytes/1024**3).toFixed(1)} GB` : `${Math.round(bytes/1024**2)} MB`;
+  function formatBytes(bytes) {
+    if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(1)} GB`;
+    if (bytes >= 1024 ** 2) return `${Math.round(bytes / 1024 ** 2)} MB`;
+    if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${bytes} B`;
+  }
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const getLockSvg = (isLocked, size = 15) => isLocked
     ? `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" fill="currentColor" fill-opacity="0.2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`
     : `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" fill="currentColor" fill-opacity="0.05"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>`;
   const getTrashSvg = (size = 15) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
-  document.getElementById('backToDrives').addEventListener('click', () => {viewRecordings.classList.remove('detail-open');document.querySelector('.drives-sidebar').scrollIntoView({block:'start'});});
-  document.getElementById('playbackBackBtn').addEventListener('click', () => {player.pause();switchTab('recordings');viewRecordings.classList.remove('detail-open');});
+  const libraryBackButton = document.getElementById('backToDrives');
+  const overviewSheet = document.getElementById('driveOverviewSheet');
+  function showDriveOverview(open) {
+    if (open && !overviewSheet.open) {
+      overviewSheet.showModal();
+      overviewSheet.querySelector('.drive-overview-stage').scrollTop = 0;
+      overviewMap.handleResize();
+      overviewMap.render();
+    } else if (!open && overviewSheet.open) {
+      overviewSheet.close();
+      overviewSheet.querySelectorAll('details').forEach(details => { details.open = false; });
+    }
+  }
+  libraryBackButton.addEventListener('click', () => showDriveOverview(false));
+  overviewSheet.addEventListener('cancel', event => {
+    event.preventDefault();
+    showDriveOverview(false);
+  });
+  overviewSheet.addEventListener('click', event => {
+    if (event.target === overviewSheet) showDriveOverview(false);
+  });
+  document.getElementById('playbackBackBtn').addEventListener('click', () => {player.pause();switchTab('recordings');showDriveOverview(false);});
   document.getElementById('libraryRefreshBtn').addEventListener('click', () => location.reload());
   document.getElementById('loadingCancelBtn').addEventListener('click', () => {loadToken++;player.cancelLoad();hideLoadingModal();switchTab('recordings');});
   document.getElementById('loadingRetryBtn').addEventListener('click', () => {if(lastOpen)playClipInDrive(lastOpen.clip,lastOpen.autoPlay,lastOpen.startAt);});
   player.onTimeUpdate = seconds => {
+    if (activeClip && player.parser && player.manifest) {
+      timeline.setTelemetry(activeClip.id, player.parser.telemetryRecords,
+        player.manifest.startMonotonicUs ?? player.parser.startMonotonicUs, player.speedUnit);
+    }
     timeline.update(activeClip?.id,seconds);
     hudElements.scrubber.style.setProperty('--seek-progress',(player.duration>0?Math.max(0,Math.min(100,seconds/player.duration*100)):0)+'%');
     document.getElementById('dockElapsed').textContent=DriveTimeline.format(seconds);
     document.getElementById('dockDuration').textContent=DriveTimeline.format(player.duration);
   };
-  player.onCameraViewChange = view => { if(openCalibrateBtn) openCalibrateBtn.disabled=!!view?.single; };
+  const cameraViewUnavailable = document.getElementById('cameraViewUnavailable');
+  const cameraViewUnavailableReason = document.getElementById('cameraViewUnavailableReason');
+  player.onCameraViewChange = view => {
+    const unavailable = !!view?.single;
+    const reason = unavailable ? (view.bmwCameraActive
+      ? 'BMW was using the cameras at this point in the drive.'
+      : 'The recorder’s four-camera feed is unavailable for this part of the drive.') : '';
+    if (cameraViewUnavailableReason.textContent !== reason) cameraViewUnavailableReason.textContent = reason;
+    cameraViewUnavailable.hidden = !unavailable;
+  };
   player.onStateChange = ({state,message,loaded,total,download}) => {
     recordingNavigation.update(state==='loading');
     const status = document.getElementById('playbackStatus');
@@ -209,17 +251,54 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById('playbackProgress').hidden=state!=='buffering';
     if (state === 'loading') { if(message)loadingModalStatus.textContent=message;const verb=window.BVSourceManager.readOnly?'read':'received';const received=total ? `${Math.min(100,Math.round(loaded/total*100))}% ${verb}` : loaded ? `${formatBytes(loaded)} ${verb}` : 'Waiting for recording data…';const rate=download?.elapsedMs>=500&&download.bytesPerSecond>0?' · '+formatBytes(download.bytesPerSecond)+'/s':'';const timing=window.showAdvancedDetails===true&&download?' · Receive wait '+(download.receiveWaitMs/1000).toFixed(1)+'s · Video processing '+(download.processingMs/1000).toFixed(1)+'s':'';document.getElementById('loadingProgress').textContent=received+rate+timing; }
     hudElements.playBtn.disabled=!player.streamComplete||state==='loading'||state==='error';
+    document.getElementById('openExportBtn').disabled=hudElements.playBtn.disabled;
     if(state==='error' && !videoLoadingModal.style.display.includes('flex')) document.getElementById('playbackRetryBtn').hidden=false;
   };
   document.getElementById('playbackRetryBtn').addEventListener('click',()=>{if(activeClip)playClipInDrive(activeClip,true,player.currentTime);});
   player.onEnded=()=>{
     const index=activeDrive?.segments.findIndex(s=>s.clip.id===activeClip?.id) ?? -1;
-    const next=activeDrive?.segments[index+1]; if(next)playClipInDrive(next.clip,true);
+    const next=activeDrive?.segments[index+1];
+    if(next && document.getElementById('webContinuePlayback')?.checked!==false)playClipInDrive(next.clip,true);
   };
   document.addEventListener('visibilitychange',()=>{if(document.hidden)player.pause();});
 
 
   async function ensureCarSession() { /* Selected source owns pairing. */ }
+  async function allowUsbLock(source){
+    if(source?.kind!=='usb' || source.canLock)return true;
+    const dialog=document.getElementById('usbWriteDialog');
+    if(dialog.open)return false;
+    const choose=document.getElementById('usbWriteChoose'),cancel=document.getElementById('usbWriteCancel');
+    const help=document.getElementById('usbWriteHelp'),error=document.getElementById('usbWriteError');
+    const supported=typeof window.showDirectoryPicker==='function';
+    help.textContent=supported
+      ? 'Your USB drive is open for viewing. To save this lock change, select the same folder again and choose Allow when your browser asks to edit files. BimmerVision updates the lock in the recording metadata.'
+      : 'This browser can view USB recordings. To change a lock, open this page in desktop Chrome or Edge, select the USB folder, then press Lock or Unlock and allow editing.';
+    choose.hidden=!supported;choose.disabled=false;cancel.textContent=supported?'Cancel':'Close';error.hidden=true;
+    const controller=new AbortController();
+    let granted=false;
+    return new Promise(resolve=>{
+      dialog.onclose=()=>{controller.abort();choose.onclick=null;cancel.onclick=null;resolve(granted && window.BVSourceManager.source===source);};
+      cancel.onclick=()=>dialog.close();
+      choose.onclick=async()=>{
+        choose.disabled=true;error.hidden=true;
+        try{
+          const root=await window.showDirectoryPicker({id:'bimmervision-recordings',mode:'readwrite'});
+          if(controller.signal.aborted || window.BVSourceManager.source!==source){if(dialog.open&&!controller.signal.aborted)dialog.close();return;}
+          await source.enableLocks(root,controller.signal);
+          granted=true;dialog.close();
+        }catch(e){
+          if(controller.signal.aborted)return;
+          if(e.name==='AbortError'){dialog.close();return;}
+          error.textContent=e.name==='NotAllowedError'||e.name==='SecurityError'
+            ? 'Editing access was denied. Allow editing in the folder picker, or open this page in desktop Chrome or Edge.'
+            : e.name==='NotFoundError'?'Choose the same USB folder you opened for viewing.':e.message;
+          error.hidden=false;choose.disabled=false;
+        }
+      };
+      dialog.showModal();
+    });
+  }
   function apiFetch(url,options={}) { return window.BVSourceManager.fetch(url,options); }
 
   let stopRecordingNotice=null;
@@ -238,6 +317,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   rawCancel.addEventListener('click',()=>rawController?.abort());
   document.getElementById('rawDownloadClose').addEventListener('click',clearRaw);
   async function downloadRaw(id){
+    showDriveOverview(false);
     if(rawController){rawPanel.hidden=false;return;}
     clearRaw();rawPanel.hidden=false;rawCancel.hidden=false;rawText.textContent='Preparing original recording and metadata…';
     const controller=new AbortController(),generation=window.BVSourceManager.generation;rawController=controller;
@@ -291,12 +371,90 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   checkForUpdates();
 
+  function driveRoutePreview(route) {
+    if (route.length < 2) return '';
+    const first = route[0];
+    const longitudeScale = Math.cos(first.latitude * Math.PI / 180);
+    const points = route.map(({latitude, longitude}) => ({
+      x: ((longitude - first.longitude + 540) % 360 - 180) * longitudeScale,
+      y: first.latitude - latitude
+    }));
+    const bounds = points.reduce((b, p) => ({
+      minX: Math.min(b.minX, p.x), maxX: Math.max(b.maxX, p.x),
+      minY: Math.min(b.minY, p.y), maxY: Math.max(b.maxY, p.y)
+    }), {minX:0,maxX:0,minY:0,maxY:0});
+    const width = bounds.maxX - bounds.minX;
+    const height = bounds.maxY - bounds.minY;
+    const scale = 1 / Math.max(width / 276, height / 88);
+    if (!Number.isFinite(scale)) return '';
+    const plotted = points.map(({x,y}) => [
+      160 + (x - bounds.minX - width / 2) * scale,
+      56 + (y - bounds.minY - height / 2) * scale
+    ]);
+    const [startX,startY] = plotted[0];
+    const [endX,endY] = plotted.at(-1);
+    return `<div class="drive-route-preview" role="img" aria-label="Recorded route preview">
+      <svg viewBox="0 0 320 112" aria-hidden="true">
+        <polyline points="${plotted.map(point => point.map(value => value.toFixed(2)).join(',')).join(' ')}"/>
+        <circle cx="${startX}" cy="${startY}" r="4"/><circle cx="${endX}" cy="${endY}" r="4"/>
+      </svg>
+    </div>`;
+  }
+
+  const homeTripStats = document.getElementById('homeTripStats');
+  const homeLibraryIntro = document.getElementById('homeLibraryIntro');
+  const homeLibraryTitle = document.getElementById('homeLibraryTitle');
+  const homeLibrarySubtitle = document.getElementById('homeLibrarySubtitle');
+  const homeTripNodes = Object.fromEntries(
+    ['Source','Distance','DistanceUnit','Speed','SpeedUnit','Time','Count']
+      .map(key => [key, document.getElementById('homeTrip' + key)])
+  );
+  const homeTripNumber = new Intl.NumberFormat(undefined, {maximumFractionDigits:1});
+  let homeTripTotals = null;
+  function renderHomeTrips() {
+    homeTripStats.hidden = homeLibraryIntro.hidden = !homeTripTotals;
+    const heading = homeTripTotals ? 'homeLibraryTitle' : 'sourceTitle';
+    document.getElementById('sourceScreen').setAttribute('aria-labelledby', heading);
+    document.getElementById('welcomeIntro').setAttribute('aria-labelledby', heading);
+    if (!homeTripTotals) return;
+    const {distanceMeters, topSpeedKph, seconds, recordings} = homeTripTotals;
+    const metric = document.getElementById('webSpeedUnit').value === 'km/h';
+    const distance = distanceMeters === null ? null : distanceMeters / (metric ? 1000 : 1609.344);
+    const speed = topSpeedKph === null ? null : Math.round(topSpeedKph / (metric ? 1 : 1.609344));
+    homeTripNodes.Distance.textContent = distance === null ? '—' : distance > 0 && distance < .1 ? '<' + homeTripNumber.format(.1) : homeTripNumber.format(distance);
+    homeTripNodes.DistanceUnit.textContent = distance === null ? '' : metric ? 'km' : 'mi';
+    homeTripNodes.Speed.textContent = speed === null ? '—' : homeTripNumber.format(speed);
+    homeTripNodes.SpeedUnit.textContent = speed === null ? '' : metric ? 'km/h' : 'mph';
+    homeTripNodes.Time.textContent = seconds >= 3600
+      ? `${Math.floor(seconds / 3600)}h ${Math.floor(seconds % 3600 / 60)}m`
+      : seconds > 0 ? DriveTimeline.format(seconds) : '—';
+    homeTripNodes.Count.textContent = homeTripNumber.format(detectedDrives.length);
+    const kind = window.BVSourceManager.source?.kind;
+    const sourceDescription = {car:'your BMW', usb:'your USB drive', drive:'Google Drive'}[kind] || 'your recording source';
+    const drives = detectedDrives.length;
+    homeLibraryTitle.textContent = kind === 'car' ? 'Your BMW recordings' : 'Your drive library';
+    homeLibrarySubtitle.textContent =
+      `${homeTripNumber.format(drives)} ${drives === 1 ? 'drive' : 'drives'} · ${homeTripNumber.format(recordings)} ${recordings === 1 ? 'recording' : 'recordings'} from ${sourceDescription}.`;
+    homeTripNodes.Source.textContent = `${librarySourceName.textContent} · ${homeTripNumber.format(recordings)} ${recordings === 1 ? 'recording' : 'recordings'}`;
+    const {date, startTime} = detectedDrives[0];
+    document.getElementById('homeLatestDriveDate').textContent = [date, startTime].filter(Boolean).join(' · ');
+  }
+
   // 5. Fetch USB Recordings & Group as Drives
   let libraryLoading=null, librarySignature=null;
+  function recordedLocationStatus(drive) {
+    if (drive.segments.some(({clip}) => clip.routeStatus === 'indexing')) return 'Reading recorded location…';
+    if (drive.segments.some(({clip}) => clip.routeStatus === 'failed')) return 'Could not read recorded location';
+    return 'Location not recorded';
+  }
   async function loadLibrary({quiet=false,onlyChanged=false}={}) {
   const librarySource=window.BVSourceManager.source;
   if(libraryLoading===librarySource)return;
   libraryLoading=librarySource;
+  const sourceName = librarySource.kind === 'usb' ? 'USB drive'
+    : librarySource.kind === 'car' ? 'Connected BMW' : librarySource.name;
+  librarySourceName.textContent = sourceName;
+  if (!quiet && librarySignature === null) librarySummary.textContent = 'Reading your recordings…';
   try {
     const capabilities = await apiFetch('/api/v1/capabilities').then(r=>r.ok?r.json():{}).catch(()=>({}));
     if(window.BVSourceManager.source!==librarySource)return;
@@ -308,86 +466,110 @@ document.addEventListener("DOMContentLoaded", async () => {
     if(window.BVSourceManager.source!==librarySource)return;
     if(quiet && !viewRecordings.classList.contains('active'))return;
     const rawClips = (data.recordings || []).filter(clip=>clip.complete===true);
-    const signature=JSON.stringify(rawClips.map(c=>[c.id,c.locked,c.bytes,c.durationSeconds,c.routeStatus,(c.route||[]).length,c.endpoints]));
+    const signature=JSON.stringify(rawClips.map(c=>[c.id,c.locked,c.bytes,c.durationSeconds,c.routeStatus,(c.route||[]).length,c.endpoints,c.metrics]));
     if(onlyChanged && signature===librarySignature)return;
     librarySignature=signature;
 
     // Group recordings into continuous Drives
-    detectedDrives = DriveGrouper.group(rawClips);updateMoreBackupCurrent();
-    driveCountEl.textContent = `${detectedDrives.length} drive${detectedDrives.length === 1 ? "" : "s"}`;
+    detectedDrives = DriveGrouper.group(rawClips);updatePlaybackBackup();
+    homeTripTotals = detectedDrives.length ? DriveGrouper.summarize(detectedDrives) : null;
+    renderHomeTrips();
     driveListEl.innerHTML = "";
 
     if (detectedDrives.length === 0) {
       driveListEl.innerHTML = `
         <div style="padding: 24px; text-align: center; color: var(--tesla-muted);">
-          No drives recorded on USB flash drive.
+          No recordings found in this source.
         </div>
       `;
       overviewSubtitle.textContent = "No recordings found.";
-      document.getElementById('librarySummary').textContent='0 drives · 0 recordings';
+      librarySummary.textContent='0 drives · 0 recordings';
       selectedDrive=null;overviewPlayBtn.disabled=true;
       window.BVRecordingBackupAction.update(overviewBackupBtn,null,window.BVSourceManager.source?.kind);
-      document.getElementById('overviewPlaceholder').hidden=false;
+      showDriveOverview(false);
       return;
     }
 
-    const dateGroups = DriveGrouper.groupByDate(detectedDrives);
+    const [newestGroup, ...otherGroups] = DriveGrouper.groupByDate(detectedDrives);
+    const [latestDrive, ...olderSameDay] = newestGroup.drives;
+    const dateGroups = [
+      {featured:true, drives:[latestDrive]},
+      ...(olderSameDay.length ? [{...newestGroup, drives:olderSameDay}] : []),
+      ...otherGroups
+    ];
     const clipCount = rawClips.length;
-    document.getElementById('librarySummary').textContent = `${detectedDrives.length} drive${detectedDrives.length===1?'':'s'} · ${clipCount} recording${clipCount===1?'':'s'} · ${formatBytes(rawClips.reduce((n,c) => n+(c.bytes||0),0))}`;
-    document.getElementById('connStatus').textContent = librarySource.kind==='usb'?'USB · view only':librarySource.name;
+    librarySummary.textContent = `${detectedDrives.length} drive${detectedDrives.length===1?'':'s'} · ${clipCount} recording${clipCount===1?'':'s'}`;
+    if (librarySource.kind === 'drive') {
+      const remaining = rawClips.filter(clip => clip.routeStatus === 'indexing').length;
+      if (remaining) librarySummary.textContent += ` · Reading metadata (${clipCount - remaining}/${clipCount})`;
+    }
     dateGroups.forEach(group => {
-      const section = document.createElement('section'); section.className = 'date-group';
+      const section = document.createElement('section');
+      section.className = group.featured ? 'date-group latest-drive-group' : 'date-group older-drive-group';
       const heading = document.createElement('h2'); heading.className = 'date-group-header';
-      heading.textContent = `${group.dayOfWeek ? group.dayOfWeek + ', ' : ''}${group.dateLabel}`; section.appendChild(heading);
+      heading.textContent = group.featured ? 'Latest drive' : `${group.dayOfWeek ? group.dayOfWeek + ', ' : ''}${group.dateLabel}`;
+      section.appendChild(heading);
       group.drives.forEach(drive => {
         const card = document.createElement('article'); card.className = 'drive-card'; card.dataset.id = drive.id;
         const location = drive.endpoints.start.address;
         const isDriveLocked = drive.segments.length > 0 && drive.segments.every(s => s.clip.locked);
         const hasAnyLocked = drive.segments.some(s => s.clip.locked);
-
+        const routePreview = group.featured ? driveRoutePreview(drive.route) : '';
         card.innerHTML = `
-          <div class="drive-card-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
-            <div style="flex:1;">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">
-                <h3 class="drive-departure" style="font-size:15px;font-weight:600;color:#fff;margin:0;">${escapeHtml(drive.startTime || 'Recorded drive')}</h3>
-              </div>
-              <p class="drive-route-summary" style="margin:0;font-size:12px;color:var(--tesla-muted);display:flex;align-items:center;gap:6px;">
-                <span class="route-marker" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--m-blue);box-shadow:0 0 8px var(--m-blue);"></span>
-                ${escapeHtml(location === 'Location unavailable' ? (drive.segments.some(s=>s.clip.routeStatus==='indexing')?'Loading recorded location…':'Location not recorded') : location)}
-              </p>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;">
+          <div class="drive-card-header">
+            <h3 class="drive-departure">
+              <button class="btn-view-entire-drive" type="button">
+                ${driveIcon("clips")}
+                <span>${group.featured ? escapeHtml(drive.date) + ' · ' : ''}${escapeHtml(drive.startTime || 'Recorded drive')}</span>
+                <img src="assets/chevron.svg" width="16" height="16" alt="">
+              </button>
+            </h3>
+            <p class="drive-route-summary">
+              ${escapeHtml(location === 'Location unavailable' ? recordedLocationStatus(drive) : location)}
+            </p>
+          </div>
+          ${routePreview}
+          <div class="drive-card-meta">
+            ${group.featured ? `
+              <dl class="featured-drive-stats">
+                <div><dt>Duration</dt><dd>${escapeHtml(drive.durationFormatted)}</dd></div>
+                <div><dt>${drive.segments.length === 1 ? 'Recording' : 'Recordings'}</dt><dd>${drive.segments.length}</dd></div>
+                <div><dt>Size</dt><dd>${escapeHtml(formatBytes(drive.bytes))}</dd></div>
+              </dl>
+            ` : `<p class="drive-description">${escapeHtml(drive.durationFormatted)} · ${drive.segments.length} ${drive.segments.length===1?'recording':'recordings'}</p>`}
+            <div class="drive-card-tools">
+              <details class="drive-manage"><summary>Manage</summary><div class="drive-manage-options">
               <button class="btn-lock-drive ${isDriveLocked ? 'is-locked' : ''}" type="button" title="${isDriveLocked ? 'Drive is locked. Click to unlock entire drive.' : 'Lock entire drive to prevent deletion'}" style="display:flex;align-items:center;background:rgba(255,255,255,0.06);border:1px solid ${isDriveLocked ? 'rgba(245,158,11,0.5)' : 'rgba(255,255,255,0.12)'};border-radius:6px;padding:5px 8px;cursor:pointer;color:${isDriveLocked ? '#f59e0b' : 'var(--tesla-muted)'};transition:all 0.2s ease;">
-                ${getLockSvg(isDriveLocked, 14)}
+                ${getLockSvg(isDriveLocked, 14)} ${isDriveLocked ? "Unlock drive" : "Lock drive"}
               </button>
               <button class="btn-delete-drive" type="button" title="Delete entire drive" style="display:flex;align-items:center;background:rgba(238,36,64,0.1);border:1px solid rgba(238,36,64,0.3);border-radius:6px;padding:5px 8px;cursor:pointer;color:#EE2440;transition:all 0.2s ease;">
-                ${getTrashSvg(14)}
+                ${getTrashSvg(14)} Delete drive
               </button>
-              <span class="drive-storage" style="font-size:11px;color:var(--tesla-muted);font-weight:500;padding-left:4px;">${formatBytes(drive.bytes)}</span>
+</div></details>
+              ${group.featured ? '' : `<span class="drive-storage">${escapeHtml(formatBytes(drive.bytes))}</span>`}
             </div>
           </div>
-          <p class="drive-description">${escapeHtml(drive.durationFormatted)} of footage${drive.endpoints.end.time ? ` · Ends ${escapeHtml(drive.endpoints.end.time)}` : ''} · ${drive.segments.length} ${drive.segments.length===1?'recording':'recordings'}</p>
-          <div class="drive-card-actions" style="margin-top:10px;display:flex;gap:6px;align-items:center;">
-            <button class="drive-play" type="button" aria-label="Play drive from ${escapeHtml(drive.startTime || drive.date)}" title="Play drive" style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;font-size:12px;font-weight:600;">
-              ${driveIcon("play")}<span>Play drive</span>
+          <div class="drive-card-actions">
+            <button class="drive-overview-action" type="button" aria-haspopup="dialog" aria-controls="driveOverviewSheet">
+              ${driveIcon("clips")}<span>Drive Overview</span>
             </button>
-            <div class="drive-secondary-actions" style="display:flex;gap:6px;">
-              <button class="btn-view-entire-drive" type="button" aria-label="Drive overview" title="Drive overview" style="padding:6px 12px;border-radius:999px;font-size:12px;">${driveIcon("overview")}<span>Overview</span></button>
-              <button class="btn-toggle-recordings" type="button" aria-label="Show all ${drive.segments.length} clips" aria-controls="drive-clips-${escapeHtml(drive.id)}" title="Recordings in this drive" aria-expanded="false" style="padding:6px 12px;border-radius:999px;font-size:12px;">${driveIcon("clips")}<span class="drive-clips-label">Show all ${drive.segments.length} clips</span></button>
-            </div>
+            <button class="drive-play" type="button">${driveIcon("play")}<span>Play Drive</span></button>
           </div>
-          <div id="drive-clips-${escapeHtml(drive.id)}" class="drive-recordings-drawer" hidden></div>
         `;
         card.querySelector('.drive-play').addEventListener('click', () => { selectDrive(drive,card); playClipInDrive(drive.segments[0].clip,true); });
-        card.querySelector('.btn-view-entire-drive').addEventListener('click', () => { selectDrive(drive,card); viewRecordings.classList.add('detail-open'); if(window.innerWidth<=760)document.querySelector('.drive-overview-stage').scrollIntoView({block:'start',behavior:'smooth'}); });
+        const openOverview = () => { selectDrive(drive,card); showDriveOverview(true); };
+        card.querySelector('.btn-view-entire-drive').addEventListener('click', openOverview);
+        card.querySelector('.drive-overview-action').addEventListener('click', openOverview);
 
         const lockDriveBtn = card.querySelector('.btn-lock-drive');
         if (lockDriveBtn) {
           lockDriveBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
+            if(!await allowUsbLock(librarySource))return;
             const target = !isDriveLocked;
             lockDriveBtn.disabled = true;
             for (const seg of drive.segments) {
+              if(window.BVSourceManager.source!==librarySource)break;
               try {
                 await apiFetch(`/api/v1/recordings/${seg.clip.id}/lock`, {
                   method: 'POST',
@@ -425,90 +607,22 @@ document.addEventListener("DOMContentLoaded", async () => {
           });
         }
 
-        const toggle = card.querySelector('.btn-toggle-recordings'), drawer=card.querySelector('.drive-recordings-drawer');
-        toggle.addEventListener('click', () => { const open=drawer.classList.toggle('open');drawer.hidden=!open;toggle.setAttribute('aria-expanded',String(open));const label=open?'Hide clips':`Show all ${drive.segments.length} clips`;toggle.setAttribute('aria-label',label);toggle.querySelector('.drive-clips-label').textContent=label; });
-        drive.segments.forEach((seg,i) => {
-          const row = document.createElement('div'); row.className='recording-clip-row';
-          row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.05);gap:10px;transition:background 0.2s ease;';
-          row.innerHTML=`
-            <div class="clip-row-info" style="cursor:pointer;flex:1;">
-              <div style="display:flex;align-items:center;gap:6px;">
-                <strong style="color:#fff;font-size:12px;">Clip ${i+1}</strong>
-                <span style="color:var(--tesla-muted);font-size:11px;">· ${DriveTimeline.format(seg.offset)} into drive</span>
-              </div>
-              <small style="display:block;color:var(--tesla-muted);font-size:11px;margin-top:2px;">${DriveTimeline.format(seg.clip.durationSeconds)} · ${formatBytes(seg.clip.bytes||0)}</small>
-            </div>
-            <div class="clip-row-actions" style="display:flex;align-items:center;gap:6px;">
-              <a class="clip-row-raw" href="#" data-raw-recording="${seg.clip.id}" download aria-label="Download original Clip ${i+1} and metadata as ZIP" title="Download original BVR recording and metadata">${driveIcon("download")}<span>Original ZIP</span></a>
-              <button class="clip-row-raw" type="button" data-backup-recording="${seg.clip.id}" aria-label="Send to Remote Backup — Clip ${i+1}" title="Send to Remote Backup using your phone">${driveIcon("upload")}<span>Send to Remote Backup</span></button>
-              <button class="btn-lock-clip" type="button" title="${seg.clip.locked ? 'Recording is locked. Tap to unlock.' : 'Lock recording to prevent deletion'}" style="display:flex;align-items:center;background:rgba(255,255,255,0.06);border:1px solid ${seg.clip.locked ? 'rgba(245,158,11,0.5)' : 'rgba(255,255,255,0.12)'};border-radius:6px;padding:4px 8px;cursor:pointer;color:${seg.clip.locked ? '#f59e0b' : 'var(--tesla-muted)'};transition:all 0.2s ease;">
-                ${getLockSvg(seg.clip.locked, 13)}
-              </button>
-              <button class="btn-delete-clip" type="button" title="Delete recording" style="display:flex;align-items:center;background:rgba(238,36,64,0.1);border:1px solid rgba(238,36,64,0.3);border-radius:6px;padding:4px 8px;cursor:pointer;color:#EE2440;transition:all 0.2s ease;">
-                ${getTrashSvg(13)}
-              </button>
-              <button class="clip-row-play" type="button" aria-label="Play recording ${i+1}" title="Play recording" style="display:flex;align-items:center;gap:4px;background:rgba(61,168,242,0.12);border:1px solid rgba(61,168,242,0.25);border-radius:6px;padding:4px 8px;color:var(--m-blue);cursor:pointer;font-size:11px;">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg><span>Play</span>
-              </button>
-            </div>
-          `;
-          row.querySelector('.clip-row-info').addEventListener('click',()=>{selectDrive(drive,card);playClipInDrive(seg.clip,true);});
-          row.querySelector('.clip-row-play').addEventListener('click',()=>{selectDrive(drive,card);playClipInDrive(seg.clip,true);});
-
-          const lockClipBtn = row.querySelector('.btn-lock-clip');
-          lockClipBtn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const target = !seg.clip.locked;
-            lockClipBtn.disabled = true;
-            try {
-              await apiFetch(`/api/v1/recordings/${seg.clip.id}/lock`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ locked: target })
-              });
-              seg.clip.locked = target;
-              await loadLibrary();
-            } catch (err) {
-              alert('Could not update lock status.');
-              lockClipBtn.disabled = false;
-            }
-          });
-
-          const delClipBtn = row.querySelector('.btn-delete-clip');
-          delClipBtn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            if (seg.clip.locked) {
-              alert('This recording is locked. You must first unlock the recording before it can be deleted.');
-              return;
-            }
-            if (!confirm(`Are you sure you want to delete Clip ${i+1}? This action cannot be undone.`)) return;
-            delClipBtn.disabled = true;
-            try {
-              const res = await apiFetch(`/api/v1/recordings/${seg.clip.id}`, { method: 'DELETE' });
-              if (!res.ok) {
-                const data = await res.json().catch(() => ({}));
-                alert(data.error || 'Failed to delete recording.');
-                delClipBtn.disabled = false;
-                return;
-              }
-              await loadLibrary();
-            } catch (err) {
-              alert(`Failed to delete: ${err.message}`);
-              delClipBtn.disabled = false;
-            }
-          });
-
-          drawer.appendChild(row);
-        });
         section.appendChild(card);
-      });driveListEl.appendChild(section);
+      });
+      if (!group.featured && !driveListEl.querySelector('.library-older-title')) {
+        const olderTitle = document.createElement('h2');
+        olderTitle.className = 'library-older-title';
+        olderTitle.textContent = 'Earlier drives';
+        driveListEl.appendChild(olderTitle);
+      }
+      driveListEl.appendChild(section);
     });
-    if(selectedDrive){const refreshed=detectedDrives.find(d=>d.id===selectedDrive.id);if(refreshed)selectDrive(refreshed,[...document.querySelectorAll(".drive-card")].find(card=>card.dataset.id===refreshed.id));else {selectedDrive=null;window.BVRecordingBackupAction.update(overviewBackupBtn,null,window.BVSourceManager.source?.kind);}}
+    if(selectedDrive){const refreshed=detectedDrives.find(d=>d.id===selectedDrive.id);if(refreshed)selectDrive(refreshed,[...document.querySelectorAll(".drive-card")].find(card=>card.dataset.id===refreshed.id));else {selectedDrive=null;showDriveOverview(false);window.BVRecordingBackupAction.update(overviewBackupBtn,null,window.BVSourceManager.source?.kind);}}
     if(activeDrive){const refreshed=detectedDrives.find(d=>d.id===activeDrive.id);if(refreshed){activeDrive=refreshed;timeline.setDrive(refreshed);timeline.update(activeClip?.id,player.currentTime);recordingNavigation.update();}}
   } catch (err) {
-    if(quiet)return;
+    if(quiet || window.BVSourceManager.source !== librarySource)return;
+    librarySummary.textContent = "Could not load recordings";
     console.error("Failed to load recordings:", err);
-    driveCountEl.textContent = "Offline";
     driveListEl.innerHTML = `
       <div style="padding: 20px; text-align: center; color: var(--m-red);">
         Could not load your drives. ${escapeHtml(err.message)}
@@ -518,11 +632,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   window.BVSourceManager.subscribe(()=>{
     loadToken++;player.cancelLoad();hideLoadingModal();
-    activeClip=null;activeDrive=null;selectedDrive=null;detectedDrives=[];librarySignature=null;updateMoreBackupCurrent();
+    activeClip=null;activeDrive=null;selectedDrive=null;detectedDrives=[];librarySignature=null;updatePlaybackBackup();
+    homeTripTotals=null;renderHomeTrips();
     window.BVRecordingBackupAction.update(overviewBackupBtn,null,window.BVSourceManager.source?.kind);
     recordingNavigation.update(false);
     document.getElementById('exportModal').classList.remove('open');document.getElementById('identifyModal').classList.remove('open');
-    switchTab('recordings');loadLibrary();checkForUpdates(true);
+    showDriveOverview(false);switchTab('recordings');loadLibrary();checkForUpdates(true);
   });
   window.addEventListener('bimmervision:library-updated',()=>loadLibrary({quiet:true,onlyChanged:true}));
   await loadLibrary();
@@ -530,13 +645,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
   function selectDrive(drive, cardEl) {
-    document.querySelectorAll(".drive-card").forEach((c) => c.classList.remove("active"));
-    if (cardEl) cardEl.classList.add("active");
+    document.querySelectorAll(".drive-card.active").forEach((card) => {
+      card.classList.remove("active");
+      card.querySelector('.btn-view-entire-drive').removeAttribute('aria-current');
+    });
+    if (cardEl) {
+      cardEl.classList.add("active");
+      cardEl.querySelector('.btn-view-entire-drive').setAttribute('aria-current', 'true');
+    }
 
     selectedDrive = drive;
-    window.BVRecordingBackupAction.update(overviewBackupBtn,drive,window.BVSourceManager.source?.kind==='car'?'car':null);
+    window.BVRecordingBackupAction.update(overviewBackupBtn,drive,window.BVSourceManager.source?.kind);
     overviewPlayBtn.disabled=false;
-    document.getElementById('overviewPlaceholder').hidden=true;
 
     const isDriveLocked = drive.segments.length > 0 && drive.segments.every(s => s.clip.locked);
     const overviewLockBtn = document.getElementById('overviewLockBtn');
@@ -545,7 +665,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const overviewDeleteBtn = document.getElementById('overviewDeleteBtn');
     if (overviewLockBtn) {
       overviewLockBtn.disabled = false;
-      if (overviewLockLabel) overviewLockLabel.textContent = isDriveLocked ? 'Unlock Drive' : 'Lock Drive';
+      if (overviewLockLabel) overviewLockLabel.textContent = isDriveLocked ? 'Unlock drive' : 'Lock drive';
       if (overviewLockIcon) overviewLockIcon.innerHTML = getLockSvg(isDriveLocked, 15);
     }
     if (overviewDeleteBtn) {
@@ -553,18 +673,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Populate Overview
-    overviewTitle.textContent = drive.title;
-    const sizeMb = (drive.bytes / (1024 * 1024)).toFixed(1) + " MB";
-    overviewSubtitle.textContent = `${drive.durationFormatted} · ${drive.segments.length} recordings · ${formatBytes(drive.bytes)}`;
+    overviewTitle.textContent = [drive.date, drive.startTime].filter(Boolean).join(" · ") || "Recorded drive";
+    overviewSubtitle.textContent = `${drive.segments.length} ${drive.segments.length === 1 ? "recording" : "recordings"} · ${formatBytes(drive.bytes)}`;
 
-    endpointStartAddr.textContent = drive.endpoints.start.address;
-    endpointStartTime.textContent = drive.endpoints.start.time ? `Departed ${drive.endpoints.start.time}` : drive.endpoints.start.coords;
+    const locationStatus = recordedLocationStatus(drive);
+    endpointStartAddr.textContent = drive.endpoints.start.address === 'Location unavailable' ? locationStatus : drive.endpoints.start.address;
+    endpointStartTime.textContent = drive.endpoints.start.time ? drive.endpoints.start.time : drive.endpoints.start.coords;
 
-    endpointEndAddr.textContent = drive.endpoints.end.address;
-    endpointEndTime.textContent = drive.endpoints.end.time ? `Arrived ${drive.endpoints.end.time}` : drive.endpoints.end.coords;
+    endpointEndAddr.textContent = drive.endpoints.end.address === 'Location unavailable' ? locationStatus : drive.endpoints.end.address;
+    endpointEndTime.textContent = drive.endpoints.end.time ? drive.endpoints.end.time : drive.endpoints.end.coords;
 
     // Update Overview Map
-    overviewMap.emptyMessage=drive.segments.some(s=>s.clip.routeStatus==='indexing')?'Loading recorded location…':'Location was not recorded';
+    overviewMap.emptyMessage = locationStatus;
     overviewMap.setTrack(drive.route);
 
     // Update Live Tracking Map track
@@ -577,34 +697,36 @@ document.addEventListener("DOMContentLoaded", async () => {
     driveSegmentsList.innerHTML = "";
     drive.segments.forEach((seg, sIdx) => {
       const item = document.createElement("div");
-      item.className = "segment-item";
-      item.style.cssText = "display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.05);gap:10px;";
-      const sDur = Math.round(seg.clip.durationSeconds || 4);
+      item.className = "overview-clip";
+      const duration = seg.clip.durationSeconds;
+      const timing = Number.isFinite(duration)
+        ? `${DriveTimeline.format(seg.offset)} into drive · ${DriveTimeline.format(Math.round(duration))} long`
+        : `${DriveTimeline.format(seg.offset)} into drive`;
+      const lockLabel = seg.clip.locked ? 'Unlock' : 'Lock';
 
       item.innerHTML = `
-        <div class="segment-info" style="cursor:pointer;flex:1;">
-          <span style="font-weight: 600; color: #fff;">Clip ${sIdx + 1}</span>
-          <span style="color: var(--tesla-muted); margin-left: 8px;">${DriveTimeline.format(seg.offset)} into drive · ${DriveTimeline.format(sDur)} · ${formatBytes(seg.clip.bytes || 0)}</span>
-        </div>
-        <div class="clip-row-actions" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;">
-          <button class="clip-row-raw" type="button" data-backup-recording="${seg.clip.id}" aria-label="Send to Remote Backup — Clip ${sIdx+1}" title="Send to Remote Backup using your phone">${driveIcon("upload")}<span>Send to Remote Backup</span></button>
-          <button class="btn-lock-clip" type="button" title="${seg.clip.locked ? 'Recording is locked. Tap to unlock.' : 'Lock recording to prevent deletion'}" style="background:rgba(255,255,255,0.06);border:1px solid ${seg.clip.locked ? 'rgba(245,158,11,0.5)' : 'rgba(255,255,255,0.12)'};border-radius:6px;padding:5px 8px;cursor:pointer;color:${seg.clip.locked ? '#f59e0b' : 'var(--tesla-muted)'};display:inline-flex;align-items:center;justify-content:center;">${getLockSvg(seg.clip.locked, 13)}</button>
-          <button class="btn-delete-clip" type="button" title="Delete recording" style="background:rgba(238,36,64,0.1);border:1px solid rgba(238,36,64,0.3);border-radius:6px;padding:5px 8px;cursor:pointer;color:#EE2440;display:inline-flex;align-items:center;justify-content:center;">${getTrashSvg(13)}</button>
-          <button class="unit-toggle-pill btn-play-clip" type="button" aria-label="Play recording ${sIdx+1}" title="Play recording" style="padding: 2px 8px;">${driveIcon("play")}<span>Play</span></button>
+        <button class="overview-clip-play" type="button" aria-label="Play clip ${sIdx+1}, ${timing}">
+          <span class="overview-clip-play-icon">${driveIcon("play")}</span>
+          <span class="overview-clip-copy"><strong>Clip ${sIdx+1}</strong><small>${timing}</small></span>
+          <img src="assets/chevron.svg" width="16" height="16" alt="">
+        </button>
+        <div class="overview-clip-actions">
+          ${['usb','car'].includes(window.BVSourceManager.source.kind)?`<button type="button" data-backup-recording="${escapeHtml(seg.clip.id)}" aria-label="Back up clip ${sIdx+1}" title="Send to Remote Backup">${driveIcon("backup")}Back up</button>`:''}
+          <a href="#" data-raw-recording="${escapeHtml(seg.clip.id)}" download aria-label="Download original Clip ${sIdx+1} and metadata as ZIP">${driveIcon("download")}Original ZIP</a>
+          <button class="btn-lock-clip" type="button" aria-label="${lockLabel} clip ${sIdx+1}">${getLockSvg(seg.clip.locked,18)}${lockLabel}</button>
+          <button class="btn-delete-clip" type="button" aria-label="Delete clip ${sIdx+1}">${getTrashSvg(18)}Delete</button>
         </div>
       `;
 
-      item.querySelector('.segment-info').addEventListener("click", () => {
-        playClipInDrive(seg.clip);
-      });
-      item.querySelector('.btn-play-clip').addEventListener("click", () => {
+      item.querySelector('.overview-clip-play').addEventListener("click", () => {
         playClipInDrive(seg.clip);
       });
 
       const lockClipBtn = item.querySelector('.btn-lock-clip');
       lockClipBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
-        const target = !seg.clip.locked;
+        if(!await allowUsbLock(window.BVSourceManager.source))return;
+            const target = !seg.clip.locked;
         lockClipBtn.disabled = true;
         try {
           await apiFetch(`/api/v1/recordings/${seg.clip.id}/lock`, {
@@ -660,6 +782,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // Play Drive button: Jump to playback and play from start
+  document.getElementById('overviewClipsBtn').addEventListener('click', () => {
+    const heading = overviewSheet.querySelector('.segments-header');
+    heading.focus({preventScroll:true});
+    heading.scrollIntoView({block:'start',behavior:'instant'});
+  });
   overviewPlayBtn.addEventListener("click", () => {
     if (selectedDrive && selectedDrive.segments.length > 0) {
       playClipInDrive(selectedDrive.segments[0].clip, true);
@@ -672,10 +799,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (overviewLockBtn) {
     overviewLockBtn.addEventListener('click', async () => {
       if (!selectedDrive || !selectedDrive.segments.length) return;
-      const isDriveLocked = selectedDrive.segments.every(s => s.clip.locked);
+      const drive=selectedDrive,source=window.BVSourceManager.source;
+      if(!await allowUsbLock(source) || window.BVSourceManager.source!==source)return;
+      const isDriveLocked = drive.segments.every(s => s.clip.locked);
       const target = !isDriveLocked;
       overviewLockBtn.disabled = true;
-      for (const seg of selectedDrive.segments) {
+      for (const seg of drive.segments) {
+        if(window.BVSourceManager.source!==source)break;
         try {
           await apiFetch(`/api/v1/recordings/${seg.clip.id}/lock`, {
             method: 'POST',
@@ -706,96 +836,33 @@ document.addEventListener("DOMContentLoaded", async () => {
           break;
         }
       }
+      showDriveOverview(false);
       selectedDrive = null;
       window.BVRecordingBackupAction.update(overviewBackupBtn,null,window.BVSourceManager.source?.kind);
       await loadLibrary();
     });
   }
 
-  const playbackLockBtn = document.getElementById('playbackLockBtn');
-  const playbackLockIcon = document.getElementById('playbackLockIcon');
-  const playbackLockLabel = document.getElementById('playbackLockLabel');
-  const playbackDeleteBtn = document.getElementById('playbackDeleteBtn');
-
-  function updateMoreBackupCurrent() {
-    const backupCurrent=document.getElementById('moreBackupCurrentBtn');
-    if(backupCurrent){const eligible=['car','usb'].includes(window.BVSourceManager.source?.kind)&&activeClip?.complete===true&&typeof activeClip.id==='string'&&detectedDrives.some(d=>d.segments.some(seg=>seg.clip.id===activeClip.id));backupCurrent.disabled=!eligible;if(eligible)backupCurrent.dataset.currentRecording=activeClip.id;else delete backupCurrent.dataset.currentRecording;}
-  }
-  function updatePlaybackLockUI() {
-    updateMoreBackupCurrent();
-    if (!playbackLockBtn || !activeClip) return;
-    const isLocked = Boolean(activeClip.locked);
-    if (playbackLockLabel) playbackLockLabel.textContent = isLocked ? 'Locked' : 'Lock';
-    if (playbackLockIcon) playbackLockIcon.innerHTML = getLockSvg(isLocked, 15);
-    playbackLockBtn.style.color = isLocked ? '#f59e0b' : 'inherit';
-    playbackLockBtn.style.borderColor = isLocked ? 'rgba(245, 158, 11, 0.4)' : 'rgba(255, 255, 255, 0.15)';
-    playbackLockBtn.title = isLocked ? 'Recording is locked. Tap to unlock.' : 'Lock recording to prevent deletion';
-  }
-
-  if (playbackLockBtn) {
-    playbackLockBtn.addEventListener('click', async () => {
-      if (!activeClip) return;
-      const target = !activeClip.locked;
-      playbackLockBtn.disabled = true;
-      try {
-        await apiFetch(`/api/v1/recordings/${activeClip.id}/lock`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ locked: target })
-        });
-        activeClip.locked = target;
-        updatePlaybackLockUI();
-        for (const d of detectedDrives) {
-          const found = d.segments.find(s => s.clip.id === activeClip.id);
-          if (found) found.clip.locked = target;
-        }
-      } catch (_) {
-        alert('Could not update recording lock status.');
-      } finally {
-        playbackLockBtn.disabled = false;
-      }
-    });
-  }
-
-  if (playbackDeleteBtn) {
-    playbackDeleteBtn.addEventListener('click', async () => {
-      if (!activeClip) return;
-      if (activeClip.locked) {
-        alert('This recording is locked. You must first unlock the recording before it can be deleted.');
-        return;
-      }
-      if (!confirm('Are you sure you want to delete this recording? This action cannot be undone.')) return;
-      playbackDeleteBtn.disabled = true;
-      try {
-        player.pause();
-        const res = await apiFetch(`/api/v1/recordings/${activeClip.id}`, { method: 'DELETE' });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          alert(err.error || 'Failed to delete recording.');
-          playbackDeleteBtn.disabled = false;
-          return;
-        }
-        activeClip = null;
-        updatePlaybackLockUI();
-        switchTab('recordings');
-        await loadLibrary();
-      } catch (e) {
-        alert(`Failed to delete recording: ${e.message}`);
-      } finally {
-        playbackDeleteBtn.disabled = false;
-      }
-    });
+  function updatePlaybackBackup() {
+    const button = document.getElementById('backupPlaybackBtn');
+    const kind = window.BVSourceManager.source?.kind;
+    const eligible = ['car','usb'].includes(kind) && activeClip?.complete === true &&
+      typeof activeClip.id === 'string' &&
+      detectedDrives.some(drive => drive.segments.some(segment => segment.clip.id === activeClip.id));
+    button.disabled = !eligible;
+    if (eligible) button.dataset.currentRecording = activeClip.id;
+    else delete button.dataset.currentRecording;
+    document.getElementById('backupPlaybackDetail').textContent =
+      kind === 'drive' ? 'Already in Google Drive' : 'Save to Google Drive';
   }
 
   // Settings Modal Event Listeners
   const settingsModal = document.getElementById('settingsModal');
-  const headerSettingsBtn = document.getElementById('headerSettingsBtn');
   const closeSettingsBtn = document.getElementById('closeSettingsBtn');
   const dismissSettingsBtn = document.getElementById('dismissSettingsBtn');
 
-  if (headerSettingsBtn && settingsModal) {
-    headerSettingsBtn.addEventListener('click', () => {
-      window.BVMoreMenuInstance?.close(false);
+  if (librarySettingsButton && settingsModal) {
+    librarySettingsButton.addEventListener('click', () => {
       settingsModal.classList.add('open');
       closeSettingsBtn?.focus();
     });
@@ -803,13 +870,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (closeSettingsBtn && settingsModal) {
     closeSettingsBtn.addEventListener('click', () => {
       settingsModal.classList.remove('open');
-      window.BVMoreMenuInstance?.trigger?.focus();
+      librarySettingsButton?.focus();
     });
   }
   if (dismissSettingsBtn && settingsModal) {
     dismissSettingsBtn.addEventListener('click', () => {
       settingsModal.classList.remove('open');
-      window.BVMoreMenuInstance?.trigger?.focus();
+      librarySettingsButton?.focus();
     });
   }
   if (settingsModal) {
@@ -819,6 +886,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   async function playClipInDrive(clip, autoPlay = true, startAt = 0) {
+    showDriveOverview(false);
     const token = ++loadToken;
     player.cancelLoad();
     lastOpen={clip,autoPlay,startAt};
@@ -828,7 +896,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     activeClip=clip;
     window.BVRecordingCache?.setWindow(drive,clip.id,{native:player.nativeAvailable});
     recordingNavigation.update(true);
-    updatePlaybackLockUI();
+    updatePlaybackBackup();
     document.getElementById('playbackTitle').textContent = drive ? `${drive.date} · ${drive.startTime}` : 'Drive playback';
     document.getElementById('playbackClipLabel').textContent = `Recording ${(drive?.segments.findIndex(s=>s.clip.id===clip.id) ?? 0)+1} of ${drive?.segments.length||1}`;
     document.getElementById('dockRecordingLabel').textContent=document.getElementById('playbackClipLabel').textContent;
@@ -875,9 +943,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  document.getElementById('quickExportBtn').addEventListener('click',()=>document.getElementById('openExportBtn').click());
-  document.getElementById('moreDrivesBtn').addEventListener('click',()=>{player.pause();switchTab('recordings');viewRecordings.classList.remove('detail-open');});
-  document.getElementById('moreBackupCurrentBtn').addEventListener('click',event=>{const id=event.currentTarget.dataset.currentRecording;if(!id)return;try{Promise.resolve(window.BVBackupActions.openRecording(id)).catch(error=>alert(error.message));}catch(error){alert(error.message);}});
+  const saveSheet = document.getElementById('playbackSaveSheet');
+  document.getElementById('playbackSaveBtn').addEventListener('click', () => {
+    document.getElementById('savePlaybackRawBtn').disabled = !activeClip?.id;
+    saveSheet.showModal();
+  });
+  document.getElementById('closePlaybackSave').addEventListener('click', () => saveSheet.close());
+  saveSheet.addEventListener('click', event => {
+    if (event.target === saveSheet) saveSheet.close();
+  });
+  document.getElementById('savePlaybackRawBtn').addEventListener('click', () => {
+    saveSheet.close();
+    if (activeClip?.id) downloadRaw(activeClip.id);
+  });
+  window.BVSourceManager.subscribe(() => { if (saveSheet.open) saveSheet.close(); });
+  document.getElementById('backupPlaybackBtn').addEventListener('click',event=>{saveSheet.close();const id=event.currentTarget.dataset.currentRecording;if(!id)return;try{Promise.resolve(window.BVBackupActions.openRecording(id)).catch(error=>alert(error.message));}catch(error){alert(error.message);}});
 
   // 6. Transport Controls
   hudElements.playBtn.addEventListener("click", () => player.togglePlay());
@@ -893,6 +973,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   function setSpeedUnit(unit) {
     const nextUnit = unit === "km/h" ? "km/h" : "mph";
     player.setSpeedUnit(nextUnit);
+    timeline.speedUnit = nextUnit;
+    timeline.draw();
+    const webSpeedUnit = document.getElementById('webSpeedUnit');
+    if (webSpeedUnit) webSpeedUnit.value = nextUnit;
+    renderHomeTrips();
     try {
       localStorage.setItem("bimmervision_speed_unit", nextUnit);
     } catch (_) {}
@@ -924,6 +1009,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     setSpeedUnit(player.speedUnit === "mph" ? "km/h" : "mph");
   }
 
+  window.addEventListener('bimmervision:speed-unit', event => setSpeedUnit(event.detail));
+
   const speedToggleEl = document.getElementById("speedToggle");
   if (speedToggleEl) speedToggleEl.addEventListener("click", toggleSpeedUnit);
   if (unitBtnMph) unitBtnMph.addEventListener("click", () => setSpeedUnit("mph"));
@@ -936,7 +1023,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // 8. Desktop Keyboard Shortcuts
   window.addEventListener("keydown", (e) => {
-    if (document.querySelector(".modal-backdrop.open") || videoLoadingModal.style.display === "flex") return;
+    if (document.querySelector(".modal-backdrop.open, .dashboard-sheet[open]") || videoLoadingModal.style.display === "flex") return;
     if (e.defaultPrevented || e.target.closest?.('input,select,textarea,button,a,summary,[contenteditable="true"]')) return;
 
     if (e.code === "Space") {
@@ -1115,7 +1202,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  const saveExportLink = document.getElementById("downloadExportLink");
+  let completedExportClip = null;
+  function releaseCompletedExport() {
+    if (window.lastExportUrl) URL.revokeObjectURL(window.lastExportUrl);
+    window.lastExportUrl = null;
+    completedExportClip = null;
+    saveExportLink.onclick = null;
+    saveExportLink.removeAttribute("href");
+    saveExportLink.style.display = "none";
+  }
   openExportBtn.addEventListener("click", () => {
+    saveSheet.close();
     player.pause();
     exportCameraSelect.value = ["quad", "source", "front", "rear", "left", "right"].includes(player.viewMode) ? player.viewMode : "quad";
     exportModal.classList.add("open");
@@ -1136,8 +1234,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     exportProgress.style.display = "none";
     startExportBtn.disabled = false;
     startExportBtn.style.display = "flex";
-    const manualBtn = document.getElementById("downloadExportLink");
-    if (manualBtn) manualBtn.style.display = "none";
+    if (completedExportClip !== player.manifest) releaseCompletedExport();
+    if (exportInProgress || window.lastExportUrl) exportProgress.style.display = "flex";
 
     const drivingToggle=document.getElementById('exportToggleDriving');
     drivingToggle.disabled=!player.drivingView?.data?.frames?.some(f=>f.o.length||f.b.length);
@@ -1156,6 +1254,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   startExportBtn.addEventListener("click", async (e) => {
     const cameraAngle = selectedExportView();
     if(exportInProgress || (Array.isArray(cameraAngle) && cameraAngle.length === 0))return;
+    releaseCompletedExport();
+    const exportingClip = player.manifest;
     exportInProgress=true;
     if (e) {
       e.preventDefault();
@@ -1182,48 +1282,31 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       });
 
-      if (window.lastExportUrl) URL.revokeObjectURL(window.lastExportUrl);
-      const blob = new Blob([result.buffer], { type: "video/mp4" });
-      const blobUrl = URL.createObjectURL(blob);
-      window.lastExportUrl = blobUrl;
-      const sizeMb = (result.buffer.byteLength / (1024 * 1024)).toFixed(1);
-
-      progressBarFill.style.width = "100%";
-      progressText.textContent = `Export complete! (${sizeMb} MB) Download started.`;
-
-      // Trigger standard browser download via temporary anchor
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = result.fileName;
-      a.style.display = "none";
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        if (a.parentNode) document.body.removeChild(a);
-      }, 500);
-
-      // Reveal permanent download button in modal as reliable fallback
-      const manualBtn = document.getElementById("downloadExportLink");
-      if (manualBtn) {
-        manualBtn.href = blobUrl;
-        manualBtn.download = result.fileName;
-        manualBtn.textContent = `⬇ Download ${result.fileName} (${sizeMb} MB)`;
-        manualBtn.style.display = "block";
-      }
-
-      startExportBtn.style.display = "none";
-
-      // On mobile devices supporting Web Share, also trigger share sheet
-      const file = new File([result.buffer], result.fileName, { type: "video/mp4" });
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && navigator.canShare && navigator.canShare({ files: [file] })) {
+      if (!result.blob?.size) throw new Error("The encoder produced an empty video.");
+      const file = new File([result.blob], result.fileName, {type:result.blob.type});
+      const save = saveExportLink;
+      completedExportClip = exportingClip;
+      window.lastExportUrl = URL.createObjectURL(file);
+      save.href = window.lastExportUrl;
+      save.download = file.name;
+      save.textContent = "Save video";
+      save.style.display = "block";
+      save.onclick = async event => {
+        if (!navigator.canShare?.({files:[file]})) return;
+        event.preventDefault();
         try {
-          await navigator.share({
-            title: "BimmerVision Recording",
-            text: `BimmerVision drive clip (${result.duration.toFixed(1)}s)`,
-            files: [file]
-          });
-        } catch (_) {}
-      }
+          await navigator.share({files:[file]});
+        } catch (error) {
+          if (error.name === "AbortError") return;
+          save.onclick = null;
+          save.textContent = "Download video";
+          progressText.textContent = "Sharing is unavailable. Tap Download video to save your export.";
+        }
+      };
+      progressBarFill.style.width = "100%";
+      progressText.textContent = `Ready to save · ${(file.size / 1048576).toFixed(1)} MB`;
+      startExportBtn.style.display = "none";
+      save.focus();
     } catch (err) {
       console.error("Export failed:", err);
       progressText.textContent = "Export error: " + (err.message || String(err));
@@ -1281,7 +1364,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         : "Name the side-by-side camera pair for this source frame to ensure views and exports are correctly oriented:";
     }
     if (doneIdentifyBtn) {
-      doneIdentifyBtn.textContent = isFirstTime ? "Confirm & Play ▶" : "Apply & Done";
+      doneIdentifyBtn.textContent = isFirstTime ? "Confirm & Play" : "Apply & Done";
     }
 
     identifyModal.classList.add("open");
@@ -1413,18 +1496,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Dismissing an unconfirmed dialog never marks a recording as identified.
   closeIdentifyBtn.addEventListener('click',()=>{identifyModal.classList.remove('open');onIdentifyComplete=null;});
   doneIdentifyBtn.addEventListener('click',completeIdentify);
-
-  if (openCalibrateBtn) {
-    openCalibrateBtn.addEventListener("click", () => {
-      if (!activeClip) return;
-      openIdentifyModal({
-        clip: activeClip,
-        drive: activeDrive,
-        isFirstTime: false,
-        onComplete: () => {}
-      });
-    });
-  }
 
   identifyModal.addEventListener("click", (e) => {
     if (e.target === identifyModal) {identifyModal.classList.remove('open');onIdentifyComplete=null;}

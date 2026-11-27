@@ -1,6 +1,7 @@
 'use strict';
 // Isolated native helper sessions for perception, mirror reads and ICAM mode supervision.
 var fs=require('fs'),path=require('path'),crypto=require('crypto'),cp=require('child_process'),io=require('./io');
+// perception-transport.json identifies IterioDev's hmictl, shipped as perception-receiver.
 var definition=require('./perception-schema.json'),transport=require('./perception-transport.json'),blindSpot=require('./blind-spot'),cameraControl=require('./camera-control'),horn=require('./horn');
 var streams=Object.create(null),MAX_LINE=131200;
 definition.streams.forEach(function(s){streams[s.serviceId+':'+s.eventId]=s;});

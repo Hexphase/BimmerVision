@@ -1,33 +1,12 @@
 /* Approved playback workspace: quiet navigation and one synchronized player. */
 .mobile-redesign .app-header {overflow:visible;position:relative;display:flex;height:76px;gap:26px;padding:0 24px;background:#0c0d0f;border-bottom:1px solid #292c32;}
 .mobile-redesign .app-header::after {display:none;}
-.mobile-redesign .app-header .brand-wordmark {width:150px;height:auto;}
-.header-context {display:flex;align-items:center;gap:22px;min-width:0;flex:1;}
-.header-context>.back-link {white-space:nowrap;font-size:13px;color:#d7dbe2;}
 .playback-context {min-width:0;}
 .playback-context h1 {font-size:17px;line-height:1.35;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .playback-context p {display:flex;gap:12px;align-items:center;font-size:10px;color:#9199a7;margin-top:3px;}
-.header-actions {display:flex;align-items:center;gap:18px;margin-left:auto;}
-.mobile-redesign .header-export {display:inline-flex;align-items:center;justify-content:center;gap:7px;width:auto;min-width:0;flex-shrink:0;white-space:nowrap;min-height:44px;padding:0 14px;background:#1689f5;border:1px solid #379cff;border-radius:7px;color:#fff;font:inherit;font-size:13px;font-weight:650;box-shadow:0 2px 9px #1689f526;cursor:pointer;transition:background .15s,border-color .15s;}
-.mobile-redesign .header-export:hover {background:#2998ff;border-color:#62b4ff;}
-.mobile-redesign .header-export:focus-visible {outline:2px solid #c9e8ff;outline-offset:3px;}
-.header-export svg {width:17px;height:17px;flex:none;}
-.app-menu {position:relative;z-index:200;}
-.app-menu summary {list-style:none;cursor:pointer;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;letter-spacing:2px;border-radius:8px;}
-.app-menu summary::-webkit-details-marker {display:none;}
-.app-menu summary:hover {background:#20242b;}
-.app-menu-content {max-height:calc(100dvh - 88px - env(safe-area-inset-top,0px));overflow-y:auto;box-sizing:border-box;position:absolute;top:calc(100% + 8px);right:0;display:flex;flex-direction:column;gap:12px;width:250px;padding:16px;border:1px solid #353b45;border-radius:12px;background:#191c22;box-shadow:0 12px 40px #0008;}
-.app-menu-content .playback-tools {margin:0;display:block;}
-.mobile-redesign .app-menu-content .recording-actions {display:flex;flex-direction:column;margin:0;padding:0;border:0;background:none;}
-.mobile-redesign .app-menu-content .recording-actions .export-btn {width:100%;justify-content:flex-start;}
-.mobile-redesign .app-menu-content .advanced-toggle-label {display:flex;font-size:12px;min-height:36px;}
-.mobile-redesign .app-menu-content .unit-toggle-pill {width:100%;min-height:40px;justify-content:flex-start;text-align:left;font-size:12px;}
-.mobile-redesign .app-menu-content .status-pill {display:flex;font-size:11px;}
-body[data-screen="library"] .header-context,body[data-screen="library"] .header-export,body[data-screen="library"] .playback-tools {display:none;}
-.app-menu-content .camera-review-action {display:none;}
 .control-btn:disabled {opacity:.25;cursor:default;filter:grayscale(1);}
 .control-btn:disabled:hover {background:transparent;transform:none;}
-.mobile-redesign #viewPlayback .playback-grid {display:grid;flex:none;grid-template-columns:minmax(0,1.65fr) minmax(240px,.7fr) minmax(170px,.35fr);grid-template-rows:minmax(136px,.48fr) minmax(170px,1fr) auto auto;grid-template-areas:"cameras map map" "cameras driving selector" "instruments instruments instruments" "transport transport transport";gap:12px;width:100%;max-width:none;height:calc(100dvh - 76px);min-height:520px;margin:0;padding:16px 20px 12px;box-sizing:border-box;align-items:stretch;}
+.mobile-redesign #viewPlayback .playback-grid {display:grid;flex:none;grid-template-columns:minmax(0,1.65fr) minmax(240px,.7fr) minmax(170px,.35fr);grid-template-rows:minmax(136px,.48fr) minmax(170px,1fr) auto auto;grid-template-areas:"cameras map map" "cameras driving selector" "instruments instruments instruments" "transport transport transport";gap:12px;width:100%;max-width:none;height:calc(100dvh - 58px);min-height:520px;margin:0;padding:16px 20px 12px;box-sizing:border-box;align-items:stretch;}
 .mobile-redesign #viewPlayback .sedan-panel-card {grid-area:selector;width:100%;height:100%;min-height:0;margin:0;overflow:hidden;border-radius:14px;}
 #viewPlayback #sedanSelectorContainer {display:grid;grid-template-columns:minmax(0,1fr) 150px;align-items:stretch;height:100%;}
 #viewPlayback .sedan-panel-header {padding:16px;display:flex;flex-direction:column;justify-content:center;gap:12px;border:0;min-width:0;}
@@ -44,7 +23,6 @@ body[data-screen="library"] .header-context,body[data-screen="library"] .header-
 .mobile-redesign #viewPlayback #drivingViewPanel {grid-area:driving;height:100%;min-height:0;width:100%;display:flex;flex-direction:column;border-radius:14px;}
 #viewPlayback .driving-panel .section-header {padding:8px 10px;flex:0 0 auto;}
 #viewPlayback .driving-stage {height:auto;min-height:0;flex:1;}
-#viewPlayback .driving-detail {min-height:0;padding:5px 10px;font-size:8px;}
 .mobile-redesign #viewPlayback .live-map-panel {grid-area:map;height:100%;min-height:0;width:100%;display:flex;flex-direction:column;border-radius:14px;}
 #viewPlayback .live-map-panel .section-header {padding:8px 10px;flex:0 0 auto;}
 #viewPlayback .live-map-box {flex:1;height:auto;min-height:0;}
@@ -67,8 +45,9 @@ body[data-screen="library"] .header-context,body[data-screen="library"] .header-
 #viewPlayback .sedan-view-switchers {align-self:stretch;}
 #viewPlayback .sedan-view-pill {padding:5px 3px;min-height:44px;font-size:11px;}
 #viewPlayback .sedan-stage-wrapper {width:100%;height:auto;flex:1;min-height:0;}
-.mobile-redesign #viewPlayback .playback-grid {padding:0;gap:1px;background:#282c32;grid-template-columns:minmax(0,1.65fr) minmax(150px,.38fr) minmax(230px,.67fr);grid-template-rows:minmax(250px,1fr) minmax(140px,.55fr) auto auto;grid-template-areas:"cameras selector driving" "cameras map map" "instruments instruments instruments" "transport transport transport";}
-.mobile-redesign #viewPlayback :is(#playerStage,.panel-card,.cockpit-hud,.transport-panel) {border-radius:0;border:0;box-shadow:none;margin:0;}
+.mobile-redesign #viewPlayback .playback-grid {padding:0;gap:1px;background:#282c32;grid-template-columns:minmax(0,1.55fr) minmax(150px,.36fr) minmax(260px,.87fr);grid-template-rows:minmax(250px,1fr) minmax(140px,.55fr) auto auto;grid-template-areas:"cameras selector driving" "cameras map map" "instruments instruments instruments" "transport transport transport";}
+.mobile-redesign #viewPlayback :is(#playerStage,.panel-card,.cockpit-hud,.transport-panel) {border-radius:0;border:0;box-shadow:none;}
+.mobile-redesign #viewPlayback :where(#playerStage,.panel-card,.cockpit-hud,.transport-panel) {margin:0;}
 .mobile-redesign #viewPlayback .transport-panel {background:#101216;padding:8px 20px;}
 .mobile-redesign #viewPlayback .cockpit-hud {padding:2px 24px;}
 .export-driving-note {grid-column:1/-1;font-size:11px;line-height:1.6;color:#98a5b7;}
@@ -77,24 +56,16 @@ body[data-screen="library"] .header-context,body[data-screen="library"] .header-
 @media(max-width:999px) {
  html:has(body[data-screen="playback"]) {scroll-padding-top:calc(56px + env(safe-area-inset-top,0px) + min(75vw, max(100px, calc(100dvh - 210px - env(safe-area-inset-top,0px)))));}
  html,body.mobile-redesign {overflow-x:clip;overflow-y:visible;}
- body[data-screen="playback"] {--playback-header-height:calc(56px + env(safe-area-inset-top,0px));--pinned-video-height:min(75vw, max(100px, calc(100dvh - 210px - env(safe-area-inset-top,0px))));background:#101216;}
+ body[data-screen="playback"] {--playback-header-height:calc(58px + env(safe-area-inset-top,0px));--pinned-video-height:min(75vw, max(100px, calc(100dvh - 210px - env(safe-area-inset-top,0px))));background:#101216;}
  body[data-screen="playback"] .app-shell {height:auto;min-height:100dvh;overflow:visible;}
- body[data-screen="playback"] .app-header {position:sticky;top:0;z-index:80;display:grid;grid-template-columns:88px minmax(0,1fr) 88px;height:var(--playback-header-height);min-height:0;padding:env(safe-area-inset-top,0px) 8px 0;gap:0;box-sizing:border-box;background:#0c0d0f;}
- body[data-screen="playback"] .app-header .header-left {display:none;}
- body[data-screen="playback"] .header-context {display:contents;}
- body[data-screen="playback"] .header-context>.back-link {grid-column:1;grid-row:1;justify-self:start;font-size:12px;min-height:44px;padding:0 4px;}
- body[data-screen="playback"] .playback-context {grid-column:2;grid-row:1;min-width:0;text-align:center;}
+ body[data-screen="playback"] .app-header {position:sticky;top:0;z-index:80;height:var(--playback-header-height);min-height:0;padding:env(safe-area-inset-top,0px) 8px 0;gap:0;box-sizing:border-box;background:#0c0d0f;}
+ body[data-screen="playback"] .playback-context {min-width:0;}
  body[data-screen="playback"] .playback-context h1 {font-size:12px;line-height:1.4;white-space:normal;}
  body[data-screen="playback"] .playback-context p {position:absolute;top:100%;left:0;right:0;justify-content:center;pointer-events:none;margin:0;background:#101216;}
  body[data-screen="playback"] :is(#playbackClipLabel,#playbackStatus) {display:none;}
  body[data-screen="playback"] #playbackRetryBtn {pointer-events:auto;}
- body[data-screen="playback"] .header-actions {grid-column:3;grid-row:1;margin:0;gap:8px;justify-self:end;}
- .mobile-redesign .header-export {position:relative;gap:0;width:32px;min-width:32px;height:32px;min-height:32px;padding:0;font-size:11px;border-radius:6px;}
- .mobile-redesign .header-export span {display:none;}
- /* Keep the compact artwork inside a 44px touch target. */
- .mobile-redesign .header-export::after {content:"";position:absolute;inset:-6px;}
  .mobile-redesign #viewPlayback {animation:none;overflow:visible;height:auto;flex:none;}
- .mobile-redesign #viewPlayback .playback-grid {display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto 300px 360px 280px;grid-template-areas:"instruments" "transport" "selector" "driving" "map";height:auto;min-height:0;gap:1px;padding:var(--pinned-video-height) 0 env(safe-area-inset-bottom,0px);overflow:visible;}
+ .mobile-redesign #viewPlayback .playback-grid {display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto 300px 420px 280px;grid-template-areas:"instruments" "transport" "selector" "driving" "map";height:auto;min-height:0;gap:1px;padding:var(--pinned-video-height) 0 env(safe-area-inset-bottom,0px);overflow:visible;}
  .mobile-redesign #viewPlayback #playerStage {position:fixed;top:var(--playback-header-height);left:0;right:0;z-index:70;width:100%;height:var(--pinned-video-height);min-height:0;background:#000;}
  .mobile-redesign #viewPlayback .canvas-viewport {height:100%;width:100%;max-height:none;aspect-ratio:auto;}
  .mobile-redesign #viewPlayback #videoCanvas {display:block;width:100%;height:100%;object-fit:contain;}
@@ -124,9 +95,8 @@ body[data-screen="library"] .header-context,body[data-screen="library"] .header-
  #viewPlayback .sedan-panel-header {padding:10px 16px;}
  #viewPlayback .sedan-header-meta {flex-direction:row;}
  #viewPlayback .sedan-stage-wrapper {height:auto;width:100%;min-height:0;flex:1;}
- .mobile-redesign #viewPlayback #drivingViewPanel {position:static;grid-area:driving;height:360px;min-height:0;}
+ .mobile-redesign #viewPlayback #drivingViewPanel {position:static;grid-area:driving;height:420px;min-height:0;}
  #viewPlayback .driving-stage {height:auto;min-height:0;flex:1;}
- #viewPlayback .driving-detail {padding:8px 12px;font-size:9px;}
  .mobile-redesign #viewPlayback .live-map-panel {grid-area:map;height:280px;min-height:0;}
  #viewPlayback .live-map-box {height:auto;min-height:0;flex:1;}
 }
@@ -163,7 +133,7 @@ body[data-screen="library"] .header-context,body[data-screen="library"] .header-
 @media(max-width:999px) {
  html:has(body[data-screen="playback"]) {scroll-padding-top:calc(110px + env(safe-area-inset-top,0px) + min(75vw, max(100px, calc(100dvh - 210px - env(safe-area-inset-top,0px)))));}
  .mobile-redesign #viewPlayback .cockpit-hud {position:fixed;top:calc(var(--playback-header-height) + var(--pinned-video-height));left:0;right:0;z-index:70;width:100%;height:54px;}
- .mobile-redesign #viewPlayback .playback-grid {grid-template-rows:auto 300px 360px 280px;grid-template-areas:"transport" "selector" "driving" "map";padding-top:calc(var(--pinned-video-height) + 54px);}
+ .mobile-redesign #viewPlayback .playback-grid {grid-template-rows:auto 312px auto 420px 280px;grid-template-areas:"transport" "selector" "actions" "driving" "map";padding-top:calc(var(--pinned-video-height) + 54px);}
 }
 
 /* Typography replaces the speed-limit sign. */
@@ -182,11 +152,9 @@ body[data-screen="library"] .header-context,body[data-screen="library"] .header-
  .mobile-redesign #viewPlayback .transport-panel {min-height:0;padding:10px 12px;}
  .mobile-redesign #viewPlayback .timeline-viewport {border-radius:0;}
  .mobile-redesign #viewPlayback .playback-grid {padding-top:calc(var(--pinned-video-height) + 48px);}
- html:has(body[data-screen="playback"]) {scroll-padding-top:calc(104px + env(safe-area-inset-top,0px) + min(75vw, max(100px, calc(100dvh - 210px - env(safe-area-inset-top,0px)))));}
+ html:has(body[data-screen="playback"]) {scroll-padding-top:calc(118px + env(safe-area-inset-top,0px) + min(75vw, max(100px, calc(100dvh - 210px - env(safe-area-inset-top,0px)))));}
 }
 
-#playbackBackBtn {display:inline-flex;align-items:center;gap:4px;}
-#playbackBackBtn svg {flex:none;}
 #viewPlayback .hud-limit-label {font-size:5.85px;}
 #viewPlayback .hud-limit-text {font-size:18.2px;}
 .playback-hover-control {position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(155,155,155,.02);pointer-events:none;opacity:0;transition:opacity .15s ease;}
@@ -197,7 +165,6 @@ body[data-screen="library"] .header-context,body[data-screen="library"] .header-
 }
 @media(max-width:999px) {
  #viewPlayback .hud-limit-text {font-size:16.9px;}
- body[data-screen="playback"] .header-context>.back-link {font-size:11px;}
 }
 
 #viewPlayback .driving-angle {margin-left:auto;white-space:nowrap;}
@@ -220,3 +187,393 @@ body[data-screen="library"] .header-context,body[data-screen="library"] .header-
 
 
 .drive-segments-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}.drive-segments-heading .segments-header{margin-bottom:0}.drive-segments-heading .clip-row-backup{font:inherit;font-size:13px;min-height:44px;padding:10px 14px;border:1px solid #416b88;border-radius:7px;background:#122535;color:#b8e4ff;cursor:pointer;white-space:normal;text-align:center}.drive-segments-heading button[hidden]{display:none!important}.drive-segments-heading button:focus-visible{outline:2px solid #8ed2ff;outline-offset:3px}@media(max-width:700px){.drive-segments-heading .clip-row-backup{width:100%}}
+
+/* Match the library's charcoal surfaces and reserve the brightest action for playback. */
+body[data-screen="playback"] {
+  --playback-canvas:var(--bv-dashboard-canvas,#1a1c1d);
+  --playback-surface:var(--bv-dashboard-surface,#252728);
+  --playback-toolbar:var(--bv-dashboard-tab-bar,#242526);
+  --playback-border:var(--bv-dashboard-divider,#383d44);
+  --playback-text:#f3f5f7;
+  --playback-muted:#bac2cb;
+  background:var(--playback-canvas)
+}
+body[data-screen="playback"] .app-header {
+  display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;
+  padding-inline:max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right));
+  gap:0;background:var(--playback-toolbar);border-color:var(--playback-border);box-shadow:none
+}
+body[data-screen="playback"] .playback-context {grid-column:2;grid-row:1;text-align:center}
+body[data-screen="playback"] .playback-context p {justify-content:center}
+#playbackBackBtn {
+  grid-area:1 / 1;display:grid;place-items:center;width:44px;height:44px;padding:0;
+  border:0;border-radius:6px;background:transparent;color:#f2f4f6;cursor:pointer
+}
+#playbackBackBtn:hover {background:#ffffff0c}
+#viewPlayback .playback-actions {
+  grid-area:actions;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px
+}
+#viewPlayback .playback-action {
+  display:grid;grid-template-columns:20px minmax(0,1fr) 12px;grid-template-rows:auto;
+  align-items:center;gap:7px;min-width:0;min-height:54px;padding:7px 9px;
+  border:1px solid #363b40;border-radius:10px;background:var(--playback-surface);
+  color:var(--playback-text);text-align:left;font:inherit;cursor:pointer
+}
+#viewPlayback .playback-action:not(:disabled):hover {background:#31363a;border-color:#545e68}
+#viewPlayback .playback-action:focus-visible,#playbackBackBtn:focus-visible {outline:2px solid #84c5ff;outline-offset:2px}
+#viewPlayback .playback-action:disabled {color:#a4aab0;cursor:default}
+#viewPlayback .playback-action:disabled small {color:#a4aab0}
+#viewPlayback .playback-action .dashboard-action-copy {grid-area:1 / 2;gap:2px}
+#viewPlayback .playback-action .dashboard-action-copy strong {font-size:13px}
+#viewPlayback .playback-action .dashboard-action-copy small {font-size:11px}
+#viewPlayback .playback-action .dashboard-chevron {grid-area:1 / 3;width:12px;height:12px;margin:0}
+#viewPlayback .playback-action .dashboard-action-icon {width:19px;height:19px}
+
+body[data-screen="playback"] .playback-context h1 {color:var(--playback-text);font-weight:650}
+body[data-screen="playback"] .playback-context p {color:var(--playback-muted);font-size:11px}
+.mobile-redesign[data-screen="playback"] #viewPlayback .playback-grid {background:var(--playback-canvas)}
+.mobile-redesign[data-screen="playback"] #viewPlayback :is(.cockpit-hud,.transport-panel,.panel-card) {
+  background:var(--playback-surface)
+}
+.mobile-redesign[data-screen="playback"] #viewPlayback .sedan-stage-wrapper {background:#202326}
+#viewPlayback :is(.section-header,.sedan-panel-header) {background:var(--playback-surface)}
+#viewPlayback :is(.section-header .section-title,.sedan-panel-title) {
+  color:var(--playback-text);text-transform:none;letter-spacing:0;font-size:13px;font-weight:650
+}
+#viewPlayback .sedan-view-switchers {
+  gap:3px;padding:2px;border-radius:7px;background:#191c1f
+}
+#viewPlayback .sedan-view-pill {
+  min-height:34px;min-width:0;padding:4px 3px;border-radius:5px;color:var(--playback-muted)
+}
+#viewPlayback .camera-view-unavailable {
+  box-sizing:border-box;display:grid;align-content:center;justify-items:center;gap:8px;
+  height:100%;padding:16px;text-align:center
+}
+#viewPlayback .camera-view-unavailable svg {color:#9dbbd5}
+#viewPlayback .camera-view-unavailable strong {font-size:14px;line-height:1.35}
+#viewPlayback .camera-view-unavailable p {margin:0;max-width:28ch;color:var(--playback-muted);font-size:12px;line-height:1.5}
+
+#viewPlayback .sedan-view-pill.active {background:#34495e;color:#e2f0ff}
+#viewPlayback .camera-target.active .cam-dot {background:#84c5ff}
+#viewPlayback .timeline-heading {color:var(--playback-muted);letter-spacing:0}
+#viewPlayback .timeline-position {color:var(--playback-text);font-variant-numeric:tabular-nums}
+.mobile-redesign #viewPlayback .timeline-viewport {height:44px;background:#1a1e22;border-radius:7px}
+.mobile-redesign #viewPlayback .timeline-viewport .drive-timeline-track {
+  top:19px;height:19px;border-radius:3px;
+  background:repeating-linear-gradient(120deg,#292e33 0 3px,#24292e 3px 6px)
+}
+#viewPlayback .timeline-ruler span {top:1px}
+#viewPlayback .timeline-ruler span::after {top:11px;height:4px}
+#viewPlayback .timeline-playhead {top:17px;bottom:3px}
+.mobile-redesign[data-screen="playback"] #viewPlayback .transport-panel {position:relative;padding:8px 12px;gap:3px}
+.mobile-redesign #viewPlayback #playbackProgress {
+  position:absolute;z-index:2;top:29px;left:50%;transform:translateX(-50%);
+  height:22px;margin:0;padding:0 7px;border-radius:4px;background:#202830;
+  color:#b9dcfa;pointer-events:none
+}
+.mobile-redesign #viewPlayback #playbackProgress[hidden] {display:none!important}
+#viewPlayback .timeline-feedback {margin:3px 0 0}
+#viewPlayback .playback-controls .play-btn {
+  background:#f3f5f7;border-color:#f3f5f7;color:#171b20
+}
+#viewPlayback .playback-controls .play-btn:hover {background:#dce9f4;border-color:#dce9f4}
+#viewPlayback .playback-controls .play-btn svg {fill:currentColor}
+@media(min-width:1000px) {
+  body[data-screen="playback"] .app-header {height:58px;min-height:58px}
+  .mobile-redesign[data-screen="playback"] #viewPlayback .playback-grid {gap:10px;padding:12px 16px 14px}
+  .mobile-redesign[data-screen="playback"] #viewPlayback :is(#playerStage,.panel-card,.cockpit-hud,.transport-panel) {
+    border-radius:11px;box-shadow:inset 0 0 0 1px #ffffff13
+  }
+  #viewPlayback :is(.section-header,.sedan-panel-header) {border-bottom:1px solid #ffffff10}
+  .mobile-redesign[data-screen="playback"] #viewPlayback .transport-panel {margin-top:4px}
+}
+@media(max-width:999px) {
+  body[data-screen="playback"] .playback-context h1 {font-size:clamp(12px,3.55vw,16px);line-height:1.2}
+  body[data-screen="playback"] .playback-context p {background:var(--playback-toolbar)}
+  .mobile-redesign[data-screen="playback"] #viewPlayback .playback-grid {gap:10px;padding-inline:12px}
+  .mobile-redesign[data-screen="playback"] #viewPlayback .cockpit-hud {border-block:1px solid var(--playback-border)}
+  .mobile-redesign[data-screen="playback"] #viewPlayback :is(#drivingViewPanel,.transport-panel,.panel-card) {
+    border-radius:11px;box-shadow:inset 0 0 0 1px #ffffff13
+  }
+  .mobile-redesign[data-screen="playback"] #viewPlayback .transport-panel {margin-top:16px}
+  .mobile-redesign[data-screen="playback"] #viewPlayback .sedan-panel-card {margin-top:12px}
+  .mobile-redesign[data-screen="playback"] #viewPlayback .playback-grid:has(#cameraViewUnavailable:not([hidden])) {
+    grid-template-rows:auto minmax(144px,auto) auto 420px 280px
+  }
+  #viewPlayback .sedan-panel-card:has(#cameraViewUnavailable:not([hidden])) {height:auto}
+}
+@media(min-width:900px) and (max-width:999px) {
+  .mobile-redesign[data-screen="playback"] #viewPlayback .playback-grid {padding-bottom:12px}
+}
+
+@media(max-width:420px) {
+  #viewPlayback .playback-action {grid-template-columns:20px minmax(0,1fr)}
+  #viewPlayback .playback-action .dashboard-chevron {display:none}
+  #viewPlayback .playback-action .dashboard-action-copy strong {font-size:12px}
+}
+
+/* Source capabilities are shown in the library before playback starts. */
+body[data-screen="playback"] #sourceAccessNotice {display:none}
+
+#viewPlayback .hud-speed-reading {display:inline-flex;align-items:baseline;gap:4px}
+#viewPlayback #speedToggle {align-items:center;justify-content:center;font:inherit;color:inherit;background:transparent;border:0;padding:0;cursor:pointer}
+@media (max-width:999px), (pointer:coarse) {
+  #viewPlayback button,#playbackBackBtn {touch-action:manipulation}
+  body[data-screen="playback"] #playbackBackBtn,
+  #viewPlayback :is(.sedan-view-pill,.driving-angle,#speedToggle) {min-width:48px;min-height:48px}
+  #viewPlayback .camera-target {width:62px;height:62px}
+  .mobile-redesign #viewPlayback .timeline-viewport {height:50px}
+  .mobile-redesign #viewPlayback .timeline-viewport .drive-timeline-track {height:22px;top:22px}
+  .mobile-redesign #viewPlayback .transport-action-row {display:flex!important;justify-content:center;margin:4px 0 0}
+  .mobile-redesign #viewPlayback .playback-controls {display:flex;width:100%;justify-content:center;gap:12px}
+  #viewPlayback .playback-controls .control-btn {
+    display:inline-flex;align-items:center;justify-content:center;width:54px;height:48px;
+    min-width:48px;min-height:48px;border:0;border-radius:10px;color:white;background:#333638
+  }
+  #viewPlayback .playback-controls .play-btn {width:74px;color:#17191a;background:#f5f6f8}
+  #viewPlayback .playback-controls button::after {display:none}
+  #viewPlayback .sedan-view-pill {font-size:12px}
+  #viewPlayback .camera-target .cam-dot {width:12px;height:12px}
+  #viewPlayback :is(button,.timeline-viewport):focus-visible {outline:2px solid #84c5ff;outline-offset:-2px}
+}
+
+@media(max-width:999px) {
+  body[data-screen="playback"] {
+    --pinned-video-height:min(75vw,34dvh);
+    --hud-bottom:calc(var(--playback-header-height) + var(--pinned-video-height) + 48px);
+  }
+  .mobile-redesign[data-screen="playback"] #viewPlayback .transport-action-row {display:none!important}
+  #playerStage > :is(#skipBackBtn,#skipFwdBtn) {
+    position:absolute;bottom:8px;z-index:3;display:grid;place-items:center;width:48px;height:48px;
+    border:0;border-radius:50%;background:#16181cc9;color:white;
+  }
+  #playerStage > #skipBackBtn {left:10px}
+  #playerStage > #skipFwdBtn {right:10px}
+  #playerStage > :is(#skipBackBtn,#skipFwdBtn):disabled,
+  #playerStage[data-playing="true"] > :is(#skipBackBtn,#skipFwdBtn) {visibility:hidden}
+  #playerStage[data-playing="false"] .playback-hover-control {opacity:1}
+  #playerStage[data-playing="true"] .playback-hover-control {opacity:0}
+  .mobile-redesign[data-screen="playback"] #viewPlayback .transport-panel {
+    position:sticky;top:var(--hud-bottom);z-index:65;margin:0;border-radius:0;
+    padding:4px 10px;background:var(--playback-surface)
+  }
+  .mobile-redesign[data-screen="playback"] #viewPlayback .playback-grid,
+  .mobile-redesign[data-screen="playback"] #viewPlayback .playback-grid:has(#cameraViewUnavailable:not([hidden])) {
+    --panel-room:calc(100dvh - var(--hud-bottom) - var(--transport-height,76px) - 16px - env(safe-area-inset-bottom,0px));
+    grid-template-rows:auto min(312px,var(--panel-room)) auto min(420px,var(--panel-room)) min(280px,var(--panel-room));
+    padding-bottom:max(10px,env(safe-area-inset-bottom,0px))
+  }
+  .mobile-redesign[data-screen="playback"] #viewPlayback :is(.sedan-panel-card,#drivingViewPanel,.live-map-panel) {
+    margin:0;height:100%;box-sizing:border-box
+  }
+  html:has(body[data-screen="playback"]) {scroll-padding-top:calc(58px + env(safe-area-inset-top) + min(75vw,34dvh) + 130px)}
+}
+@media(max-width:999px) and (max-height:490px) {
+  .mobile-redesign[data-screen="playback"] #viewPlayback .playback-grid,
+  .mobile-redesign[data-screen="playback"] #viewPlayback .playback-grid:has(#cameraViewUnavailable:not([hidden])) {
+    --panel-room:calc(100dvh - var(--playback-header-height) - 20px - env(safe-area-inset-bottom));
+    padding-top:0;grid-template-areas:"cameras" "instruments" "transport" "selector" "actions" "driving" "map";
+    grid-template-rows:min(75vw,60dvh) 48px auto min(312px,var(--panel-room)) auto min(420px,var(--panel-room)) min(280px,var(--panel-room))
+  }
+  .mobile-redesign[data-screen="playback"] #viewPlayback :is(#playerStage,.cockpit-hud,.transport-panel) {position:relative;inset:auto;height:100%}
+  .mobile-redesign[data-screen="playback"] #viewPlayback .playback-grid {row-gap:0}
+  html:has(body[data-screen="playback"]) {scroll-padding-top:calc(60px + env(safe-area-inset-top))}
+}
+
+.preview-picker {display:none}
+@media(max-width:999px) {
+  .mobile-redesign[data-screen="playback"] #viewPlayback .playback-grid,
+  .mobile-redesign[data-screen="playback"] #viewPlayback .playback-grid:has(#cameraViewUnavailable:not([hidden])) {
+    grid-template-areas:"transport" "picker" "previews" "actions";grid-template-rows:auto auto auto auto;
+    row-gap:12px;padding-inline:0
+  }
+  .mobile-redesign[data-screen="playback"] #viewPlayback .transport-panel {
+    border:0;border-radius:0;box-shadow:none;background:var(--playback-toolbar);padding:3px 12px 5px
+  }
+  .mobile-redesign #viewPlayback .timeline-viewport {background:transparent}
+  #viewPlayback .preview-picker {
+    grid-area:picker;display:flex;align-items:center;justify-content:center
+  }
+  .preview-picker button {
+    display:grid;place-items:center;width:34px;height:32px;padding:0;
+    border:0;background:none;color:#b5bbc1;cursor:pointer
+  }
+  .preview-picker button::before {
+    content:"";width:8px;height:8px;border:1.5px solid currentColor;
+    box-sizing:border-box;border-radius:50%
+  }
+  .preview-picker button[aria-pressed="true"]::before {color:#fff;background:currentColor}
+  #viewPlayback .playback-vision-pair {
+    grid-area:previews;display:flex;gap:12px;min-width:0;margin:0 12px;
+    overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;
+    touch-action:auto;overscroll-behavior-x:contain;scrollbar-width:none;border-radius:11px;
+    height:clamp(320px,46dvh,440px)
+  }
+  #viewPlayback .playback-vision-pair::-webkit-scrollbar {display:none}
+  .mobile-redesign[data-screen="playback"] #viewPlayback .playback-vision-pair > section {
+    flex:0 0 100%;min-width:0;scroll-snap-align:start;scroll-snap-stop:always;height:100%;margin:0
+  }
+  #viewPlayback .playback-actions {margin:0 12px 12px}
+}
+html:has(body[data-screen="playback"]),
+body.mobile-redesign[data-screen="playback"] {
+  overflow:hidden;
+  overscroll-behavior-y:none
+}
+body[data-screen="playback"] #viewPlayback {touch-action:pan-x pinch-zoom}
+
+/* Budget the two visual areas from the space left by the controls. */
+@media(max-width:999px) {
+  body[data-screen="playback"] .app-shell {
+    box-sizing:border-box;height:100dvh;min-height:0;padding-bottom:env(safe-area-inset-bottom,0px)
+  }
+  body[data-screen="playback"] .app-header {flex:none;position:relative}
+  .mobile-redesign[data-screen="playback"] #viewPlayback.active {
+    display:flex;flex:1 1 0;min-height:0
+  }
+  .mobile-redesign[data-screen="playback"] #viewPlayback .playback-grid,
+  .mobile-redesign[data-screen="playback"] #viewPlayback .playback-grid:has(#cameraViewUnavailable:not([hidden])) {
+    flex:1 1 0;height:100%;min-height:0;padding:0;gap:0;
+    grid-template-areas:"cameras" "instruments" "transport" "picker" "previews";
+    /* Fit the full 4:3 recording while reserving space for the swipeable preview. */
+    grid-template-rows:minmax(0,75vw) 48px auto auto minmax(min(150px,28dvh),1fr)
+  }
+  .mobile-redesign[data-screen="playback"] #viewPlayback :is(#playerStage,.cockpit-hud,.transport-panel) {
+    position:relative;inset:auto;height:100%;min-height:0
+  }
+  #viewPlayback .playback-vision-pair {min-height:0;height:calc(100% - 5px);align-self:start}
+  #viewPlayback .playback-actions {margin:6px 12px}
+  html:has(body[data-screen="playback"]) {scroll-padding-top:0}
+}
+@media(max-width:999px) and (orientation:landscape) {
+  .mobile-redesign[data-screen="playback"] #viewPlayback .playback-grid,
+  .mobile-redesign[data-screen="playback"] #viewPlayback .playback-grid:has(#cameraViewUnavailable:not([hidden])) {
+    grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);
+    grid-template-rows:auto minmax(0,1fr) 48px auto;
+    grid-template-areas:"cameras picker" "cameras previews" "instruments previews" "transport previews";
+    padding-inline:env(safe-area-inset-left,0px) env(safe-area-inset-right,0px)
+  }
+}
+@media(max-width:999px) and (max-height:720px) {
+  #viewPlayback .playback-action small {display:none}
+  #viewPlayback .playback-actions .playback-action {min-height:48px}
+}
+@media(max-width:999px) {
+  #viewPlayback .camera-target {width:var(--camera-touch-size,62px);height:var(--camera-touch-size,62px)}
+}
+
+body[data-screen="playback"] .app-header {grid-template-columns:56px minmax(0,1fr) 56px}
+#playbackSaveBtn {
+  grid-area:1/3;min-height:48px;width:100%;border:0;border-radius:8px;
+  background:none;color:#c1e2ff;font:inherit;font-size:15px;font-weight:650;cursor:pointer
+}
+#playbackSaveSheet {--app-canvas:var(--bv-dashboard-canvas);--dashboard-divider:var(--bv-dashboard-divider)}
+#closePlaybackSave {grid-column:3}
+#playbackSaveSheet .save-options {display:grid;gap:8px}
+#playbackSaveSheet .playback-action {
+  display:grid;grid-template-columns:24px minmax(0,1fr) 16px;align-items:center;gap:12px;
+  padding:14px;min-height:64px;text-align:left;border:0;border-radius:10px;
+  background:var(--bv-dashboard-surface);color:#f5f6f8;font:inherit;cursor:pointer
+}
+#playbackSaveSheet .dashboard-action-copy {grid-column:2;gap:3px}
+#playbackSaveSheet .dashboard-action-copy strong {font-size:15px}
+#playbackSaveSheet .dashboard-action-copy small {font-size:12px;color:#bbc0c6}
+#playbackSaveSheet .dashboard-chevron {grid-area:1/3;align-self:center}
+#playbackSaveSheet .playback-action:disabled {opacity:.55;cursor:default}
+
+#viewPlayback .sedan-panel-header,
+#viewPlayback #drivingViewPanel .section-header {
+  min-height:44px;box-sizing:border-box;flex-direction:row;align-items:center;justify-content:space-between;gap:6px;padding:0 10px
+}
+#viewPlayback #cameraViewMode,
+#viewPlayback #drivingViewPanel .driving-angle {
+  min-height:44px;min-width:0;max-width:100%;padding:0 4px;border:0;
+  background:transparent;color:#d8e5ef;color-scheme:dark;font:inherit;font-size:14px;cursor:pointer
+}
+#cameraViewMode {display:inline-flex;align-items:center;justify-content:center;gap:6px}
+#cameraModeSheet {
+  --app-canvas:var(--bv-dashboard-canvas);--dashboard-divider:var(--bv-dashboard-divider);
+  max-width:min(100%,440px)
+}
+#cameraModeSheet .dashboard-sheet-control {grid-column:3}
+.camera-mode-options {display:grid;padding:6px 16px max(14px,env(safe-area-inset-bottom))}
+.camera-mode-options button {
+  display:flex;justify-content:space-between;align-items:center;min-height:50px;padding:0 10px;
+  color:#f5f6f8;background:transparent;border:0;text-align:left;font:inherit;cursor:pointer
+}
+.camera-mode-options button + button {border-top:1px solid var(--bv-dashboard-divider)}
+.camera-mode-options [aria-pressed="true"]::after {
+  content:"";width:6px;height:12px;border:solid #84c5ff;border-width:0 2px 2px 0;
+  transform:rotate(45deg);margin-right:5px
+}
+@media(min-width:1000px) {
+  #viewPlayback .sedan-panel-header {flex-wrap:nowrap;gap:4px;padding-inline:8px}
+  #viewPlayback #cameraViewMode {font-size:13px;white-space:nowrap}
+}
+
+#viewPlayback #drivingViewPanel .driving-angle[aria-pressed="true"] {color:#84c5ff;background:#263545}
+
+#viewPlayback #timelinePreview {
+  grid-area:timeline;min-width:0;min-height:0;overflow:hidden;
+  background:var(--playback-toolbar,#242627)
+}
+#timelinePreview #driveTimeline {
+  display:grid;grid-template-rows:auto 44px repeat(3,minmax(23px,1fr));
+  box-sizing:border-box;height:100%;min-height:140px;padding:6px 12px;
+  margin:0;border:0;gap:0
+}
+#timelinePreview .timeline-heading {margin:0 0 4px;font-size:12px;color:#f4f5f6}
+#timelinePreview .timeline-viewport {height:44px}
+#timelinePreview .timeline-feedback:not(:empty) {grid-column:1;grid-row:2;align-self:end;z-index:1;background:#222}
+#timelinePreview .telemetry-lane {
+  --trace:#83bfff;display:grid;grid-template-rows:auto minmax(10px,1fr);min-height:0;
+  border-top:1px solid #ffffff14;padding-top:2px
+}
+#timelinePreview .telemetry-lane:nth-last-child(2) {--trace:#86c6a1}
+#timelinePreview .telemetry-lane:last-child {--trace:#ef9698}
+#timelinePreview .telemetry-lane div {display:flex;justify-content:space-between;font-size:11px;color:#cbd0d5}
+#timelinePreview .telemetry-lane strong {color:#f5f6f7;font-variant-numeric:tabular-nums}
+#timelinePreview .telemetry-lane svg {
+  width:100%;height:100%;min-height:0;
+  background:linear-gradient(90deg,transparent calc(50% - .5px),#ffffff54 50%,transparent calc(50% + .5px))
+}
+#timelinePreview .telemetry-lane path {stroke:var(--trace);stroke-width:2;fill:none}
+@media(min-width:1000px) {
+  .mobile-redesign[data-screen="playback"] #viewPlayback .playback-grid {
+    grid-template-areas:"cameras selector driving" "cameras map timeline" "instruments map timeline" "transport map timeline"
+  }
+}
+
+#viewPlayback #playerStage {position:relative}
+#playerStage .clip-overlay {
+  position:absolute;inset:0;z-index:3;opacity:0;pointer-events:none;
+  background:linear-gradient(transparent 60%,#000a);transition:opacity .14s ease
+}
+#playerStage .clip-overlay :is(button,input) {pointer-events:none}
+#playerStage:is([data-controls="visible"],:not([data-dismissed]):has(:focus-visible),:has(input:active)) .clip-overlay {opacity:1}
+#playerStage:is([data-controls="visible"],:not([data-dismissed]):has(:focus-visible),:has(input:active)) .clip-overlay :is(button,input) {pointer-events:auto}
+#playerStage[data-mouse-hover] .clip-overlay {opacity:1}
+#playerStage[data-mouse-hover] .clip-overlay :is(button,input) {pointer-events:auto}
+#playerStage .clip-buttons-row {
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)
+}
+#viewPlayback #playerStage .playback-controls {
+  display:flex;align-items:center;justify-content:center;gap:clamp(12px,3vw,28px);margin:0;width:auto
+}
+#viewPlayback #playerStage .playback-controls .control-btn {
+  display:grid;place-items:center;min-width:44px;width:44px;height:44px;min-height:44px;
+  margin:0;padding:0;border:0;border-radius:50%;color:white;background:#101216cc
+}
+#viewPlayback #playerStage .playback-controls .control-btn:disabled {opacity:.45}
+#playerStage .scrubber-bar-row {
+  display:flex;align-items:center;position:absolute;inset:auto 12px 0;gap:8px;color:white
+}
+#playerStage #scrubBar {height:44px;margin:0;min-width:0;flex:1}
+#viewPlayback #playerStage #timecode {display:inline;font-size:11px;font-variant-numeric:tabular-nums}
+@media(prefers-reduced-motion:reduce) {#playerStage .clip-overlay {transition:none}}
+
+#viewPlayback #playerStage .playback-controls #playPauseBtn {
+  width:64px;height:64px;border-radius:50%;padding:0
+}
+#playerStage #playPauseBtn svg {width:28px;height:28px}

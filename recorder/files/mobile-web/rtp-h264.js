@@ -342,6 +342,7 @@ class RtpH264Assembler {
     const phase = this.accessUnits.length % 2;
 
     let pair = (pairMap && typeof pairMap.get === "function") ? pairMap.get(rtpTimestamp) : null;
+    const recordedPair = pair === "frontRear" || pair === "leftRight";
     if (!pair) {
       pair = phase === 0 ? "frontRear" : "leftRight";
     }
@@ -409,7 +410,7 @@ class RtpH264Assembler {
       avcc[avccOffset + 2] = (len >>> 8) & 0xFF;
       avcc[avccOffset + 3] = len & 0xFF;
       avccOffset += 4;
-      
+
       // Do not mutate slice NAL header - keep valid uncorrupted slice syntax
       avcc.set(nal, avccOffset);
       avccOffset += len;
@@ -427,6 +428,7 @@ class RtpH264Assembler {
       damaged: Boolean(damaged),
       phase: phase,
       pair: pair,
+      recordedPair,
       data: annexB,
       avcc: avcc
     });

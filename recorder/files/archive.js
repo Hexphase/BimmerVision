@@ -7,7 +7,9 @@ function validTime(t) { return Number.isSafeInteger(t) && t >= 0; }
 function record(type, atUs, payload) {
  if (!Buffer.isBuffer(payload) || !payload.length || (type !== 1 && type !== 2) || payload.length > (type === 1 ? 65536 : 262144)) throw new Error('Invalid record type or payload length');
  if (!validTime(atUs)) throw new Error('Non-exact timestamp');
- var b = Buffer.alloc(24 + payload.length); b.write('BVRR'); b[4] = type; b.writeUInt16LE(24,6); b.writeUInt32LE(payload.length,8); b.writeUInt32LE(atUs % 4294967296,12); b.writeUInt32LE(Math.floor(atUs / 4294967296),16); b.writeUInt32LE(crc32(payload),20); payload.copy(b,24); return b;
+ // Every header byte is set below, including the reserved flags byte.
+ // Small records can use Node's buffer pool without clearing the payload twice.
+ var b = Buffer.allocUnsafe(24 + payload.length); b.write('BVRR'); b[4] = type; b[5] = 0; b.writeUInt16LE(24,6); b.writeUInt32LE(payload.length,8); b.writeUInt32LE(atUs % 4294967296,12); b.writeUInt32LE(Math.floor(atUs / 4294967296),16); b.writeUInt32LE(crc32(payload),20); payload.copy(b,24); return b;
 }
 function checkHeader(b) { if (b.length < 16) return 'Truncated file header'; if (b.toString('ascii',0,4) !== 'BVR1' || b.readUInt32LE(4) !== 1 || b.readUInt32LE(8) !== 16 || b.readUInt32LE(12) !== 0) return 'Invalid archive version/header'; return null; }
 function recordHeader(b) {

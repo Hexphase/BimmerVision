@@ -30,6 +30,8 @@ var HORN = {
   released: ["KEINE_AKTION"],
 };
 var SOURCES = [
+  {dir: "/var/opt/public/oap/oap_12236/someipInterfaces", name: "de.bmw.infotainment.KombiIF",
+   instance: "1", field: "statusShowTimeDate", serviceId: 46363, kind: "displayClock"},
   {
     dir: "/var/opt/public/oap/oap_12247/someipInterfaces",
     name: "de.bmw.dass.driverassistanceapplications.StatusDisplayXADAndSpeed",
@@ -124,6 +126,18 @@ function namedState(schema, spec, value) {
   return null;
 }
 function readSignal(kind, schema, value) {
+  if (kind === "displayClock") {
+    if (!value) return null;
+    var parts = [value.displayDateYear, value.displayDateMonth, value.displayDateDay,
+      value.displayHour, value.displayMinute, value.displaySecond];
+    if (!parts.every(Number.isInteger) || parts[0] < 2000 || parts[0] > 2099 ||
+        parts[1] < 1 || parts[1] > 12 || parts[2] < 1 || parts[2] > 31 ||
+        parts[3] < 0 || parts[3] > 23 || parts[4] < 0 || parts[4] > 59 ||
+        parts[5] < 0 || parts[5] > 59) return null;
+    // Encode the dashboard's calendar fields without applying the Linux timezone.
+    var wallMs = Date.UTC(parts[0], parts[1]-1, parts[2], parts[3], parts[4], parts[5]);
+    return new Date(wallMs).getUTCDate() === parts[2] ? {wallMs:wallMs} : null;
+  }
   if (kind === "speed") {
     if (!value || typeof value.displayedValueSpeed !== "number") return null;
     var speed = value.displayedValueSpeed;

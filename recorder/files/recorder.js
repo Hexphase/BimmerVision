@@ -61,7 +61,16 @@ Recorder.prototype.sync=async function(fd){
  var started=this.nowUs();await io.fsync(fd);var elapsed=this.nowUs()-started;
  this.ioMetrics.syncCalls++;this.ioMetrics.syncUs+=elapsed;this.ioMetrics.maxSyncUs=Math.max(this.ioMetrics.maxSyncUs,elapsed);
 };
-Recorder.prototype.writeEvent=async function(event,atUs){await this.write(archive.record(2,atUs,Buffer.from(JSON.stringify(event))));if(event.reason==='rtp-sequence-gap')this.current.manifest.observedSequenceGaps+=event.packets||0;};
+function rememberDisplayClock(manifest,event){
+ if(!event || event.type!=='display-clock' || event.source!=='KombiIF.statusShowTimeDate' ||
+    !Number.isSafeInteger(event.sampleUs) || !Number.isSafeInteger(event.wallMs))return;
+ var anchors=manifest.clock.displayAnchors||(manifest.clock.displayAnchors=[]);
+ var last=anchors[anchors.length-1];
+ if(last && (event.sampleUs<=last.sampleUs ||
+    Math.abs(event.wallMs-last.wallMs-(event.sampleUs-last.sampleUs)/1000)<1500))return;
+ anchors.push({sampleUs:event.sampleUs,wallMs:event.wallMs});
+}
+Recorder.prototype.writeEvent=async function(event,atUs){await this.write(archive.record(2,atUs,Buffer.from(JSON.stringify(event))));rememberDisplayClock(this.current.manifest,event);if(event.reason==='rtp-sequence-gap')this.current.manifest.observedSequenceGaps+=event.packets||0;};
 Recorder.prototype.flushLoss=async function(){
  if(this.pendingDrops){var count=this.pendingDrops;this.pendingDrops=0;await this.writeEvent({type:'discontinuity',reason:'queue-overflow',packets:count},this.lastDropUs);this.current.manifest.applicationDroppedPackets+=count;}
  if(this.pendingSequenceGaps){var gaps=this.pendingSequenceGaps;this.pendingSequenceGaps=0;await this.writeEvent({type:'discontinuity',reason:'rtp-sequence-gap',packets:gaps,coalesced:true},this.latestAt);}
@@ -78,7 +87,7 @@ Recorder.prototype.drain=async function(){
   if(priorPackets){this.writtenVideoPackets+=priorPackets;this.lastVideoWriteUs=this.nowUs();}
   for(var j=0;j<batch.length;j++){var written=batch[j];c.manifest.endMonotonicUs=Math.max(c.manifest.endMonotonicUs,written.atUs);if(written.type===1){c.manifest.packets++;var parsed=written.parsed;if(parsed){var stream=parsed.ssrc;if(!Object.prototype.hasOwnProperty.call(c.sources,stream)){if(Object.keys(c.sources).length>=8)c.sourceOverflow=true;else c.sources[stream]=false;}}else c.sourceOverflow=true;// A later recovery IDR cannot make an already retained dependent prefix standalone.
     if(parsed&&Object.prototype.hasOwnProperty.call(c.sources,parsed.ssrc)&&!c.sources[parsed.ssrc]&&rtp.opensPredicted(parsed.payload))c.prefixNeeded[parsed.ssrc]=true;
-    c.decoder.push(parsed||written.data.slice(24),written.atUs);c.manifest.requiresPrevious=Object.keys(c.prefixNeeded).length>0||c.sourceOverflow||!Object.keys(c.sources).length||Object.keys(c.sources).some(function(k){return !c.sources[k];});}else if(written.event&&written.event.reason==='rtp-sequence-gap')c.manifest.observedSequenceGaps+=written.event.packets||0;}
+    c.decoder.push(parsed||written.data.slice(24),written.atUs);c.manifest.requiresPrevious=Object.keys(c.prefixNeeded).length>0||c.sourceOverflow||!Object.keys(c.sources).length||Object.keys(c.sources).some(function(k){return !c.sources[k];});}else if(written.event){rememberDisplayClock(c.manifest,written.event);if(written.event.reason==='rtp-sequence-gap')c.manifest.observedSequenceGaps+=written.event.packets||0;}}
   this.queue.splice(0,batch.length);this.queuedBytes-=bytes;await this.flushLoss();var last=batch[batch.length-1].atUs,syncLimit=this.queuedBytes>(this.queueLimit>>2)?SYNC_BUSY_US:SYNC_IDLE_US;if(last-c.lastSyncUs>=syncLimit){await this.guard.check(c.fd);await this.sync(c.fd);c.lastSyncUs=last;}
  }
 };

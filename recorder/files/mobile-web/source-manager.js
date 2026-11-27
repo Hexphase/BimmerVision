@@ -14,13 +14,13 @@ class SourceManager {
  subscribe(listener){this.listeners.add(listener);return ()=>this.listeners.delete(listener);}
  async fetch(path,options={}){
   if(typeof path!=='string'||!/^\/api\/v1\//.test(path)||path.includes('\\')||/[\r\n]/.test(path))throw Error('Use a relative recording API path.');
-  const source=this.source;if(!source)return json({error:'Choose a USB drive or connect to your car first.'},503);
+  const source=this.source,generation=this.generation;if(!source)return json({error:'Choose a USB drive or connect to your car first.'},503);
   if(source.kind==='usb'){
-   if(path==='/api/v1/capabilities')return json({nativePreview:false,readOnly:true,localFiles:true});
+   if(path==='/api/v1/capabilities')return json({nativePreview:false,readOnly:source.readOnly!==false,canLock:source.canLock===true,canDelete:false,localFiles:true});
    if(path==='/api/v1/version')return json({version:'0.2.78',repository:'Hexphase/BimmerVision-Web',hostedViewer:true});
   }
   const response=await (this.recordingCache ? this.recordingCache.fetch(source,path,options) : source.fetch(path,options));
-  if(String(options.method||'GET').toUpperCase()==='POST'&&/\/lock$/.test(path)){
+  if(generation!==this.generation||source!==this.source){await response.body?.cancel();throw new DOMException('Recording source changed.','AbortError');}if(String(options.method||'GET').toUpperCase()==='POST'&&/\/lock$/.test(path)){
    if(!response.ok){const reason=await response.json().catch(()=>null);throw Error(reason?.error||'The recording lock was not saved.');}
    this.recordingCache?.clear();
   }

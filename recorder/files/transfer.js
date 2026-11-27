@@ -769,7 +769,7 @@ Transfer.prototype.handle = async function (req, res, generation) {
         if(await self.library.resolve(match[1],'capture.bvr')!==capturePath)throw failure(503,'USB recording path changed');
       }
       async function priorityRaw(){
-        for(;;){await checkRaw();var state=await self.status();if(!state||!((state.metrics&&state.metrics.queuedBytes)||state.queuedBytes))return state;await new Promise(function(r){setTimeout(r,25);});}
+        for(;;){await checkRaw();var state=await self.status(true);if(!state||!((state.metrics&&state.metrics.queuedBytes)||state.queuedBytes))return state;await new Promise(function(r){setTimeout(r,25);});}
       }
       async function paceRaw(bytes,state){
         if(!self.devMode&&(self.explicitBandwidth||!state||state.writeInProgress!==false||state.activeId)){
@@ -879,7 +879,7 @@ Transfer.prototype.handle = async function (req, res, generation) {
     );
     var downloadSample = match[2] === "capture.bvr" ? {clipId:match[1],startedAtMs:self.now(),endedAtMs:null,totalBytes:Math.max(0,end-start+1),sentBytes:0,recordingWaitMs:0,metadataCheckMs:0,paced:false,complete:false} : null;
     if (downloadSample) this.lastDownload = downloadSample;
-    var initialStatus = await this.status();
+    var initialStatus = await this.status(true);
     var idleRead = initialStatus && initialStatus.writeInProgress === false && !initialStatus.activeId;
     live();
     source = fs.createReadStream(file, {
@@ -903,7 +903,7 @@ Transfer.prototype.handle = async function (req, res, generation) {
             done();
             return;
           }
-          var status = await self.status();
+          var status = await self.status(true);
           if (finished) return;
           if (
             status &&
